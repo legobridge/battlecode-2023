@@ -200,3 +200,7 @@ fabric.properties
 # IntelliJ Idea files
 .idea
 
+# MacOS files
+.DS_Store
+**/.DS_Store
+
