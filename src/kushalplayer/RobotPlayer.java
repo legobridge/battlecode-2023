@@ -26,6 +26,14 @@ public strictfp class RobotPlayer {
      */
     static final Random rng = new Random(6147);
 
+    static Team ourTeam;
+    static Team theirTeam;
+
+    static int mapHeight;
+    static int mapWidth;
+
+    static MapLocation lastSeenHeadquarters;
+
     /**
      * Array containing all the possible movement directions. (excludes CENTER)
      */
@@ -57,13 +65,38 @@ public strictfp class RobotPlayer {
         // You can also use indicators to save debug notes in replays.
         rc.setIndicatorString("Hello world!");
 
+        // Set game constants
+        if (rc.getTeam() == Team.A) {
+            ourTeam = Team.A;
+            theirTeam = Team.B;
+        }
+        else {
+            ourTeam = Team.B;
+            theirTeam = Team.A;
+        }
+        mapHeight = rc.getMapHeight();
+        mapWidth = rc.getMapWidth();
+
+        if (lastSeenHeadquarters == null) {
+            if (rc.getType() == RobotType.HEADQUARTERS) {
+                lastSeenHeadquarters = rc.getLocation();
+            }
+            RobotInfo[] nearbyRobots = rc.senseNearbyRobots(2, RobotPlayer.ourTeam);
+            for (RobotInfo nearbyRobot: nearbyRobots) {
+                if (nearbyRobot.type == RobotType.HEADQUARTERS) {
+                    lastSeenHeadquarters = nearbyRobot.location;
+                }
+            }
+            if (lastSeenHeadquarters == null) {
+                throw new GameActionException(GameActionExceptionType.NO_ROBOT_THERE, "Headquarters not found, wtf");
+            }
+        }
+
         //noinspection InfiniteLoopStatement
         while (true) {
-            // This code runs during the entire lifespan of the robot, which is why it is in an infinite
-            // loop. If we ever leave this loop and return from run(), the robot dies! At the end of the
-            // loop, we call Clock.yield(), signifying that we've done everything we want to do.
 
             turnCount += 1;  // We have now been alive for one more turn!
+            int startRoundNum = rc.getRoundNum(); // The current round number
 
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode.
             try {
@@ -93,21 +126,19 @@ public strictfp class RobotPlayer {
                 }
 
             } catch (GameActionException e) {
-                // Oh no! It looks like we did something illegal in the Battlecode world. You should
-                // handle GameActionExceptions judiciously, in case unexpected events occur in the game
-                // world. Remember, uncaught exceptions cause your robot to explode!
-                System.out.println(rc.getType() + " Exception");
+                System.out.println(rc.getType() + " GameActionException");
                 e.printStackTrace();
 
             } catch (Exception e) {
-                // Oh no! It looks like our code tried to do something bad. This isn't a
-                // GameActionException, so it's more likely to be a bug in our code.
                 System.out.println(rc.getType() + " Exception");
                 e.printStackTrace();
-
             } finally {
+                // Check if a turn was skipped by comparing with startRoundNum
+                if (rc.getRoundNum() > startRoundNum) {
+                    System.out.println("Skipped a turn!");
+                }
+
                 // Signify we've done everything we want to do, thereby ending our turn.
-                // This will make our code wait until the next turn, and then perform this loop again.
                 Clock.yield();
             }
             // End of loop: go back to the top. Clock.yield() has ended, so it's time for another turn!

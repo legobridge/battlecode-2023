@@ -57,6 +57,29 @@ public class CarrierStrategy {
             if (enemyRobots.length > 0) {
                 if (rc.canAttack(enemyRobots[0].location)) {
                     rc.attack(enemyRobots[0].location);
+                    rc.setIndicatorString("Attacking!");
+                }
+            }
+        }
+
+        // If already carrying max resources, move back to HQ and drop off resources
+        if (rc.getAnchor() == null && (rc.getWeight() >= GameConstants.CARRIER_CAPACITY / 2)) {
+            rc.setIndicatorString("Moving to HQ!");
+            Direction dir = rc.getLocation().directionTo(RobotPlayer.lastSeenHeadquarters);
+            while (rc.canMove(dir)) {
+                rc.move(dir);
+            }
+            if (rc.canMove(Direction.EAST)){
+                rc.move(Direction.EAST);
+            }
+            else if (rc.canMove(Direction.NORTH)){
+                rc.move(Direction.NORTH);
+            }
+            for (ResourceType resourceType: ResourceType.values()) { // TODO - handle mixed resources
+                int resourceAmount = rc.getResourceAmount(resourceType);
+                if (rc.canTransferResource(RobotPlayer.lastSeenHeadquarters, resourceType, resourceAmount)) {
+                    rc.setIndicatorString("Transferring resource to HQ!");
+                    rc.transferResource(RobotPlayer.lastSeenHeadquarters, resourceType, resourceAmount);
                 }
             }
         }
@@ -64,14 +87,16 @@ public class CarrierStrategy {
         // If we can see a well, move towards it
         WellInfo[] wells = rc.senseNearbyWells();
         if (wells.length > 1 && RobotPlayer.rng.nextInt(3) == 1) {
+            rc.setIndicatorString("Moving to Well!");
             WellInfo well_one = wells[1];
             Direction dir = me.directionTo(well_one.getMapLocation());
-            if (rc.canMove(dir))
+            while (rc.canMove(dir))
                 rc.move(dir);
         }
         // Also try to move randomly.
         Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
         if (rc.canMove(dir)) {
+            rc.setIndicatorString("Moving randomly!");
             rc.move(dir);
         }
     }
