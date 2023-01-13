@@ -8,13 +8,10 @@ public class HeadquartersStrategy {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runHeadquarters(RobotController rc) throws GameActionException {
-        if (rc.getRoundNum() % 100 >= 10) {
-            // Once every 100 rounds save up for 90 rounds to build an anchor
+        if (RobotPlayer.turnCount % 2 == 0) {
             buildAnchor(rc);
         }
-        else {
-            buildRobot(rc);
-        }
+        buildRobot(rc);
     }
 
     private static void buildAnchor(RobotController rc) throws GameActionException {

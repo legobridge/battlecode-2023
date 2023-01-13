@@ -2,6 +2,7 @@ package kushalplayer;
 
 import battlecode.common.*;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -26,14 +27,6 @@ public strictfp class RobotPlayer {
      */
     static final Random rng = new Random(6147);
 
-    static Team ourTeam;
-    static Team theirTeam;
-
-    static int mapHeight;
-    static int mapWidth;
-
-    static MapLocation lastSeenHeadquarters;
-
     /**
      * Array containing all the possible movement directions. (excludes CENTER)
      */
@@ -47,6 +40,29 @@ public strictfp class RobotPlayer {
             Direction.WEST,
             Direction.NORTHWEST,
     };
+
+    // Calculated as (60 * sqrt(2)) ^ 2
+    static final int MAX_MAP_DIST_SQ = 7200;
+
+    static Team ourTeam;
+    static Team theirTeam;
+
+    static int islandCount;
+
+    static int mapHeight;
+    static int mapWidth;
+
+    static int[][] map;
+
+    // TODO - Convert all ArrayLists to arrays later for bytecode optimization
+    static MapLocation closestHqLoc;
+    static ArrayList<MapLocation> knownHqLocs = new ArrayList<>();
+
+    static MapLocation closestWellLoc;
+    static ArrayList<MapLocation> knownWellLocs = new ArrayList<>();
+
+    public static MapLocation closestIslandLoc;
+    static ArrayList<MapLocation> knownIslandLocs = new ArrayList<>();
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -66,40 +82,23 @@ public strictfp class RobotPlayer {
         rc.setIndicatorString("Hello world!");
 
         // Set game constants
-        if (rc.getTeam() == Team.A) {
-            ourTeam = Team.A;
-            theirTeam = Team.B;
-        }
-        else {
-            ourTeam = Team.B;
-            theirTeam = Team.A;
-        }
-        mapHeight = rc.getMapHeight();
-        mapWidth = rc.getMapWidth();
-
-        if (lastSeenHeadquarters == null) {
-            if (rc.getType() == RobotType.HEADQUARTERS) {
-                lastSeenHeadquarters = rc.getLocation();
-            }
-            RobotInfo[] nearbyRobots = rc.senseNearbyRobots(2, RobotPlayer.ourTeam);
-            for (RobotInfo nearbyRobot: nearbyRobots) {
-                if (nearbyRobot.type == RobotType.HEADQUARTERS) {
-                    lastSeenHeadquarters = nearbyRobot.location;
-                }
-            }
-            if (lastSeenHeadquarters == null) {
-                throw new GameActionException(GameActionExceptionType.NO_ROBOT_THERE, "Headquarters not found, wtf");
-            }
-        }
+        setGameConstants(rc);
 
         //noinspection InfiniteLoopStatement
         while (true) {
 
             turnCount += 1;  // We have now been alive for one more turn!
+
             int startRoundNum = rc.getRoundNum(); // The current round number
 
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode.
             try {
+
+                // Scan surroundings
+                scanHQ(rc);
+                scanWells(rc);
+                scanIslands(rc);
+
                 // The same run() function is called for every robot on your team, even if they are
                 // different types. Here, we separate the control depending on the RobotType, so we can
                 // use different strategies on different robots. If you wish, you are free to rewrite
@@ -146,4 +145,92 @@ public strictfp class RobotPlayer {
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
 
+    private static void setGameConstants(RobotController rc) {
+        if (rc.getTeam() == Team.A) {
+            ourTeam = Team.A;
+            theirTeam = Team.B;
+        } else {
+            ourTeam = Team.B;
+            theirTeam = Team.A;
+        }
+        islandCount = rc.getIslandCount();
+        mapWidth = rc.getMapWidth();
+        mapHeight = rc.getMapHeight();
+        map = new int[mapWidth][mapHeight];
+    }
+
+    static void moveRandom(RobotController rc) throws GameActionException {
+        Direction dir = directions[rng.nextInt(directions.length)];
+        if (rc.canMove(dir)) rc.move(dir);
+    }
+
+    static void moveTowards(RobotController rc, MapLocation loc) throws GameActionException {
+        Direction dir = rc.getLocation().directionTo(loc);
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+        }
+        else {
+            moveRandom(rc);
+        }
+    }
+
+    static void scanHQ(RobotController rc) throws GameActionException {
+        RobotInfo[] robots = rc.senseNearbyRobots();
+        MapLocation selfLoc = rc.getLocation();
+        int closestHqDistSq = MAX_MAP_DIST_SQ;
+
+        for (RobotInfo robot : robots) {
+            if (robot.getTeam() == ourTeam && robot.getType() == RobotType.HEADQUARTERS) {
+                MapLocation hqLoc = robot.getLocation();
+                if (!knownHqLocs.contains(hqLoc)) {
+                    knownHqLocs.add(hqLoc);
+                }
+                int hqDistSq = selfLoc.distanceSquaredTo(hqLoc);
+                if (closestHqLoc == null || hqDistSq < closestHqDistSq) {
+                    closestHqLoc = hqLoc;
+                    closestHqDistSq = hqDistSq;
+                }
+            }
+        }
+    }
+
+    static void scanWells(RobotController rc) throws GameActionException {
+        WellInfo[] wells = rc.senseNearbyWells();
+        MapLocation selfLoc = rc.getLocation();
+        int closestWellDistSq = MAX_MAP_DIST_SQ;
+
+        for (WellInfo well : wells) {
+            MapLocation wellLoc = well.getMapLocation();
+            if (!knownWellLocs.contains(wellLoc)) {
+                knownWellLocs.add(wellLoc);
+            }
+            int wellDistSq = selfLoc.distanceSquaredTo(wellLoc);
+            if (closestWellLoc == null || wellDistSq < closestWellDistSq) {
+                closestWellLoc = wellLoc;
+                closestWellDistSq = wellDistSq;
+            }
+        }
+    }
+
+    static void scanIslands(RobotController rc) throws GameActionException {
+        int[] ids = rc.senseNearbyIslands();
+        MapLocation selfLoc = rc.getLocation();
+        int closestIslandDistSq = MAX_MAP_DIST_SQ;
+
+        for (int id : ids) {
+            if (rc.senseTeamOccupyingIsland(id) == Team.NEUTRAL) {
+                MapLocation[] islandLocs = rc.senseNearbyIslandLocations(id);
+                for (MapLocation islandLoc : islandLocs) {
+                    if (!knownIslandLocs.contains(islandLoc)) {
+                        knownIslandLocs.add(islandLoc);
+                    }
+                    int islandDistSq = selfLoc.distanceSquaredTo(islandLoc);
+                    if (closestIslandLoc == null || islandDistSq < closestIslandDistSq) {
+                        closestIslandLoc = islandLoc;
+                        closestIslandDistSq = islandDistSq;
+                    }
+                }
+            }
+        }
+    }
 }

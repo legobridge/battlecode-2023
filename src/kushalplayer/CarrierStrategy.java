@@ -7,97 +7,83 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class CarrierStrategy {
+
+    static boolean anchorMode = false;
+
     /**
      * Run a single turn for a Carrier.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runCarrier(RobotController rc) throws GameActionException {
-        if (rc.getAnchor() != null) {
-            // If I have an anchor singularly focus on getting it to the first island I see
-            int[] islands = rc.senseNearbyIslands();
-            Set<MapLocation> islandLocs = new HashSet<>();
-            for (int id : islands) {
-                MapLocation[] thisIslandLocs = rc.senseNearbyIslandLocations(id);
-                islandLocs.addAll(Arrays.asList(thisIslandLocs));
-            }
-            if (islandLocs.size() > 0) {
-                MapLocation islandLocation = islandLocs.iterator().next();
-                rc.setIndicatorString("Moving my anchor towards " + islandLocation);
-                while (!rc.getLocation().equals(islandLocation)) {
-                    Direction dir = rc.getLocation().directionTo(islandLocation);
-                    if (rc.canMove(dir)) {
-                        rc.move(dir);
-                    }
-                }
-                if (rc.canPlaceAnchor()) {
-                    rc.setIndicatorString("Huzzah, placed anchor!");
-                    rc.placeAnchor();
-                }
-            }
+
+        // Collect from well if close and inventory not full
+        if (RobotPlayer.closestWellLoc != null && rc.canCollectResource(RobotPlayer.closestWellLoc, -1)) {
+            rc.collectResource(RobotPlayer.closestWellLoc, -1);
         }
-        // Try to gather from squares around us.
-        MapLocation me = rc.getLocation();
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                MapLocation wellLocation = new MapLocation(me.x + dx, me.y + dy);
-                if (rc.canCollectResource(wellLocation, -1)) {
-                    if (RobotPlayer.rng.nextBoolean()) {
-                        rc.collectResource(wellLocation, -1);
-                        rc.setIndicatorString("Collecting, now have, AD:" +
-                                rc.getResourceAmount(ResourceType.ADAMANTIUM) +
-                                " MN: " + rc.getResourceAmount(ResourceType.MANA) +
-                                " EX: " + rc.getResourceAmount(ResourceType.ELIXIR));
-                    }
-                }
-            }
-        }
+
+        //Transfer resource to headquarters
+        depositResource(rc, ResourceType.ADAMANTIUM);
+        depositResource(rc, ResourceType.MANA);
+        depositResource(rc, ResourceType.ELIXIR);
+
         // Occasionally try out the carriers attack
         if (RobotPlayer.rng.nextInt(20) == 1) {
             RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
             if (enemyRobots.length > 0) {
                 if (rc.canAttack(enemyRobots[0].location)) {
                     rc.attack(enemyRobots[0].location);
-                    rc.setIndicatorString("Attacking!");
                 }
             }
         }
 
-        // If already carrying max resources, move back to HQ and drop off resources
-        if (rc.getAnchor() == null && (rc.getWeight() >= GameConstants.CARRIER_CAPACITY / 2)) {
-            rc.setIndicatorString("Moving to HQ!");
-            Direction dir = rc.getLocation().directionTo(RobotPlayer.lastSeenHeadquarters);
-            while (rc.canMove(dir)) {
-                rc.move(dir);
-            }
-            if (rc.canMove(Direction.EAST)){
-                rc.move(Direction.EAST);
-            }
-            else if (rc.canMove(Direction.NORTH)){
-                rc.move(Direction.NORTH);
-            }
-            for (ResourceType resourceType: ResourceType.values()) { // TODO - handle mixed resources
-                int resourceAmount = rc.getResourceAmount(resourceType);
-                if (rc.canTransferResource(RobotPlayer.lastSeenHeadquarters, resourceType, resourceAmount)) {
-                    rc.setIndicatorString("Transferring resource to HQ!");
-                    rc.transferResource(RobotPlayer.lastSeenHeadquarters, resourceType, resourceAmount);
-                }
-            }
+        int total = getTotalResources(rc);
+
+        if (rc.canTakeAnchor(RobotPlayer.closestHqLoc, Anchor.STANDARD)) {
+            rc.takeAnchor(RobotPlayer.closestHqLoc, Anchor.STANDARD);
+            anchorMode = true;
         }
 
-        // If we can see a well, move towards it
-        WellInfo[] wells = rc.senseNearbyWells();
-        if (wells.length > 1 && RobotPlayer.rng.nextInt(3) == 1) {
-            rc.setIndicatorString("Moving to Well!");
-            WellInfo well_one = wells[1];
-            Direction dir = me.directionTo(well_one.getMapLocation());
-            while (rc.canMove(dir))
-                rc.move(dir);
+        if (anchorMode) { // In anchor mode, go plant that flag
+            if (RobotPlayer.closestIslandLoc == null) {
+                RobotPlayer.moveRandom(rc);
+            }
+            else {
+                RobotPlayer.moveTowards(rc, RobotPlayer.closestIslandLoc);
+            }
+            if (rc.canPlaceAnchor()) {
+                rc.placeAnchor();
+            }
+        } else {
+            if (total == 0) { // No resources -> look for well
+                if (RobotPlayer.closestWellLoc != null) {
+                    MapLocation selfLoc = rc.getLocation();
+                    if (!selfLoc.isAdjacentTo(RobotPlayer.closestWellLoc)) {
+                        RobotPlayer.moveTowards(rc, RobotPlayer.closestWellLoc);
+                    }
+                } else {
+                    RobotPlayer.moveRandom(rc);
+                }
+            }
+
+            // Full resources -> go to HQ
+            if (total == GameConstants.CARRIER_CAPACITY) {
+                RobotPlayer.moveTowards(rc, RobotPlayer.closestHqLoc);
+            }
         }
-        // Also try to move randomly.
-        Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(RobotPlayer.directions.length)];
-        if (rc.canMove(dir)) {
-            rc.setIndicatorString("Moving randomly!");
-            rc.move(dir);
+    }
+
+    static void depositResource(RobotController rc, ResourceType type) throws GameActionException {
+        int amount = rc.getResourceAmount(type);
+        if (amount > 0) {
+            if (rc.canTransferResource(RobotPlayer.closestHqLoc, type, amount)) {
+                rc.transferResource(RobotPlayer.closestHqLoc, type, amount);
+            }
         }
+    }
+
+    static int getTotalResources(RobotController rc) throws GameActionException {
+        return rc.getResourceAmount(ResourceType.ADAMANTIUM)
+                + rc.getResourceAmount(ResourceType.MANA)
+                + rc.getResourceAmount(ResourceType.ELIXIR);
     }
 }
