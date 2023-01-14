@@ -12,7 +12,7 @@ public class MapHashUtil {
     public static int hashMapLocation(MapLocation mapLocation, int mapWidth) {
         int x = mapLocation.x;
         int y = mapLocation.y;
-        return y * mapWidth + x;
+        return y * mapWidth + x + 1;
     }
 
     /**
@@ -23,6 +23,7 @@ public class MapHashUtil {
      * @return a MapLocation
      */
     public static MapLocation unhashMapLocation(int hashedMapLocation, int mapWidth) {
+        hashedMapLocation--;
         int x = hashedMapLocation % mapWidth;
         int y = hashedMapLocation / mapWidth;
         return new MapLocation(x, y);

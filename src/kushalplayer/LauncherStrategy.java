@@ -13,7 +13,8 @@ public class LauncherStrategy {
 
         // Movement
         moveTowardsEnemies(rc);
-        moveTowardsFarthestAlly(rc);
+        moveAwayFromFarthestAlly(rc);
+//        moveTowardsFarthestAlly(rc);
         moveTowardsClosestWell(rc);
         RobotPlayer.moveRandom(rc);
     }
@@ -27,6 +28,28 @@ public class LauncherStrategy {
             if (rc.canMove(moveDir)) {
                 rc.move(moveDir);
                 break;
+            }
+        }
+    }
+
+    private static void moveAwayFromFarthestAlly(RobotController rc) throws GameActionException {
+        MapLocation targetLoc = null;
+        int targetDistSq = 0;
+        MapLocation selfLoc = rc.getLocation();
+
+        RobotInfo[] visibleAllies = rc.senseNearbyRobots(-1, RobotPlayer.ourTeam);
+        for (RobotInfo ally : visibleAllies) {
+            MapLocation allyLoc = ally.getLocation();
+            int allyDistSq = selfLoc.distanceSquaredTo(allyLoc);
+            if (allyDistSq > targetDistSq) {
+                targetLoc = allyLoc;
+                targetDistSq = allyDistSq;
+            }
+        }
+        if (targetLoc != null) {
+            Direction moveDir = selfLoc.directionTo(targetLoc).opposite();
+            if (rc.canMove(moveDir)) {
+                rc.move(moveDir);
             }
         }
     }

@@ -2,10 +2,6 @@ package kushalplayer;
 
 import battlecode.common.*;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 public class CarrierStrategy {
 
     static boolean anchorMode = false;
@@ -52,6 +48,7 @@ public class CarrierStrategy {
             }
             if (rc.canPlaceAnchor()) {
                 rc.placeAnchor();
+                anchorMode = false;
             }
         } else {
             if (total == 0) { // No resources -> look for well

@@ -26,7 +26,7 @@ public class HeadquartersStrategy {
     private static void buildRobot(RobotController rc) throws GameActionException {
         // Pick a type of robot to build
         RobotType robotTypeToBuild;
-        if (RobotPlayer.rng.nextBoolean()) {
+        if (RobotPlayer.rng.nextInt() % 5 == 0) {
             robotTypeToBuild = RobotType.CARRIER;
         } else {
             robotTypeToBuild = RobotType.LAUNCHER;
