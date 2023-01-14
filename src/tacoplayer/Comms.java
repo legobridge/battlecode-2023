@@ -3,8 +3,6 @@ package tacoplayer;
 import battlecode.common.*;
 import java.util.ArrayList;
 
-import java.awt.*;
-
 /**
  * Comms is the class used for robot communication
  * with the shared array
