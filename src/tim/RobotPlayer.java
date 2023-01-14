@@ -1,13 +1,9 @@
-package examplefuncsplayer;
+package tim;
 
 import battlecode.common.*;
+import battlecode.world.Well;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /**
  * RobotPlayer is the class that describes your main robot strategy.
@@ -52,14 +48,6 @@ public strictfp class RobotPlayer {
      **/
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
-
-        // Hello world! Standard output is very useful for debugging.
-        // Everything you say here will be directly viewable in your terminal when you run a match!
-        // System.out.println("I'm a " + rc.getType() + " and I just got created! I have health " + rc.getHealth());
-
-        // You can also use indicators to save debug notes in replays.
-        // rc.setIndicatorString("Hello world!");
-
         while (true) {
             // This code runs during the entire lifespan of the robot, which is why it is in an infinite
             // loop. If we ever leave this loop and return from run(), the robot dies! At the end of the
@@ -75,11 +63,11 @@ public strictfp class RobotPlayer {
                 // this into a different control structure!
                 switch (rc.getType()) {
                     case HEADQUARTERS:     runHeadquarters(rc);  break;
-                    case CARRIER:      runCarrier(rc);   break;
-                    case LAUNCHER: runLauncher(rc); break;
-                    case BOOSTER: // Examplefuncsplayer doesn't use any of these robot types below.
-                    case DESTABILIZER: // You might want to give them a try!
-                    case AMPLIFIER:       break;
+                    case CARRIER:          runCarrier(rc);   break;
+                    case LAUNCHER:         runLauncher(rc); break;
+                    case BOOSTER:          // Examplefuncsplayer doesn't use any of these robot types below.
+                    case DESTABILIZER:     // You might want to give them a try!
+                    case AMPLIFIER:        runAmplifier(rc); break;
                 }
 
             } catch (GameActionException e) {
@@ -111,19 +99,57 @@ public strictfp class RobotPlayer {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runHeadquarters(RobotController rc) throws GameActionException {
+        // If turn 0, initialize the shared array
+        if (rc.getRoundNum() == 1) {
+            // Write all values to max value (2^16 - 1 = 65535)
+            for(int i = 0; i < GameConstants.SHARED_ARRAY_LENGTH; i++) {
+                rc.writeSharedArray(i, 65535);
+            }
+
+            // Record position of headquarters
+            MapLocation hq_loc = rc.getLocation();
+            rc.writeSharedArray(0, hq_loc.x);
+            rc.writeSharedArray(1, hq_loc.y);
+
+            // Record position of any known wells in the shared array
+            WellInfo[] wells = rc.senseNearbyWells();
+            for (WellInfo w : wells) {
+                MapLocation loc = w.getMapLocation();
+                ResourceType well_type = w.getResourceType();
+                int well_type_num = 0;
+                switch (well_type) {
+                    case ADAMANTIUM: well_type_num = 0; break;
+                    case MANA: well_type_num = 1; break;
+                    case ELIXIR: well_type_num = 2; break;
+                }
+                rc.writeSharedArray(2+well_type_num*2, loc.x);
+                rc.writeSharedArray(2+well_type_num*2+1, loc.y);
+            }
+            rc.writeSharedArray(63, 0);
+            // Build an amplifier to scout
+            for (Direction dir: directions) {
+                MapLocation build_loc = rc.getLocation().add(dir);
+                if (rc.canBuildRobot(RobotType.AMPLIFIER, build_loc)) {
+                    rc.buildRobot(RobotType.AMPLIFIER, build_loc);
+                }
+            }
+        }
+
         // Pick a direction to build in.
         Direction dir = directions[rng.nextInt(directions.length)];
         MapLocation newLoc = rc.getLocation().add(dir);
-        if (rc.canBuildAnchor(Anchor.STANDARD)) {
+        if (rc.canBuildAnchor(Anchor.STANDARD) && 1==0) {
             // If we can build an anchor do it!
             rc.buildAnchor(Anchor.STANDARD);
-            rc.setIndicatorString("Building anchor! ");
+            rc.setIndicatorString("Building anchor! " + rc.getAnchor());
         }
+
         if (rng.nextBoolean()) {
             // Let's try to build a carrier.
             rc.setIndicatorString("Trying to build a carrier");
-            if (rc.canBuildRobot(RobotType.CARRIER, newLoc)) {
+            if (rc.canBuildRobot(RobotType.CARRIER, newLoc) && rc.readSharedArray(63) < 4) {
                 rc.buildRobot(RobotType.CARRIER, newLoc);
+                rc.writeSharedArray(63, rc.readSharedArray(63)+1);
             }
         } else {
             // Let's try to build a launcher.
@@ -131,6 +157,19 @@ public strictfp class RobotPlayer {
             if (rc.canBuildRobot(RobotType.LAUNCHER, newLoc)) {
                 rc.buildRobot(RobotType.LAUNCHER, newLoc);
             }
+        }
+
+        MapLocation me = rc.getLocation();
+        int hq_x = rc.readSharedArray(0);
+        int hq_y = rc.readSharedArray(1);
+        int mana_well_x = rc.readSharedArray(4);
+        int mana_well_y = rc.readSharedArray(5);
+
+        int hq_to_well = mana_well_x - hq_x + mana_well_y - hq_y;
+        int me_to_well = mana_well_x - me.x + mana_well_y - me.y;
+        if (me_to_well < hq_to_well) {
+            rc.writeSharedArray(0, me.x);
+            rc.writeSharedArray(1, me.y);
         }
     }
 
@@ -164,17 +203,20 @@ public strictfp class RobotPlayer {
         }
         // Try to gather from squares around us.
         MapLocation me = rc.getLocation();
+        boolean collecting_resource = false;
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 MapLocation wellLocation = new MapLocation(me.x + dx, me.y + dy);
                 if (rc.canCollectResource(wellLocation, -1)) {
-                    if (rng.nextBoolean()) {
-                        rc.collectResource(wellLocation, -1);
-                        rc.setIndicatorString("Collecting, now have, AD:" + 
-                            rc.getResourceAmount(ResourceType.ADAMANTIUM) + 
+                    collecting_resource = true;
+                    rc.collectResource(wellLocation, -1);
+                    rc.setIndicatorString("Collecting, now have, AD:" +
+                            rc.getResourceAmount(ResourceType.ADAMANTIUM) +
                             " MN: " + rc.getResourceAmount(ResourceType.MANA) + 
                             " EX: " + rc.getResourceAmount(ResourceType.ELIXIR));
-                    }
+                }
+                if (rc.canTransferResource(wellLocation, ResourceType.MANA, 1)) {
+                    rc.transferResource(wellLocation, ResourceType.MANA, 1);
                 }
             }
         }
@@ -187,7 +229,7 @@ public strictfp class RobotPlayer {
                 }
             }
         }
-        
+
         // If we can see a well, move towards it
         WellInfo[] wells = rc.senseNearbyWells();
         if (wells.length > 1 && rng.nextInt(3) == 1) {
@@ -196,10 +238,49 @@ public strictfp class RobotPlayer {
             if (rc.canMove(dir)) 
                 rc.move(dir);
         }
-        // Also try to move randomly.
-        Direction dir = directions[rng.nextInt(directions.length)];
-        if (rc.canMove(dir)) {
-            rc.move(dir);
+
+        // Move towards mana well if cargo isn't full
+        if (rc.getResourceAmount(ResourceType.MANA) == 0) {
+            System.out.println("moving towards a");
+            int well_x = 0;
+            int well_y = 0;
+            try {
+                well_x = rc.readSharedArray(4);
+                well_y = rc.readSharedArray(5);
+            } catch (battlecode.common.GameActionException e) {}
+            MapLocation well_location = new MapLocation(well_x, well_y);
+            Direction dir = me.directionTo(well_location);
+            if (rc.canMove(dir)) {
+                rc.move(dir);
+            }
+            else {
+                dir = directions[rng.nextInt(directions.length)];
+                if (rc.canMove(dir)) {
+                    rc.move(dir);
+                }
+            }
+        }
+
+        // If full move home
+        if (rc.getResourceAmount(ResourceType.MANA) == 40) {
+            System.out.println("I'm full, im going home");
+            int hq_x = 0;
+            int hq_y = 0;
+            try {
+                hq_x = rc.readSharedArray(0);
+                hq_y = rc.readSharedArray(1);
+            } catch (battlecode.common.GameActionException e) {}
+            MapLocation hq_location = new MapLocation(hq_x, hq_y);
+            Direction dir = me.directionTo(hq_location);
+            if (rc.canMove(dir)) {
+                rc.move(dir);
+            }
+            else {
+                dir = directions[rng.nextInt(directions.length)];
+                if (rc.canMove(dir)) {
+                    rc.move(dir);
+                }
+            }
         }
     }
 
@@ -227,5 +308,77 @@ public strictfp class RobotPlayer {
         if (rc.canMove(dir)) {
             rc.move(dir);
         }
+    }
+
+    /**
+     * Run a single turn for an Amplifier.
+     * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
+     */
+    static void runAmplifier(RobotController rc) throws GameActionException {
+        // Check for nearby wells
+        WellInfo[] wells = rc.senseNearbyWells();
+        for (WellInfo well: wells) {
+            updateSharedArrayWell(rc, well);
+        }
+
+        Direction dir = directions[rng.nextInt(directions.length)];
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+        }
+    }
+
+    static void updateSharedArrayWell(RobotController rc, WellInfo well) {
+        int well_type = getWellTypeNum(well);
+        int well_index = 2 + 2 * well_type;
+        boolean need_to_write = false;
+        int write_x = 0;
+        int write_y = 0;
+        // If there is no well recorded for this type of well, then record it
+        try {
+            if (rc.readSharedArray(well_index) == 65535 && rc.canWriteSharedArray(well_index, 0)) {
+                MapLocation well_location = well.getMapLocation();
+                write_x = well_location.x;
+                write_y = well_location.y;
+                need_to_write = true;
+            }
+        } catch (battlecode.common.GameActionException e) {
+
+        }
+        // If there is a well in the shared array, see if this one is closer
+
+        // Write to the shared array if needed
+        if (need_to_write) {
+            System.out.println("FOUND A WELL" + String.valueOf(well_type));
+            try {
+                rc.writeSharedArray(well_index, write_x);
+                rc.writeSharedArray(well_index + 1, write_y);
+            } catch (battlecode.common.GameActionException e) {
+
+            }
+        }
+
+    }
+
+    /**
+     Returns
+     0 if the well is for Adamantium
+     1 if the well is for Mana
+     2 if the well is for Elixer
+     */
+    static int getWellTypeNum(WellInfo well) {
+        ResourceType well_type = well.getResourceType();
+        int well_type_num = 0;
+        switch (well_type) {
+            case ADAMANTIUM:
+                well_type_num = 0;
+                break;
+            case MANA:
+                well_type_num = 1;
+                break;
+            case ELIXIR:
+                well_type_num = 2;
+                break;
+        }
+        return well_type_num;
     }
 }
