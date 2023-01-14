@@ -14,7 +14,7 @@ public class Comms {
      * Attempts to read the shared array
      * If error returns 0
      */
-    static int tryRead(RobotController rc, int index) {
+    private static int tryRead(RobotController rc, int index) {
         int value = 0;
         try {
             value = rc.readSharedArray(index);
@@ -25,7 +25,7 @@ public class Comms {
     /**
      * Attempts to write to the shared array
      */
-    static void tryWrite(RobotController rc, int index, int value) {
+    private static void tryWrite(RobotController rc, int index, int value) {
         try{
             rc.writeSharedArray(index, value);
         } catch (GameActionException e) {}
@@ -87,5 +87,30 @@ public class Comms {
         int index = 8;
         int num_carriers = tryRead(rc, index) + 1;
         tryWrite(rc, index, num_carriers);
+    }
+
+    static int getCarrierCount(RobotController rc) {
+        int index = 4;
+        return tryRead(rc, index);
+    }
+
+    static int getLauncherCount(RobotController rc) {
+        int index = 5;
+        return tryRead(rc, index);
+    }
+
+    static int getAmplifierCount(RobotController rc) {
+        int index = 6;
+        return tryRead(rc, index);
+    }
+
+    static int getDestabilizerCount(RobotController rc) {
+        int index = 7;
+        return tryRead(rc, index);
+    }
+
+    static int getBoosterCount(RobotController rc) {
+        int index = 8;
+        return tryRead(rc, index);
     }
 }
