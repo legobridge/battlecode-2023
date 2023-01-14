@@ -61,41 +61,31 @@ public class Comms {
 
     static void updateCarrierCount(RobotController rc) {
         int index = 4;
-        try {
-            int num_carriers = rc.readSharedArray(index) + 1;
-            rc.writeSharedArray(index, num_carriers);
-        } catch (GameActionException e) {}
+        int num_carriers = tryRead(rc, index) + 1;
+        tryWrite(rc, index, num_carriers);
     }
 
     static void updateLauncherCount (RobotController rc) {
         int index = 5;
-        try {
-            int num_carriers = rc.readSharedArray(index) + 1;
-            rc.writeSharedArray(index, num_carriers);
-        } catch (GameActionException e) {}
+        int num_carriers = tryRead(rc, index) + 1;
+        tryWrite(rc, index, num_carriers);
     }
 
     static void updateAmplifierCount(RobotController rc) {
         int index = 6;
-        try {
-            int num_carriers = rc.readSharedArray(index) + 1;
-            rc.writeSharedArray(index, num_carriers);
-        } catch (GameActionException e) {}
+        int num_carriers = tryRead(rc, index) + 1;
+        tryWrite(rc, index, num_carriers);
     }
 
     static void updateDestabilizerCount(RobotController rc) {
         int index = 7;
-        try {
-            int num_carriers = rc.readSharedArray(index) + 1;
-            rc.writeSharedArray(index, num_carriers);
-        } catch (GameActionException e) {}
+        int num_carriers = tryRead(rc, index) + 1;
+        tryWrite(rc, index, num_carriers);
     }
 
     static void updateBoosterCount(RobotController rc) {
         int index = 8;
-        try {
-            int num_carriers = rc.readSharedArray(index) + 1;
-            rc.writeSharedArray(index, num_carriers);
-        } catch (GameActionException e) {}
+        int num_carriers = tryRead(rc, index) + 1;
+        tryWrite(rc, index, num_carriers);
     }
 }
