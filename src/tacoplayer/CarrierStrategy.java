@@ -44,7 +44,7 @@ public class CarrierStrategy {
                 RobotPlayer.moveRandom(rc);
             }
             else {
-                RobotPlayer.moveTowards(rc, RobotPlayer.closestIslandLoc);
+                Pathing.moveTowards(rc, RobotPlayer.closestIslandLoc);
             }
             if (rc.canPlaceAnchor()) {
                 rc.placeAnchor();
@@ -55,7 +55,7 @@ public class CarrierStrategy {
                 if (RobotPlayer.closestWellLoc != null) {
                     MapLocation selfLoc = rc.getLocation();
                     if (!selfLoc.isAdjacentTo(RobotPlayer.closestWellLoc)) {
-                        RobotPlayer.moveTowards(rc, RobotPlayer.closestWellLoc);
+                        Pathing.moveTowards(rc, RobotPlayer.closestWellLoc);
                     }
                 } else {
                     RobotPlayer.moveRandom(rc);
@@ -64,7 +64,7 @@ public class CarrierStrategy {
 
             // Full resources -> go to HQ
             if (total == GameConstants.CARRIER_CAPACITY) {
-                RobotPlayer.moveTowards(rc, RobotPlayer.closestHqLoc);
+                Pathing.moveTowards(rc, RobotPlayer.closestHqLoc);
             }
         }
     }

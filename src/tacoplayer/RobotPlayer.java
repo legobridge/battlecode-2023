@@ -55,6 +55,8 @@ public strictfp class RobotPlayer {
     static int[][] map;
 
     // TODO - Convert all ArrayLists to arrays later for bytecode optimization
+    // TODO - "Closest" is just straight line distance, improve upon that
+    // TODO - Stop getting confused by other robots
     static MapLocation closestHqLoc;
     static ArrayList<MapLocation> knownHqLocs = new ArrayList<>();
 
@@ -162,16 +164,6 @@ public strictfp class RobotPlayer {
     static void moveRandom(RobotController rc) throws GameActionException {
         Direction dir = directions[rng.nextInt(directions.length)];
         if (rc.canMove(dir)) rc.move(dir);
-    }
-
-    static void moveTowards(RobotController rc, MapLocation loc) throws GameActionException {
-        Direction dir = rc.getLocation().directionTo(loc);
-        if (rc.canMove(dir)) {
-            rc.move(dir);
-        }
-        else {
-            moveRandom(rc);
-        }
     }
 
     static void scanHQ(RobotController rc) throws GameActionException {
