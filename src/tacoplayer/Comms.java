@@ -24,7 +24,7 @@ public class Comms {
     static void updateHQLocation(RobotController rc) throws GameActionException {
         // Hash the 2D coordinate to a 1D coordinate
         MapLocation hq_loc = rc.getLocation();
-        int hashed_loc = MapHashUtil.hashMapLocation(hq_loc, rc.getMapWidth());
+        int hashed_loc = MapHashUtil.hashMapLocation(hq_loc);
 
         // Write it to the shared array if it hasn't been written yet
         for (int i = 0; i < 4; i++) {
@@ -37,7 +37,7 @@ public class Comms {
     }
 
     static boolean isFirstHQ(RobotController rc) throws GameActionException {
-        int robot_location = MapHashUtil.hashMapLocation(rc.getLocation(), rc.getMapWidth());
+        int robot_location = MapHashUtil.hashMapLocation(rc.getLocation());
         if (robot_location == rc.readSharedArray(0)) {
             return true;
         }
@@ -52,7 +52,7 @@ public class Comms {
         for (int i = 0; i < 4; i++) {
             int hashed_loc = rc.readSharedArray(i);
             if (hashed_loc > 0) {
-                hq_locs.add(MapHashUtil.unhashMapLocation(hashed_loc, rc.getMapWidth()));
+                hq_locs.add(MapHashUtil.unhashMapLocation(hashed_loc));
             }
         }
         // Convert the array list to an array

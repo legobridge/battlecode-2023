@@ -22,6 +22,7 @@ public class LauncherStrategy {
 
     private static void moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
         if (RobotPlayer.closestEnemyIslandLoc != null) {
+            rc.setIndicatorString("Moving towards enemy island! " + RobotPlayer.closestEnemyIslandLoc);
             Pathing.moveTowards(rc, RobotPlayer.closestEnemyIslandLoc);
         }
     }
@@ -30,6 +31,7 @@ public class LauncherStrategy {
         RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, RobotPlayer.theirTeam);
         if (visibleEnemies.length != 0) {
             MapLocation enemyLocation = visibleEnemies[0].getLocation();
+            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
             Pathing.moveTowards(rc, enemyLocation);
         }
     }
