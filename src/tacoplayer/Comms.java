@@ -50,14 +50,7 @@ public class Comms {
     }
 
     static boolean updateRobotCount(RobotController rc) throws GameActionException {
-        int index = 4;
-        switch (rc.getType()) {
-            case CARRIER: index = 4; break;
-            case LAUNCHER: index = 5; break;
-            case AMPLIFIER: index = 6; break;
-            case DESTABILIZER: index = 7; break;
-            case BOOSTER: index = 8; break;
-        }
+        int index = 3 + rc.getType().ordinal();
         int num_robots = rc.readSharedArray(index);
         if (rc.getRoundNum() % 2 == 1) {
             num_robots += 1;
@@ -77,14 +70,7 @@ public class Comms {
     }
 
     static int getPrevRobotCount(RobotController rc, RobotType robot) throws GameActionException {
-        int index = 4;
-        switch (robot) {
-            case CARRIER: index = 4; break;
-            case LAUNCHER: index = 5; break;
-            case AMPLIFIER: index = 6; break;
-            case DESTABILIZER: index = 7; break;
-            case BOOSTER: index = 8; break;
-        }
+        int index = 3 + robot.ordinal();
         return getNumFromBits(
                 rc.readSharedArray(index), 9, 16);
     }
