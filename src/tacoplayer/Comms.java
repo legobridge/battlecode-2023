@@ -9,6 +9,9 @@ import java.lang.Math;
  * with the shared array
  */
 public class Comms {
+    // Variable to ensure that counts aren't reset multiple times per round
+    static int prev_round_counts_reset = 0;
+
     /**
      * Attempts to read the shared array
      * If error returns 0
@@ -165,10 +168,13 @@ public class Comms {
     }
 
     static void resetCounts(RobotController rc) {
-        for (int i = 4; i < 9; i++) {
-            int save_count = getNumFromBits(i, 1, 8);
-            save_count = save_count << 8;
-            tryWrite(rc, i, save_count);
+        if (prev_round_counts_reset != rc.getRoundNum()) {
+            prev_round_counts_reset = rc.getRoundNum();
+            for (int i = 4; i < 9; i++) {
+                int save_count = getNumFromBits(i, 1, 8);
+                save_count = save_count << 8;
+                tryWrite(rc, i, save_count);
+            }
         }
     }
 }
