@@ -8,6 +8,10 @@ public class HeadquartersStrategy {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runHeadquarters(RobotController rc) throws GameActionException {
+        if (rc.getRoundNum() == 1) {
+            Comms.updateHQLocation(rc);
+        }
+
         // Reset alive counts
         Comms.resetCounts(rc);
 

@@ -14,39 +14,7 @@ public class Comms {
     // Variable to ensure that counts aren't reset multiple times per round
     static int prev_round_counts_reset = 0;
 
-    /**
-     * Attempts to read the shared array
-     * If error returns 0
-     */
-    private static int tryRead(RobotController rc, int index) {
-        int value = 0;
-        try {
-            value = rc.readSharedArray(index);
-        } catch (GameActionException e) {}
-        return value;
-    }
 
-    /**
-     * Attempts to write to the shared array
-     */
-    private static void tryWrite(RobotController rc, int index, int value) {
-        try{
-            rc.writeSharedArray(index, value);
-        } catch (GameActionException e) {}
-    }
-
-    /**
-     * Gets information from an integer based on bits
-     * num is the number that will be bit hacked
-     * bit_index1 is the first bit index (starting at 1)
-     * bit_index2 is the second bit index
-     *
-     * For example:
-     *  if num = 181, bit_index1 = 3, and bit_index2 = 6
-     *  181 = 1 0 1 1 0 1 0 1
-     *  We are looking the segment 1 1 0 1
-     *  Which is 13
-     */
     private static int getNumFromBits(int num, int bit_index1, int bit_index2) {
         int shifted = num >> (bit_index1 - 1);
         int mask = 0;
@@ -56,7 +24,7 @@ public class Comms {
         return shifted & mask;
     }
 
-    static void updateHQLocation(RobotController rc) {
+    static void updateHQLocation(RobotController rc) throws GameActionException {
         // Hash the 2D coordinate to a 1D coordinate
         MapLocation hq_loc = rc.getLocation();
         int hashed_loc = MapHashUtil.hashMapLocation(hq_loc, rc.getMapWidth());
@@ -64,18 +32,18 @@ public class Comms {
         // Write it to the shared array if it hasn't been written yet
         for (int i = 0; i < 4; i++) {
             // hashMapLocation adds 1 so the value of hashed_loc can never be 0
-            if (tryRead(rc, i) == 0) {
-                tryWrite(rc, i, hashed_loc);
+            if (rc.readSharedArray(i) == 0) {
+                rc.writeSharedArray(i, hashed_loc);
                 break;
             }
         }
     }
 
-    static MapLocation[] getHQLocations(RobotController rc) {
+    static MapLocation[] getHQLocations(RobotController rc) throws GameActionException{
         // Fill an array list with the locations of the HQs
         ArrayList<MapLocation> hq_locs = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
-            int hashed_loc = tryRead(rc, i);
+            int hashed_loc = rc.readSharedArray(i);
             if (hashed_loc > 0) {
                 hq_locs.add(MapHashUtil.unhashMapLocation(hashed_loc, rc.getMapWidth()));
             }
@@ -84,109 +52,52 @@ public class Comms {
         return hq_locs.toArray(new MapLocation[hq_locs.size()]);
     }
 
-    static void updateCarrierCount(RobotController rc) {
+    static void updateRobotCount(RobotController rc) throws GameActionException {
         int index = 4;
-        int num_carriers = tryRead(rc, index) + 1;
-        tryWrite(rc, index, num_carriers);
+        switch (rc.getType()) {
+            case CARRIER: index = 4;
+            case LAUNCHER: index = 5;
+            case AMPLIFIER: index = 6;
+            case DESTABILIZER: index = 7;
+            case BOOSTER: index = 8;
+        }
+        int num_robots = rc.readSharedArray(index) + 1;
+        rc.writeSharedArray(index, num_robots);
     }
 
-    static void updateLauncherCount (RobotController rc) {
-        int index = 5;
-        int num_launchers = tryRead(rc, index) + 1;
-        tryWrite(rc, index, num_launchers);
-    }
-
-    static void updateAmplifierCount(RobotController rc) {
-        int index = 6;
-        int num_amplifiers = tryRead(rc, index) + 1;
-        tryWrite(rc, index, num_amplifiers);
-    }
-
-    static void updateDestabilizerCount(RobotController rc) {
-        int index = 7;
-        int num_destabilizers = tryRead(rc, index) + 1;
-        tryWrite(rc, index, num_destabilizers);
-    }
-
-    static void updateBoosterCount(RobotController rc) {
-        int index = 8;
-        int num_boosters = tryRead(rc, index) + 1;
-        tryWrite(rc, index, num_boosters);
-    }
-
-    static int[] getCarrierCounts(RobotController rc) {
+    static int getRobotCount(RobotController rc, RobotType robot) throws GameActionException {
         int index = 4;
-        int shared_array_val = tryRead(rc, index);
-        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
-        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
-        int[] counts = new int[2];
-        counts[0] = this_turn_count;
-        counts[1] = prev_turn_count;
-        return counts;
+        switch (robot) {
+            case CARRIER: index = 4;
+            case LAUNCHER: index = 5;
+            case AMPLIFIER: index = 6;
+            case DESTABILIZER: index = 7;
+            case BOOSTER: index = 8;
+        }
+        int num_robots = rc.readSharedArray(index);
+        return num_robots;
     }
 
-    static int[] getLauncherCounts(RobotController rc) {
-        int index = 5;
-        int shared_array_val = tryRead(rc, index);
-        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
-        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
-        int[] counts = new int[2];
-        counts[0] = this_turn_count;
-        counts[1] = prev_turn_count;
-        return counts;
-    }
-
-    static int[] getAmplifierCounts(RobotController rc) {
-        int index = 6;
-        int shared_array_val = tryRead(rc, index);
-        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
-        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
-        int[] counts = new int[2];
-        counts[0] = this_turn_count;
-        counts[1] = prev_turn_count;
-        return counts;
-    }
-
-    static int[] getDestabilizerCounts(RobotController rc) {
-        int index = 7;
-        int shared_array_val = tryRead(rc, index);
-        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
-        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
-        int[] counts = new int[2];
-        counts[0] = this_turn_count;
-        counts[1] = prev_turn_count;
-        return counts;
-    }
-
-    static int[] getBoosterCounts(RobotController rc) {
-        int index = 8;
-        int shared_array_val = tryRead(rc, index);
-        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
-        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
-        int[] counts = new int[2];
-        counts[0] = this_turn_count;
-        counts[1] = prev_turn_count;
-        return counts;
-    }
-
-    static void resetCounts(RobotController rc) {
+    static void resetCounts(RobotController rc) throws GameActionException {
         if (getCurrentRound(rc) != rc.getRoundNum()) {
+            System.out.println("\nRound " + String.valueOf(rc.getRoundNum()));
             updateCurrentRound(rc);
             for (int i = 4; i < 9; i++) {
-                int save_count = getNumFromBits(tryRead(rc, i), 1, 8);
+                int save_count = getNumFromBits(
+                        rc.readSharedArray(i), 1, 8);
                 save_count = save_count << 8;
-                tryWrite(rc, i, save_count);
+                rc.writeSharedArray(i, save_count);
             }
         }
     }
 
-    static void updateCurrentRound(RobotController rc) {
+    static void updateCurrentRound(RobotController rc) throws GameActionException {
         if (getCurrentRound(rc) != rc.getRoundNum()) {
-            tryWrite(rc, 9, rc.getRoundNum());
+            rc.writeSharedArray(9, rc.getRoundNum());
         }
     }
 
-    static int getCurrentRound(RobotController rc) {
-        return tryRead(rc, 9);
+    static int getCurrentRound(RobotController rc) throws GameActionException {
+        return rc.readSharedArray(9);
     }
 }
