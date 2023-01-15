@@ -1,6 +1,8 @@
 package tacoplayer;
 
 import battlecode.common.*;
+
+import java.awt.*;
 import java.util.ArrayList;
 import java.lang.Math;
 
@@ -84,7 +86,7 @@ public class Comms {
 
     static void updateCarrierCount(RobotController rc) {
         int index = 4;
-        int num_carriers= tryRead(rc, index) + 1;
+        int num_carriers = tryRead(rc, index) + 1;
         tryWrite(rc, index, num_carriers);
     }
 
@@ -168,13 +170,23 @@ public class Comms {
     }
 
     static void resetCounts(RobotController rc) {
-        if (prev_round_counts_reset != rc.getRoundNum()) {
-            prev_round_counts_reset = rc.getRoundNum();
+        if (getCurrentRound(rc) != rc.getRoundNum()) {
+            updateCurrentRound(rc);
             for (int i = 4; i < 9; i++) {
-                int save_count = getNumFromBits(i, 1, 8);
+                int save_count = getNumFromBits(tryRead(rc, i), 1, 8);
                 save_count = save_count << 8;
                 tryWrite(rc, i, save_count);
             }
         }
+    }
+
+    static void updateCurrentRound(RobotController rc) {
+        if (getCurrentRound(rc) != rc.getRoundNum()) {
+            tryWrite(rc, 9, rc.getRoundNum());
+        }
+    }
+
+    static int getCurrentRound(RobotController rc) {
+        return tryRead(rc, 9);
     }
 }
