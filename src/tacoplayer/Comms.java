@@ -52,7 +52,7 @@ public class Comms {
         return hq_locs.toArray(new MapLocation[hq_locs.size()]);
     }
 
-    static void updateRobotCount(RobotController rc) throws GameActionException {
+    static boolean updateRobotCount(RobotController rc) throws GameActionException {
         int index = 4;
         switch (rc.getType()) {
             case CARRIER: index = 4;
@@ -62,7 +62,15 @@ public class Comms {
             case BOOSTER: index = 8;
         }
         int num_robots = rc.readSharedArray(index) + 1;
-        rc.writeSharedArray(index, num_robots);
+
+        // Try to write
+        if (rc.canWriteSharedArray(index, num_robots)) {
+            rc.writeSharedArray(index, num_robots);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     static int getRobotCount(RobotController rc, RobotType robot) throws GameActionException {
