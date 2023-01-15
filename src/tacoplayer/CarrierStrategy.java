@@ -5,6 +5,7 @@ import battlecode.common.*;
 public class CarrierStrategy {
 
     static boolean anchorMode = false;
+    // TODO - Run away from enemy launchers!
 
     /**
      * Run a single turn for a Carrier.
@@ -40,11 +41,13 @@ public class CarrierStrategy {
         }
 
         if (anchorMode) { // In anchor mode, go plant that flag
-            if (RobotPlayer.closestIslandLoc == null) {
-                RobotPlayer.moveRandom(rc);
+            if (RobotPlayer.closestNeutralIslandLoc == null) {
+                Pathing.moveRandomly(rc);
+                Pathing.moveRandomly(rc);
             }
             else {
-                Pathing.moveTowards(rc, RobotPlayer.closestIslandLoc);
+                Pathing.moveTowards(rc, RobotPlayer.closestNeutralIslandLoc);
+                Pathing.moveTowards(rc, RobotPlayer.closestNeutralIslandLoc);
             }
             if (rc.canPlaceAnchor()) {
                 rc.placeAnchor();
@@ -56,14 +59,17 @@ public class CarrierStrategy {
                     MapLocation selfLoc = rc.getLocation();
                     if (!selfLoc.isAdjacentTo(RobotPlayer.closestWellLoc)) {
                         Pathing.moveTowards(rc, RobotPlayer.closestWellLoc);
+                        Pathing.moveTowards(rc, RobotPlayer.closestWellLoc);
                     }
                 } else {
-                    RobotPlayer.moveRandom(rc);
+                    Pathing.moveRandomly(rc);
+                    Pathing.moveRandomly(rc);
                 }
             }
 
             // Full resources -> go to HQ
             if (total == GameConstants.CARRIER_CAPACITY) {
+                Pathing.moveTowards(rc, RobotPlayer.closestHqLoc);
                 Pathing.moveTowards(rc, RobotPlayer.closestHqLoc);
             }
         }

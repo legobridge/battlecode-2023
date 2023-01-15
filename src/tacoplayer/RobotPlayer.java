@@ -63,8 +63,11 @@ public strictfp class RobotPlayer {
     static MapLocation closestWellLoc;
     static ArrayList<MapLocation> knownWellLocs = new ArrayList<>();
 
-    public static MapLocation closestIslandLoc;
-    static ArrayList<MapLocation> knownIslandLocs = new ArrayList<>();
+    public static MapLocation closestNeutralIslandLoc;
+    static ArrayList<MapLocation> knownNeutralIslandLocs = new ArrayList<>();
+
+    public static MapLocation closestEnemyIslandLoc;
+    static ArrayList<MapLocation> knownEnemyIslandLocs = new ArrayList<>();
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -75,13 +78,6 @@ public strictfp class RobotPlayer {
      **/
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
-
-        // Hello world! Standard output is very useful for debugging.
-        // Everything you say here will be directly viewable in your terminal when you run a match!
-        System.out.println("I'm a " + rc.getType() + " and I just got created! I have health " + rc.getHealth());
-
-        // You can also use indicators to save debug notes in replays.
-        rc.setIndicatorString("Hello world!");
 
         // Set game constants
         setGameConstants(rc);
@@ -97,6 +93,7 @@ public strictfp class RobotPlayer {
             try {
 
                 // Scan surroundings
+                scanObstacles(rc);
                 scanHQ(rc);
                 scanWells(rc);
                 scanIslands(rc);
@@ -115,13 +112,13 @@ public strictfp class RobotPlayer {
                     case LAUNCHER:
                         LauncherStrategy.runLauncher(rc);
                         break;
+                    case AMPLIFIER:
+                        AmplifierStrategy.runAmplifier(rc);
+                        break;
                     case BOOSTER:
                         // TODO
                         break;
                     case DESTABILIZER:
-                        // TODO
-                        break;
-                    case AMPLIFIER:
                         // TODO
                         break;
                 }
@@ -147,6 +144,7 @@ public strictfp class RobotPlayer {
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
 
+
     private static void setGameConstants(RobotController rc) {
         if (rc.getTeam() == Team.A) {
             ourTeam = Team.A;
@@ -161,9 +159,7 @@ public strictfp class RobotPlayer {
         map = new int[mapWidth][mapHeight];
     }
 
-    static void moveRandom(RobotController rc) throws GameActionException {
-        Direction dir = directions[rng.nextInt(directions.length)];
-        if (rc.canMove(dir)) rc.move(dir);
+    private static void scanObstacles(RobotController rc) {
     }
 
     static void scanHQ(RobotController rc) throws GameActionException {
@@ -210,15 +206,25 @@ public strictfp class RobotPlayer {
         int closestIslandDistSq = MAX_MAP_DIST_SQ;
 
         for (int id : ids) {
-            if (rc.senseTeamOccupyingIsland(id) == Team.NEUTRAL) {
-                MapLocation[] islandLocs = rc.senseNearbyIslandLocations(id);
-                for (MapLocation islandLoc : islandLocs) {
-                    if (!knownIslandLocs.contains(islandLoc)) {
-                        knownIslandLocs.add(islandLoc);
+            MapLocation[] islandLocs = rc.senseNearbyIslandLocations(id);
+            for (MapLocation islandLoc : islandLocs) {
+                Team teamOccupyingIsland = rc.senseTeamOccupyingIsland(id);
+                if (teamOccupyingIsland == Team.NEUTRAL) {
+                    if (!knownNeutralIslandLocs.contains(islandLoc)) {
+                        knownNeutralIslandLocs.add(islandLoc);
                     }
                     int islandDistSq = selfLoc.distanceSquaredTo(islandLoc);
-                    if (closestIslandLoc == null || islandDistSq < closestIslandDistSq) {
-                        closestIslandLoc = islandLoc;
+                    if (closestNeutralIslandLoc == null || islandDistSq < closestIslandDistSq) {
+                        closestNeutralIslandLoc = islandLoc;
+                        closestIslandDistSq = islandDistSq;
+                    }
+                } else if (teamOccupyingIsland == theirTeam) {
+                    if (!knownEnemyIslandLocs.contains(islandLoc)) {
+                        knownEnemyIslandLocs.add(islandLoc);
+                    }
+                    int islandDistSq = selfLoc.distanceSquaredTo(islandLoc);
+                    if (closestEnemyIslandLoc == null || islandDistSq < closestIslandDistSq) {
+                        closestEnemyIslandLoc = islandLoc;
                         closestIslandDistSq = islandDistSq;
                     }
                 }
