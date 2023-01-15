@@ -3,6 +3,7 @@ package tacoplayer;
 import battlecode.common.*;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -68,6 +69,11 @@ public strictfp class RobotPlayer {
 
     public static MapLocation closestEnemyIslandLoc;
     static ArrayList<MapLocation> knownEnemyIslandLocs = new ArrayList<>();
+
+    // Lists to hold values that couldn't be written to shared array
+    // but should be once the bot is in range to write
+    static List<Integer> write_indexes = new ArrayList<>();
+    static List<Integer> fwrite_values = new ArrayList<>();
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
