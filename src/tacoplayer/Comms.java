@@ -12,11 +12,11 @@ import java.lang.Math;
  * with the shared array
  */
 public class Comms {
-    private static int getNumFromBits(int num, int bit_index1, int bit_index2) {
+    static int getNumFromBits(int num, int bit_index1, int bit_index2) {
         int shifted = num >> (bit_index1 - 1);
         int mask = 0;
         for (int i = 0; i < bit_index2-bit_index1+1; i++) {
-            mask += (int) Math.pow(2, i);
+            mask += 1 << i;
         }
         return shifted & mask;
     }
@@ -46,7 +46,7 @@ public class Comms {
             }
         }
         // Convert the array list to an array
-        return hq_locs.toArray(new MapLocation[hq_locs.size()]);
+        return hq_locs.toArray(new MapLocation[0]);
     }
 
     static boolean updateRobotCount(RobotController rc) throws GameActionException {
