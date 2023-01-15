@@ -12,8 +12,11 @@ public class HeadquartersStrategy {
             Comms.updateHQLocation(rc);
         }
 
-        // Reset alive counts
-        Comms.resetCounts(rc);
+        // Commands for only the first HQ to do
+        if (Comms.isFirstHQ(rc)) {
+            // Reset alive counts
+            Comms.resetCounts(rc);
+        }
 
         if (RobotPlayer.turnCount % 2 == 0) {
             buildAnchor(rc);

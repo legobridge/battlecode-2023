@@ -36,6 +36,16 @@ public class Comms {
         }
     }
 
+    static boolean isFirstHQ(RobotController rc) throws GameActionException {
+        int robot_location = MapHashUtil.hashMapLocation(rc.getLocation(), rc.getMapWidth());
+        if (robot_location == rc.readSharedArray(0)) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
     static MapLocation[] getHQLocations(RobotController rc) throws GameActionException{
         // Fill an array list with the locations of the HQs
         ArrayList<MapLocation> hq_locs = new ArrayList<>();
@@ -80,10 +90,8 @@ public class Comms {
         for (int i = 4; i < 9; i++) {
             int save_count = getNumFromBits(
                     rc.readSharedArray(i), 1, 8);
-            if (save_count != 0) {
-                save_count = save_count << 8;
-                rc.writeSharedArray(i, save_count);
-            }
+            save_count = save_count << 8;
+            rc.writeSharedArray(i, save_count);
         }
     }
 }
