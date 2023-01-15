@@ -16,6 +16,7 @@ public class Pathing {
     static int MAX_PREV_LOCS_TO_STORE = 5;
     static LinkedList<MapLocation> lastFewLocs = new LinkedList<>();
 
+    // TODO - Move (and act) as many times as cooldown allows
     // TODO - consider currents to be obstacles (soft)
     // TODO - this is very bytecode inefficient!!!
     static void moveTowards(RobotController rc, MapLocation target) throws GameActionException {
