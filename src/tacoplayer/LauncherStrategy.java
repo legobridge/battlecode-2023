@@ -8,6 +8,9 @@ public class LauncherStrategy {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runLauncher(RobotController rc) throws GameActionException {
+        // Update alive counter
+        Comms.updateRobotCount(rc);
+
         // Attack
         attackEnemies(rc);
 
