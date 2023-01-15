@@ -12,7 +12,7 @@ public class CarrierStrategy {
      */
     static void runCarrier(RobotController rc) throws GameActionException {
         // Update alive counter
-        Comms.updateCarrierCount(rc);
+        Comms.updateRobotCount(rc);
 
         // Collect from well if close and inventory not full
         if (RobotPlayer.closestWellLoc != null && rc.canCollectResource(RobotPlayer.closestWellLoc, -1)) {

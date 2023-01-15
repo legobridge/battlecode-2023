@@ -9,7 +9,7 @@ public class LauncherStrategy {
      */
     static void runLauncher(RobotController rc) throws GameActionException {
         // Update alive counter
-        Comms.updateLauncherCount(rc);
+        Comms.updateRobotCount(rc);
 
         // Attack
         attackEnemies(rc);
