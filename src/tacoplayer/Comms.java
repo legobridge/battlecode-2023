@@ -2,6 +2,7 @@ package tacoplayer;
 
 import battlecode.common.*;
 import java.util.ArrayList;
+import java.lang.Math;
 
 /**
  * Comms is the class used for robot communication
@@ -27,6 +28,27 @@ public class Comms {
         try{
             rc.writeSharedArray(index, value);
         } catch (GameActionException e) {}
+    }
+
+    /**
+     * Gets information from an integer based on bits
+     * num is the number that will be bit hacked
+     * bit_index1 is the first bit index (starting at 1)
+     * bit_index2 is the second bit index
+     *
+     * For example:
+     *  if num = 181, bit_index1 = 3, and bit_index2 = 6
+     *  181 = 1 0 1 1 0 1 0 1
+     *  We are looking the segment 1 1 0 1
+     *  Which is 13
+     */
+    private static int getNumFromBits(int num, int bit_index1, int bit_index2) {
+        int shifted = num >> (bit_index1 - 1);
+        int mask = 0;
+        for (int i = 0; i < bit_index2-bit_index1+1; i++) {
+            mask += (int) Math.pow(2, i);
+        }
+        return shifted & mask;
     }
 
     static void updateHQLocation(RobotController rc) {
@@ -59,56 +81,94 @@ public class Comms {
 
     static void updateCarrierCount(RobotController rc) {
         int index = 4;
-        int num_carriers = tryRead(rc, index) + 1;
+        int num_carriers= tryRead(rc, index) + 1;
         tryWrite(rc, index, num_carriers);
     }
 
     static void updateLauncherCount (RobotController rc) {
         int index = 5;
-        int num_carriers = tryRead(rc, index) + 1;
-        tryWrite(rc, index, num_carriers);
+        int num_launchers = tryRead(rc, index) + 1;
+        tryWrite(rc, index, num_launchers);
     }
 
     static void updateAmplifierCount(RobotController rc) {
         int index = 6;
-        int num_carriers = tryRead(rc, index) + 1;
-        tryWrite(rc, index, num_carriers);
+        int num_amplifiers = tryRead(rc, index) + 1;
+        tryWrite(rc, index, num_amplifiers);
     }
 
     static void updateDestabilizerCount(RobotController rc) {
         int index = 7;
-        int num_carriers = tryRead(rc, index) + 1;
-        tryWrite(rc, index, num_carriers);
+        int num_destabilizers = tryRead(rc, index) + 1;
+        tryWrite(rc, index, num_destabilizers);
     }
 
     static void updateBoosterCount(RobotController rc) {
         int index = 8;
-        int num_carriers = tryRead(rc, index) + 1;
-        tryWrite(rc, index, num_carriers);
+        int num_boosters = tryRead(rc, index) + 1;
+        tryWrite(rc, index, num_boosters);
     }
 
-    static int getCarrierCount(RobotController rc) {
+    static int[] getCarrierCounts(RobotController rc) {
         int index = 4;
-        return tryRead(rc, index);
+        int shared_array_val = tryRead(rc, index);
+        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
+        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
+        int[] counts = new int[2];
+        counts[0] = this_turn_count;
+        counts[1] = prev_turn_count;
+        return counts;
     }
 
-    static int getLauncherCount(RobotController rc) {
+    static int[] getLauncherCounts(RobotController rc) {
         int index = 5;
-        return tryRead(rc, index);
+        int shared_array_val = tryRead(rc, index);
+        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
+        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
+        int[] counts = new int[2];
+        counts[0] = this_turn_count;
+        counts[1] = prev_turn_count;
+        return counts;
     }
 
-    static int getAmplifierCount(RobotController rc) {
+    static int[] getAmplifierCounts(RobotController rc) {
         int index = 6;
-        return tryRead(rc, index);
+        int shared_array_val = tryRead(rc, index);
+        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
+        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
+        int[] counts = new int[2];
+        counts[0] = this_turn_count;
+        counts[1] = prev_turn_count;
+        return counts;
     }
 
-    static int getDestabilizerCount(RobotController rc) {
+    static int[] getDestabilizerCounts(RobotController rc) {
         int index = 7;
-        return tryRead(rc, index);
+        int shared_array_val = tryRead(rc, index);
+        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
+        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
+        int[] counts = new int[2];
+        counts[0] = this_turn_count;
+        counts[1] = prev_turn_count;
+        return counts;
     }
 
-    static int getBoosterCount(RobotController rc) {
+    static int[] getBoosterCounts(RobotController rc) {
         int index = 8;
-        return tryRead(rc, index);
+        int shared_array_val = tryRead(rc, index);
+        int this_turn_count = getNumFromBits(shared_array_val, 1, 8);
+        int prev_turn_count = getNumFromBits(shared_array_val, 9, 16);
+        int[] counts = new int[2];
+        counts[0] = this_turn_count;
+        counts[1] = prev_turn_count;
+        return counts;
+    }
+
+    static void resetCounts(RobotController rc) {
+        for (int i = 4; i < 9; i++) {
+            int save_count = getNumFromBits(i, 1, 8);
+            save_count = save_count << 8;
+            tryWrite(rc, i, save_count);
+        }
     }
 }
