@@ -15,67 +15,24 @@ public class LauncherStrategy {
         attackEnemies(rc);
 
         // Movement
+        moveTowardsEnemyIslands(rc);
         moveTowardsEnemies(rc);
-        moveAwayFromFarthestAlly(rc);
-//        moveTowardsFarthestAlly(rc);
-        moveTowardsClosestWell(rc);
-        RobotPlayer.moveRandom(rc);
+        Pathing.moveRandomly(rc);
+    }
+
+    private static void moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
+        if (RobotPlayer.closestEnemyIslandLoc != null) {
+            rc.setIndicatorString("Moving towards enemy island! " + RobotPlayer.closestEnemyIslandLoc);
+            Pathing.moveTowards(rc, RobotPlayer.closestEnemyIslandLoc);
+        }
     }
 
     private static void moveTowardsEnemies(RobotController rc) throws GameActionException {
         RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, RobotPlayer.theirTeam);
-        for (RobotInfo enemy : visibleEnemies) {
-            MapLocation enemyLocation = enemy.getLocation();
-            MapLocation robotLocation = rc.getLocation();
-            Direction moveDir = robotLocation.directionTo(enemyLocation);
-            if (rc.canMove(moveDir)) {
-                rc.move(moveDir);
-                break;
-            }
-        }
-    }
-
-    private static void moveAwayFromFarthestAlly(RobotController rc) throws GameActionException {
-        MapLocation targetLoc = null;
-        int targetDistSq = 0;
-        MapLocation selfLoc = rc.getLocation();
-
-        RobotInfo[] visibleAllies = rc.senseNearbyRobots(-1, RobotPlayer.ourTeam);
-        for (RobotInfo ally : visibleAllies) {
-            MapLocation allyLoc = ally.getLocation();
-            int allyDistSq = selfLoc.distanceSquaredTo(allyLoc);
-            if (allyDistSq > targetDistSq) {
-                targetLoc = allyLoc;
-                targetDistSq = allyDistSq;
-            }
-        }
-        if (targetLoc != null) {
-            Direction moveDir = selfLoc.directionTo(targetLoc).opposite();
-            if (rc.canMove(moveDir)) {
-                rc.move(moveDir);
-            }
-        }
-    }
-
-    private static void moveTowardsFarthestAlly(RobotController rc) throws GameActionException {
-        MapLocation targetLoc = null;
-        int targetDistSq = 0;
-        MapLocation selfLoc = rc.getLocation();
-
-        RobotInfo[] visibleAllies = rc.senseNearbyRobots(-1, RobotPlayer.ourTeam);
-        for (RobotInfo ally : visibleAllies) {
-            MapLocation allyLoc = ally.getLocation();
-            int allyDistSq = selfLoc.distanceSquaredTo(allyLoc);
-            if (allyDistSq > targetDistSq) {
-                targetLoc = allyLoc;
-                targetDistSq = allyDistSq;
-            }
-        }
-        if (targetLoc != null) {
-            Direction moveDir = selfLoc.directionTo(targetLoc);
-            if (rc.canMove(moveDir)) {
-                rc.move(moveDir);
-            }
+        if (visibleEnemies.length != 0) {
+            MapLocation enemyLocation = visibleEnemies[0].getLocation();
+            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
+            Pathing.moveTowards(rc, enemyLocation);
         }
     }
 
@@ -104,15 +61,6 @@ public class LauncherStrategy {
                 if (rc.canAttack(target.getLocation())) {
                     rc.attack(target.getLocation());
                 }
-            }
-        }
-    }
-
-    private static void moveTowardsClosestWell(RobotController rc) throws GameActionException {
-        if (RobotPlayer.closestWellLoc != null) {
-            Direction dir = rc.getLocation().directionTo(RobotPlayer.closestWellLoc);
-            if (rc.canMove(dir)) {
-                rc.move(dir);
             }
         }
     }
