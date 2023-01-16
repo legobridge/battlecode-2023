@@ -27,7 +27,7 @@ public class HeadquartersStrategy {
             RobotType.CARRIER,
             RobotType.LAUNCHER,
             RobotType.LAUNCHER,
-            RobotType.AMPLIFIER };
+    };
 
     static int currentBuildOrderIndexTurtle = 0;
 //    static int[] adQueue = new int[AVERAGE_PERIOD];
@@ -59,8 +59,8 @@ public class HeadquartersStrategy {
             }
             if (numCarriers/numHQs < 4) /**MAGIC NUMBER ALERT**/ {
                 tryToBuildRobot(rc, RobotType.CARRIER);
-            } else if (numAmplifiers/numHQs < 1) /**MAGIC NUMBER ALERT**/ {
-                tryToBuildRobot(rc, RobotType.AMPLIFIER);
+//            } else if (numAmplifiers/numHQs < 1) /**MAGIC NUMBER ALERT**/ {
+//                tryToBuildRobot(rc, RobotType.AMPLIFIER);
             } else if (RobotPlayer.turnCount >= MAGIC_NUM_TURNS && numLaunchers > MAGIC_NUM_LAUNCHERS && RobotPlayer.turnCount - lastBuiltAnchor > MAGIC_TURNS_BUFFER) {
                 if (tryToBuildAnchor(rc)) {
                     lastBuiltAnchor = RobotPlayer.turnCount;
@@ -106,14 +106,14 @@ public class HeadquartersStrategy {
                         lastBuiltAnchor = RobotPlayer.turnCount;
                     }
                 }
-                else if (ampsBuilt < MAGIC_NUM_AMPLIFIERS) {
-                    if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
-                        ampsBuilt++;
-                    }
-                    else if(!tryToBuildRobot(rc, RobotType.LAUNCHER)) {
-                            tryToBuildRobot(rc, RobotType.CARRIER);
-                    }
-                }
+//                else if (ampsBuilt < MAGIC_NUM_AMPLIFIERS) {
+//                    if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
+//                        ampsBuilt++;
+//                    }
+//                    else if(!tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+//                            tryToBuildRobot(rc, RobotType.CARRIER);
+//                    }
+//                }
                 else {
                     if (!tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                         tryToBuildRobot(rc, RobotType.CARRIER);
