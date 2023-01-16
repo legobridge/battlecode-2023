@@ -1,11 +1,11 @@
 package tacoplayer;
 
-import battlecode.common.*;
+import battlecode.common.GameActionException;
+import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
+import battlecode.common.RobotType;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
-import java.lang.Math;
 
 /**
  * Comms is the class used for robot communication
