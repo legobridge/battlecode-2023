@@ -142,6 +142,53 @@ public class Comms {
         return numEnemyIslands;
     }
 
+    static MapLocation getClosestNeutralIsland(RobotController rc) throws GameActionException {
+        updateClassIslandArrays(rc);
+        List<Integer> neutralIslands = new ArrayList<>();
+        for (int arrayElement: islandLocsTeams) {
+            int hashedLoc = getNumFromBits(arrayElement, 1, 12); // Bits 1-12 are for location
+            int team = getNumFromBits(arrayElement, 13, 14); // Bits 13-14 are for team
+            if (team == 2) {
+                neutralIslands.add(hashedLoc);
+            }
+        }
+        MapLocation closest = getClosestLocation(rc.getLocation(), neutralIslands);
+        return closest;
+    }
+
+    static MapLocation getClosestEnemyIsland(RobotController rc) throws GameActionException {
+        updateClassIslandArrays(rc);
+        List<Integer> neutralIslands = new ArrayList<>();
+        for (int arrayElement: islandLocsTeams) {
+            int hashedLoc = getNumFromBits(arrayElement, 1, 12); // Bits 1-12 are for location
+            int team = getNumFromBits(arrayElement, 13, 14); // Bits 13-14 are for team
+            if (team == 1) {
+                neutralIslands.add(hashedLoc);
+            }
+        }
+        MapLocation closest = getClosestLocation(rc.getLocation(), neutralIslands);
+        return closest;
+    }
+
+    static MapLocation getClosestLocation(MapLocation startLoc, List<Integer> hashedLocs) {
+        MapLocation closestLoc = null;
+        int closest_distance = 10000;
+        for (int hashedLoc: hashedLocs) {
+            MapLocation loc = MapHashUtil.unhashMapLocation(hashedLoc);
+            int distance = Math.abs(startLoc.x - loc.x) + Math.abs(startLoc.y - loc.y);
+            if (closestLoc == null) {
+                closestLoc = loc;
+                closest_distance = distance;
+            }
+            else if (distance < closest_distance) {
+                closestLoc = loc;
+                closest_distance = distance;
+            }
+        }
+
+        return closestLoc;
+    }
+
     private static void countIslands(RobotController rc) throws GameActionException {
         roundUpdated = rc.getRoundNum();
         numNeutralIslands = 0;
@@ -164,12 +211,7 @@ public class Comms {
     static void updateIslands(RobotController rc) throws GameActionException {
         // Record Island data once so byte code doesn't have to be
         // wasted by reading the shared array many times
-        for (int i = islandLocsStart; i <= islandLocsEnd; i++) {
-            islandLocsTeams[i-islandLocsStart] = rc.readSharedArray(i);
-        }
-        for (int i = islandIDsStart; i <= islandIDsEnd; i++) {
-            islandIDs[i-islandIDsStart] = rc.readSharedArray(i);
-        }
+        updateClassIslandArrays(rc);
 
         int[] island_ids = rc.senseNearbyIslands();
 
@@ -224,6 +266,18 @@ public class Comms {
             if (!found && first_zero < islandIDsStart) {
                 addIsland(rc, island_id, island_team, first_zero);
             }
+        }
+    }
+
+    private static void updateClassIslandArrays(RobotController rc) throws GameActionException {
+        if (rc.getRoundNum() != roundUpdated) {
+            for (int i = islandLocsStart; i <= islandLocsEnd; i++) {
+                islandLocsTeams[i-islandLocsStart] = rc.readSharedArray(i);
+            }
+            for (int i = islandIDsStart; i <= islandIDsEnd; i++) {
+                islandIDs[i-islandIDsStart] = rc.readSharedArray(i);
+            }
+            roundUpdated = rc.getRoundNum();
         }
     }
 
