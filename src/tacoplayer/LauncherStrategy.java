@@ -18,6 +18,11 @@ public class LauncherStrategy {
         moveTowardsEnemyIslands(rc);
         moveTowardsEnemies(rc);
         Pathing.moveRandomly(rc);
+
+        // Update islands - only every 4 rounds, its expensive and not necessary every round
+        if (rc.getRoundNum() % 4 == 0) {
+            Comms.updateIslands(rc);
+        }
     }
 
     private static void moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
