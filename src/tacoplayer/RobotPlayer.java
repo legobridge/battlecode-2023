@@ -48,6 +48,7 @@ public strictfp class RobotPlayer {
     static Team ourTeam;
     static Team theirTeam;
 
+    static int hqCount;
     static int islandCount;
 
     static int mapHeight;
@@ -59,7 +60,8 @@ public strictfp class RobotPlayer {
     // TODO - "Closest" is just straight line distance, improve upon that
     // TODO - Stop getting confused by other robots
     static MapLocation closestHqLoc;
-    static ArrayList<MapLocation> knownHqLocs = new ArrayList<>();
+    static MapLocation[] ourHqLocs = new MapLocation[4];
+    static MapLocation[] enemyHqLocs = new MapLocation[12];
 
     static MapLocation closestWellLoc;
     static ArrayList<MapLocation> knownWellLocs = new ArrayList<>();
@@ -88,6 +90,9 @@ public strictfp class RobotPlayer {
         // Set game constants
         setGameConstants(rc);
 
+        updateAlliedHqLocs(rc);
+        updateEnemyHqLocs();
+
         //noinspection InfiniteLoopStatement
         while (true) {
 
@@ -98,11 +103,17 @@ public strictfp class RobotPlayer {
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode.
             try {
 
+                // Read from comms array
+                Comms.readAndStoreSharedArray(rc);
+
                 // Scan surroundings
                 scanObstacles(rc);
-                scanHQ(rc);
+                scanRobots(rc);
                 scanWells(rc);
                 scanIslands(rc);
+
+                closestHqLoc = getClosestMapLocEuclidean(rc, ourHqLocs, hqCount);
+                // TODO - guess all enemy hq locations and decide on the closest one
 
                 // The same run() function is called for every robot on your team, even if they are
                 // different types. Here, we separate the control depending on the RobotType, so we can
@@ -150,6 +161,39 @@ public strictfp class RobotPlayer {
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
 
+    private static void updateAlliedHqLocs(RobotController rc) throws GameActionException {
+        if (rc.getType() == RobotType.HEADQUARTERS) {
+            Comms.updateHQLocation(rc);
+        }
+        else { // Note that this means HQs don't know about other allied HQs
+            for (int i = 0; i++ < hqCount;) {
+                ourHqLocs[i] = MapLocationUtil.unhashMapLocation(Comms.sharedArrayLocal[i]);
+            }
+        }
+    }
+
+    private static void updateEnemyHqLocs() {
+        for (int i = 0; i++ < hqCount;) {
+            for (int j = 0; j++ < SymmetryType.values().length;) {
+                enemyHqLocs[j * 4 + i] = MapLocationUtil.calcSymmetricLoc(ourHqLocs[i], SymmetryType.values()[j]);
+            }
+        }
+    }
+
+    private static MapLocation getClosestMapLocEuclidean(RobotController rc, MapLocation[] mapLocations, int arLen) {
+        MapLocation selfLoc = rc.getLocation();
+        MapLocation closestLoc = null;
+        int closestLocDistSq = MAX_MAP_DIST_SQ;
+        for (int i = 0; i++ < arLen;) {
+            int thisDistSq = selfLoc.distanceSquaredTo(mapLocations[i]);
+            if (closestLoc == null || thisDistSq < closestLocDistSq) {
+                closestLoc = mapLocations[i];
+                closestLocDistSq = thisDistSq;
+            }
+        }
+        return closestLoc;
+    }
+
 
     private static void setGameConstants(RobotController rc) {
         if (rc.getTeam() == Team.A) {
@@ -159,6 +203,7 @@ public strictfp class RobotPlayer {
             ourTeam = Team.B;
             theirTeam = Team.A;
         }
+        hqCount = rc.getRobotCount();
         islandCount = rc.getIslandCount();
         mapWidth = rc.getMapWidth();
         mapHeight = rc.getMapHeight();
@@ -168,22 +213,21 @@ public strictfp class RobotPlayer {
     private static void scanObstacles(RobotController rc) {
     }
 
-    static void scanHQ(RobotController rc) throws GameActionException {
+    static void scanRobots(RobotController rc) throws GameActionException {
         RobotInfo[] robots = rc.senseNearbyRobots();
-        MapLocation selfLoc = rc.getLocation();
-        int closestHqDistSq = MAX_MAP_DIST_SQ;
 
         for (RobotInfo robot : robots) {
-            if (robot.getTeam() == ourTeam && robot.getType() == RobotType.HEADQUARTERS) {
-                MapLocation hqLoc = robot.getLocation();
-                if (!knownHqLocs.contains(hqLoc)) {
-                    knownHqLocs.add(hqLoc);
-                }
-                int hqDistSq = selfLoc.distanceSquaredTo(hqLoc);
-                if (closestHqLoc == null || hqDistSq < closestHqDistSq) {
-                    closestHqLoc = hqLoc;
-                    closestHqDistSq = hqDistSq;
-                }
+            switch (robot.getType()) {
+                case HEADQUARTERS:
+                    int mostSymmetryPossible = 0;
+                    MapLocation enemyHqLoc = robot.getLocation();
+                    for (int i = 0; i++ < hqCount;) {
+                        mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyHqLoc);
+                    }
+                    Comms.updateSymmetry(rc, mostSymmetryPossible);
+                    break;
+                default: // TODO - sense other robots
+                    break;
             }
         }
     }
