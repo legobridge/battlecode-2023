@@ -1,6 +1,7 @@
 package tacoplayer;
 
 import battlecode.common.*;
+import static tacoplayer.RobotPlayer.*;
 
 public class LauncherStrategy {
     /**
@@ -26,14 +27,14 @@ public class LauncherStrategy {
     }
 
     private static void moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
-        if (RobotPlayer.closestEnemyIslandLoc != null) {
-            rc.setIndicatorString("Moving towards enemy island! " + RobotPlayer.closestEnemyIslandLoc);
-            Pathing.moveTowards(rc, RobotPlayer.closestEnemyIslandLoc);
+        if (closestEnemyIslandLoc != null) {
+            rc.setIndicatorString("Moving towards enemy island! " + closestEnemyIslandLoc);
+            Pathing.moveTowards(rc, closestEnemyIslandLoc);
         }
     }
 
     private static void moveTowardsEnemies(RobotController rc) throws GameActionException {
-        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, RobotPlayer.theirTeam);
+        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
         if (visibleEnemies.length != 0) {
             MapLocation enemyLocation = visibleEnemies[0].getLocation();
             rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
@@ -43,7 +44,7 @@ public class LauncherStrategy {
 
     private static void attackEnemies(RobotController rc) throws GameActionException {
         int radius = RobotType.LAUNCHER.actionRadiusSquared;
-        RobotInfo[] enemies = rc.senseNearbyRobots(radius, RobotPlayer.theirTeam);
+        RobotInfo[] enemies = rc.senseNearbyRobots(radius, theirTeam);
         int lowestHealth = 100;
         int smallestDistance = 100;
         RobotInfo target = null;

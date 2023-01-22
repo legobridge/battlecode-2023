@@ -1,6 +1,7 @@
 package tacoplayer;
 
 import battlecode.common.MapLocation;
+import static tacoplayer.RobotPlayer.*;
 
 public class MapHashUtil {
     /**
@@ -11,7 +12,7 @@ public class MapHashUtil {
     public static int hashMapLocation(MapLocation mapLocation) {
         int x = mapLocation.x;
         int y = mapLocation.y;
-        return y * RobotPlayer.mapWidth + x + 1;
+        return y * mapWidth + x + 1;
     }
 
     /**
@@ -22,8 +23,8 @@ public class MapHashUtil {
      */
     public static MapLocation unhashMapLocation(int hashedMapLocation) {
         hashedMapLocation--;
-        int x = hashedMapLocation % RobotPlayer.mapWidth;
-        int y = hashedMapLocation / RobotPlayer.mapWidth;
+        int x = hashedMapLocation % mapWidth;
+        int y = hashedMapLocation / mapWidth;
         return new MapLocation(x, y);
     }
 }

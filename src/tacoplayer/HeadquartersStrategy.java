@@ -1,6 +1,7 @@
 package tacoplayer;
 
 import battlecode.common.*;
+import static tacoplayer.RobotPlayer.*;
 
 public class HeadquartersStrategy {
 
@@ -19,7 +20,7 @@ public class HeadquartersStrategy {
             Comms.resetCounts(rc);
         }
 
-        if (RobotPlayer.turnCount % 2 == 0) {
+        if (turnCount % 2 == 0) {
             buildAnchor(rc);
         }
         buildRobot(rc);
@@ -37,7 +38,7 @@ public class HeadquartersStrategy {
     private static void buildRobot(RobotController rc) throws GameActionException {
         // Pick a type of robot to build
         RobotType robotTypeToBuild;
-        if (RobotPlayer.turnCount % 5 == 1) {
+        if (turnCount % 5 == 1) {
             robotTypeToBuild = RobotType.CARRIER;
         } else {
             robotTypeToBuild = RobotType.LAUNCHER;
@@ -49,7 +50,7 @@ public class HeadquartersStrategy {
 
     static void tryToBuildRobot(RobotController rc, RobotType robotTypeToBuild) throws GameActionException {
         rc.setIndicatorString("Trying to build a " + robotTypeToBuild);
-        for (Direction dir: RobotPlayer.directions) {
+        for (Direction dir: directions) {
             MapLocation candidateBuildLoc = rc.getLocation().add(dir);
             if (rc.canBuildRobot(robotTypeToBuild, candidateBuildLoc)) {
                 rc.buildRobot(robotTypeToBuild, candidateBuildLoc);
@@ -70,7 +71,7 @@ public class HeadquartersStrategy {
 //
 //    static boolean anchorBuildingMode = false;
 //    static void runHeadquarters(RobotController rc) throws GameActionException {
-//        anchorBuildingMode = RobotPlayer.turnCount % 50 == 0;
+//        anchorBuildingMode = turnCount % 50 == 0;
 //        if (anchorBuildingMode) {
 //            if (tryToBuildAnchor(rc)) {
 //                anchorBuildingMode = false;
@@ -99,7 +100,7 @@ public class HeadquartersStrategy {
 //
 //    static boolean tryToBuildRobot(RobotController rc, RobotType robotTypeToBuild) throws GameActionException {
 //        rc.setIndicatorString("Trying to build a " + robotTypeToBuild);
-//        for (Direction dir : RobotPlayer.directions) {
+//        for (Direction dir : directions) {
 //            MapLocation candidateBuildLoc = rc.getLocation().add(dir);
 //            if (rc.canBuildRobot(robotTypeToBuild, candidateBuildLoc)) {
 //                rc.buildRobot(robotTypeToBuild, candidateBuildLoc);
