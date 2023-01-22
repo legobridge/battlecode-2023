@@ -21,7 +21,8 @@ public class HeadquartersStrategy {
     final static int MAGIC_NUM_AMPLIFIERS = 10;
     final static int MAGIC_NUM_LAUNCHERS = 20;
     final static int MAGIC_TURNS_BUFFER = 50;
-//    final static int AVERAGE_PERIOD = 20;
+    // Number of turns for moving average
+    final static int AVERAGE_PERIOD = 30;
     static RobotType[] buildOrderTurtle = {
             RobotType.CARRIER,
             RobotType.CARRIER,
@@ -30,8 +31,8 @@ public class HeadquartersStrategy {
     };
 
     static int currentBuildOrderIndexTurtle = 0;
-//    static int[] adQueue = new int[AVERAGE_PERIOD];
-//    static int[] mnQueue = new int[AVERAGE_PERIOD];
+    static int[] adQueue = new int[AVERAGE_PERIOD];
+    static int[] mnQueue = new int[AVERAGE_PERIOD];
     static int lastBuiltAnchor = 0;
     static int ampsBuilt = 0;
     static void runHeadquarters(RobotController rc) throws GameActionException {
@@ -188,35 +189,35 @@ public class HeadquartersStrategy {
         return false;
     }
 
-//    static void adQueuePush (int ad) {
-//        for (int i = 0; i < adQueue.length - 1; i++) {
-//            adQueue[i+1] = adQueue[i];
-//        }
-//        adQueue[0] = ad;
-//    }
-//
-//    static float adGetMovingAverage() {
-//        int totalAd = 0;
-//        for (int ad : adQueue) {
-//            totalAd += ad;
-//        }
-//        return totalAd / adQueue.length;
-//    }
-//
-//    static void mnQueuePush (int mn) {
-//        for (int i = 0; i < mnQueue.length - 1; i++) {
-//            mnQueue[i+1] = mnQueue[i];
-//        }
-//        mnQueue[0] = mn;
-//    }
-//
-//    static float mnGetMovingAverage() {
-//        int totalMn = 0;
-//        for (int mn : mnQueue) {
-//            totalMn += mn;
-//        }
-//        return totalMn / mnQueue.length;
-//    }
+    static void adQueuePush (int ad) {
+        for (int i = 0; i++ < adQueue.length - 1;) {
+            adQueue[i+1] = adQueue[i];
+        }
+        adQueue[0] = ad;
+    }
+
+    static float adGetMovingAverage() {
+        int totalAd = 0;
+        for (int ad : adQueue) {
+            totalAd += ad;
+        }
+        return totalAd / adQueue.length;
+    }
+
+    static void mnQueuePush (int mn) {
+        for (int i = 0; i++ < mnQueue.length - 1;) {
+            mnQueue[i+1] = mnQueue[i];
+        }
+        mnQueue[0] = mn;
+    }
+
+    static float mnGetMovingAverage() {
+        int totalMn = 0;
+        for (int mn : mnQueue) {
+            totalMn += mn;
+        }
+        return totalMn / mnQueue.length;
+    }
 
 /** ---------------------------- OLD CODE ------------------------------------ **/
 
