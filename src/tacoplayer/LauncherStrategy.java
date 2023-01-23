@@ -49,7 +49,7 @@ public class LauncherStrategy {
     private static void attackEnemies(RobotController rc) throws GameActionException {
         int radius = RobotType.LAUNCHER.actionRadiusSquared;
         RobotInfo[] enemies = rc.senseNearbyRobots(radius, theirTeam);
-        int lowestHealth = 100;
+        int lowestHealth = 1000;
         int smallestDistance = 100;
         RobotInfo target = null;
         if (enemies.length > 0) {
