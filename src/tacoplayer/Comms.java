@@ -5,6 +5,8 @@ import battlecode.common.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static tacoplayer.SymmetryType.*;
+
 /**
  * Comms is the class used for robot communication
  * with the shared array
@@ -17,6 +19,7 @@ public class Comms {
     final static int islandIDsStart = 19;
     final static int islandIDsEnd = 23;
     final static int SYMMETRY_INDEX = 63;
+    private static final int ALL_SYMMETRIES = 7;
     // The entire comms array at the start of this robot's turn
     static int[] sharedArrayLocal = new int[GameConstants.SHARED_ARRAY_LENGTH];
     static int[] islandLocsTeams = new int[islandLocsEnd - islandLocsStart + 1];
@@ -28,15 +31,16 @@ public class Comms {
     static int roundUpdated = 0;
 
     static void readAndStoreSharedArray(RobotController rc) throws GameActionException {
-        for (int i = 0; i++ < GameConstants.SHARED_ARRAY_LENGTH; ) {
+        for (int i = -1; ++i < GameConstants.SHARED_ARRAY_LENGTH; ) {
             sharedArrayLocal[i] = rc.readSharedArray(i);
         }
     }
 
     private static boolean tryToWriteToSharedArray(RobotController rc, int index, int value) throws GameActionException {
+        sharedArrayLocal[index] = value; // TODO - Store this somewhere, write to shared array once in signal range.
+                                         //        As of now, it will be overwritten on the next turn.
         if (rc.canWriteSharedArray(index, value)) {
             rc.writeSharedArray(index, value);
-            sharedArrayLocal[index] = value; // TODO - store this for later, write to shared array once in signal range
             return true;
         }
         return false;
@@ -44,10 +48,7 @@ public class Comms {
 
     static int getNumFromBits(int num, int bit_index1, int bit_index2) {
         int shifted = num >> (bit_index1 - 1);
-        int mask = 0;
-        for (int i = 0; i < bit_index2 - bit_index1 + 1; i++) {
-            mask += 1 << i;
-        }
+        int mask = (1 << (bit_index2 - bit_index1 + 1)) - 1;
         return shifted & mask;
     }
 
@@ -350,7 +351,30 @@ public class Comms {
         }
     }
 
+    public static void initializeSymmetry(RobotController rc) throws GameActionException {
+        tryToWriteToSharedArray(rc, SYMMETRY_INDEX, ALL_SYMMETRIES);
+    }
+
     public static void updateSymmetry(RobotController rc, int mostSymmetryPossible) throws GameActionException {
         tryToWriteToSharedArray(rc, SYMMETRY_INDEX, sharedArrayLocal[SYMMETRY_INDEX] & mostSymmetryPossible);
+    }
+
+    public static boolean[] getMapSymmetries() {
+        switch (sharedArrayLocal[SYMMETRY_INDEX]) {
+            case 1:
+                return new boolean[]{false, false, true};
+            case 2:
+                return new boolean[]{false, true, false};
+            case 3:
+                return new boolean[]{false, true, true};
+            case 4:
+                return new boolean[]{true, false, false};
+            case 5:
+                return new boolean[]{true, false, true};
+            case 6:
+                return new boolean[]{true, true, false};
+            default:
+                return new boolean[]{true, true, true};
+        }
     }
 }
