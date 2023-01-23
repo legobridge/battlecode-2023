@@ -84,8 +84,7 @@ public class HeadquartersStrategy {
             }
             /** MAGIC NUMBERS USED **/
             else if (turnCount > MAGIC_NUM_TURNS_RUSH
-                    && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_RUSH
-                    && Comms.getNumNeutralIslands(rc) > 0) {
+                    && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_RUSH) {
                 // wait for resources and build an anchor
                 rc.setIndicatorString("Trying to build an anchor");
                 if (rc.canBuildAnchor(Anchor.STANDARD)) {

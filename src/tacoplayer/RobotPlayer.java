@@ -198,7 +198,6 @@ public strictfp class RobotPlayer {
         }
         // Update closest Enemy HQ Location
         closestEnemyHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, enemyHqLocs);
-        System.out.println(closestEnemyHqLoc);
     }
 
     private static void setGameConstants(RobotController rc) {

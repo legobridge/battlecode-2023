@@ -3,6 +3,7 @@ package tacoplayer;
 import battlecode.common.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -22,6 +23,8 @@ public class Comms {
     static int[] sharedArrayLocal = new int[GameConstants.SHARED_ARRAY_LENGTH];
     static int[] islandLocsTeams = new int[islandLocsEnd - islandLocsStart + 1];
     static int[] islandIDs = new int[islandIDsEnd - islandIDsStart + 1];
+    static MapLocation[] knownNeutralIslandLocations = new MapLocation[10];
+    static int island_index = 0;
 
     // Keep track of number of enemy and neutral islands
     static int numEnemyIslands = 0;
@@ -253,12 +256,16 @@ public class Comms {
         boolean our_team = island_team == rc.getTeam();
 
         // If we don't control the island and we can write to the shared array, write it
-        if (!our_team && rc.canWriteSharedArray(index, 0)) {
+        // TODO -  && rc.canWriteSharedArray(index, 0)
+        if (!our_team) {
 //            System.out.println("ADDING ISLAND: " + island_id);
 
             // Get the hashed location of an island square
             MapLocation island_loc = rc.senseNearbyIslandLocations(island_id)[0];
             int island_loc_hashed = MapLocationUtil.hashMapLocation(island_loc);
+
+            // TODO
+            knownNeutralIslandLocations[(island_index++) % 10] = island_loc;
 
             // Write location-team value
             tryToWriteToSharedArray(rc, index, island_loc_hashed);

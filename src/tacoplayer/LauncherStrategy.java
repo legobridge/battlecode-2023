@@ -64,7 +64,7 @@ public class LauncherStrategy {
         else if (leader_id > rc.getID()) {
             rc.setIndicatorString("I am a leader!");
             if (moveTowardsEnemies(rc)) {
-                System.out.print("enemy Bot");
+//                System.out.print("enemy Bot");
                 rc.setIndicatorString("moving towards enemy robots");
             }
             else {
@@ -86,12 +86,12 @@ public class LauncherStrategy {
                     rc.setIndicatorString("moving towards enemy island");
                 }
                 else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
-                    System.out.print("Center");
+//                    System.out.print("Center");
                     rc.move(rc.getLocation().directionTo(mapCenter));
                     rc.setIndicatorString("moving towards center");
                 }
                 else {
-                    System.out.print("Random");
+//                    System.out.print("Random");
                     Pathing.moveRandomly(rc);
                     rc.setIndicatorString("moving randomly");
                 }
@@ -102,7 +102,7 @@ public class LauncherStrategy {
             Direction dir = rc.getLocation().directionTo(leader.getLocation());
             if (rc.canMove(dir)) {
                 rc.move(dir);
-                System.out.print("Heil!");
+//                System.out.print("Heil!");
                 rc.setIndicatorString("moving towards leader " + leader_id);
             } else {
                 Pathing.moveRandomly(rc);

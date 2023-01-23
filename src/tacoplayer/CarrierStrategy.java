@@ -14,6 +14,11 @@ public class CarrierStrategy {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runCarrier(RobotController rc) throws GameActionException {
+        if (rc.getRoundNum() % 4 == 0) {
+            Comms.updateIslands(rc);
+            closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
+        }
+
         // Update alive counter
         Comms.updateRobotCount(rc);
 
@@ -53,6 +58,9 @@ public class CarrierStrategy {
         }
 
         closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
+        if (closestNeutralIslandLoc == null) {
+            closestNeutralIslandLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, Comms.knownNeutralIslandLocations);
+        }
         if (anchorMode) { // In anchor mode, go plant that flag
             if (closestNeutralIslandLoc == null) {
                 Pathing.moveRandomly(rc);
