@@ -29,6 +29,7 @@ public class Comms {
     static int roundUpdated = 0;
 
     static void readAndStoreSharedArray(RobotController rc) throws GameActionException {
+        // TODO - maybe don't do this
         for (int i = -1; ++i < GameConstants.SHARED_ARRAY_LENGTH; ) {
             sharedArrayLocal[i] = rc.readSharedArray(i);
         }

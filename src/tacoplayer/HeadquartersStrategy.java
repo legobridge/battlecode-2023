@@ -28,8 +28,6 @@ public class HeadquartersStrategy {
     static int[] adQueue = new int[AVERAGE_PERIOD];
     static int[] mnQueue = new int[AVERAGE_PERIOD];
     static int lastBuiltAnchor = 0;
-    static int mapSize = 0;
-    static MapLocation mapCenter = null;
     // total 10 cooldown / 2 per action = 5
     final static int ACTIONS_PER_TURN = 5;
     static int carriersBuilt = 0;
@@ -38,11 +36,6 @@ public class HeadquartersStrategy {
     final static int MIN_LAUNCHERS_BUILT = 100;
 
     static void runHeadquarters(RobotController rc) throws GameActionException {
-        if (rc.getRoundNum() == 1) {
-            Comms.updateHQLocation(rc);
-            mapSize = rc.getMapWidth() * rc.getMapHeight();
-            mapCenter = new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2);
-        }
 
         // Commands for only the first HQ to do
         if (Comms.isFirstHQ(rc)) {
@@ -77,13 +70,15 @@ public class HeadquartersStrategy {
                 }
             }
             /** MAGIC NUMBERS USED **/
-            else if (turnCount > MAGIC_NUM_TURNS_RUSH && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_RUSH) {
+            else if (turnCount > MAGIC_NUM_TURNS_RUSH
+                    && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_RUSH
+                    && Comms.getNumNeutralIslands(rc) > 0) {
                 // wait for resources and build an anchor
                 rc.setIndicatorString("Trying to build an anchor");
                 if (rc.canBuildAnchor(Anchor.STANDARD)) {
                     rc.setIndicatorString("Building an anchor");
                     rc.buildAnchor(Anchor.STANDARD);
-                    lastBuiltAnchor = 0;
+                    lastBuiltAnchor = 0; // TODO - Make stuff
                 } else {
                     for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
                         if (mana > RobotType.LAUNCHER.getBuildCost(ResourceType.MANA) + Anchor.STANDARD.getBuildCost(ResourceType.MANA)) {
@@ -92,7 +87,8 @@ public class HeadquartersStrategy {
                                 launchersBuilt++;
                             }
                         /** MAGIC NUMBER USED **/
-                        } else if (ad > RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM) + Anchor.STANDARD.getBuildCost(ResourceType.ADAMANTIUM) && (carriersBuilt < MAX_CARRIERS_BUILT || launchersBuilt > MIN_LAUNCHERS_BUILT)) {
+                        } else if (ad > RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM) + Anchor.STANDARD.getBuildCost(ResourceType.ADAMANTIUM)
+                                && (carriersBuilt < MAX_CARRIERS_BUILT || launchersBuilt > MIN_LAUNCHERS_BUILT)) {
                             if (tryToBuildRobot(rc, RobotType.CARRIER)) {
                                 rc.setIndicatorString("Building a carrier");
                                 carriersBuilt++;
@@ -142,13 +138,13 @@ public class HeadquartersStrategy {
             }
             // if it has been 200 turns, and we see a neutral island make an anchor
             /** MAGIC NUMBERS USED **/
-            else if (turnCount > MAGIC_NUM_TURNS_TURTLE && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_TURTLE) {
+            else if (turnCount > MAGIC_NUM_TURNS_TURTLE && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_TURTLE && Comms.getNumNeutralIslands(rc) > 0) {
                 // wait for resources and build an anchor
                 rc.setIndicatorString("Trying to build an anchor");
                 if (rc.canBuildAnchor(Anchor.STANDARD)) {
                     rc.setIndicatorString("Building an anchor");
                     rc.buildAnchor(Anchor.STANDARD);
-                    lastBuiltAnchor = 0;
+                    lastBuiltAnchor = 0;  // TODO - Make stuff
                 } else {
                     for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
                         if (mana > RobotType.LAUNCHER.getBuildCost(ResourceType.MANA) + Anchor.STANDARD.getBuildCost(ResourceType.MANA)) {
@@ -170,6 +166,7 @@ public class HeadquartersStrategy {
                 // we have moving average
                 if (turnCount > AVERAGE_PERIOD) {
                     if (adGetMovingAverage() > mnGetMovingAverage()) {
+                        // TODO - new carriers should go mine Mn
                         // more ad being gathered per turn
                         for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
                             if (tryToBuildRobot(rc, RobotType.CARRIER)) {

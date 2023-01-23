@@ -6,31 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * RobotPlayer is the class that describes your main robot strategy.
- * The run() method inside this class is like your main function: this is what we'll call once your robot
- * is created!
- */
 public strictfp class RobotPlayer {
 
-    /**
-     * We will use this variable to count the number of turns this robot has been alive.
-     * You can use static variables like this to save any information you want. Keep in mind that even though
-     * these variables are static, in Battlecode they aren't actually shared between your robots.
-     */
     static int turnCount = 0;
-
-    /**
-     * A random number generator.
-     * We will use this RNG to make some random moves. The Random class is provided by the java.util.Random
-     * import at the top of this file. Here, we *seed* the RNG with a constant number (6147); this makes sure
-     * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
-     */
     static final Random rng = new Random(6147);
 
-    /**
-     * Array containing all the possible movement directions. (excludes CENTER)
-     */
     static final Direction[] directions = {
             Direction.NORTH,
             Direction.NORTHEAST,
@@ -53,11 +33,14 @@ public strictfp class RobotPlayer {
 
     static int mapHeight;
     static int mapWidth;
+    static int mapSize;
+    static MapLocation mapCenter;
 
     static int[][] map;
 
     // TODO - Convert all ArrayLists to arrays later for bytecode optimization
     // TODO - "Closest" is just straight line distance, improve upon that
+    // TODO - Stop getting confused by other robots
     static MapLocation closestHqLoc;
     static MapLocation closestEnemyHqLoc;
     static MapLocation[] ourHqLocs = new MapLocation[4];
@@ -66,18 +49,15 @@ public strictfp class RobotPlayer {
     static MapLocation closestWellLoc;
     static ArrayList<MapLocation> knownWellLocs = new ArrayList<>();
 
+    public static MapLocation closestNeutralIslandLoc;
+
+    public static MapLocation closestEnemyIslandLoc;
+
     // Lists to hold values that couldn't be written to shared array
     // but should be once the bot is in range to write
     static List<Integer> write_indexes = new ArrayList<>();
     static List<Integer> fwrite_values = new ArrayList<>();
 
-    /**
-     * run() is the method that is called when a robot is instantiated in the Battlecode world.
-     * It is like the main function for your robot. If this method returns, the robot dies!
-     *
-     * @param rc The RobotController object. You use it to perform actions from this robot, and to get
-     *           information on its current status. Essentially your portal to interacting with the world.
-     **/
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
 
@@ -104,16 +84,16 @@ public strictfp class RobotPlayer {
                 Comms.readAndStoreSharedArray(rc);
 
                 // Scan surroundings
-                scanObstacles(rc);
+                scanObstacles(rc); // TODO - clouds, currents, etc.
                 scanRobots(rc);
-                scanWells(rc);
-//                scanIslands(rc);
+                scanWells(rc); // TODO - pick well based on what we need. Also push to shared array.
 
                 updateEnemyHqLocs();
 
                 if (rc.getType() != RobotType.HEADQUARTERS) {
                     closestHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, ourHqLocs);
                 }
+                // TODO - guess all enemy hq locations and decide on the closest one
 
                 // The same run() function is called for every robot on your team, even if they are
                 // different types. Here, we separate the control depending on the RobotType, so we can
@@ -192,7 +172,6 @@ public strictfp class RobotPlayer {
         }
     }
 
-
     private static void setGameConstants(RobotController rc) {
         if (rc.getTeam() == Team.A) {
             ourTeam = Team.A;
@@ -204,6 +183,8 @@ public strictfp class RobotPlayer {
         islandCount = rc.getIslandCount();
         mapWidth = rc.getMapWidth();
         mapHeight = rc.getMapHeight();
+        mapSize = rc.getMapWidth() * rc.getMapHeight();
+        mapCenter = new MapLocation(rc.getMapWidth()/2, rc.getMapHeight()/2);
         map = new int[mapWidth][mapHeight];
     }
 
@@ -213,15 +194,15 @@ public strictfp class RobotPlayer {
     static void scanRobots(RobotController rc) throws GameActionException {
         RobotInfo[] robots = rc.senseNearbyRobots();
 
-        for (RobotInfo robot : robots) {
-            switch (robot.getType()) {
+        for (int j = -1; ++j < robots.length;) {
+            switch (robots[j].getType()) {
                 case HEADQUARTERS:
-                    if (robot.getTeam() == theirTeam) {
+                    if (robots[j].team == theirTeam) {
                         // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
                         // TODO - stop doing this once fairly confident of symmetry
                         int mostSymmetryPossible = 0;
-                        MapLocation enemyHqLoc = robot.getLocation();
-                        for (int i = -1; ++i < hqCount;) {
+                        MapLocation enemyHqLoc = robots[j].getLocation();
+                        for (int i = -1; ++i < hqCount; ) {
                             mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyHqLoc);
                         }
                         Comms.updateSymmetry(rc, mostSymmetryPossible);
@@ -249,5 +230,51 @@ public strictfp class RobotPlayer {
                 closestWellDistSq = wellDistSq;
             }
         }
+    }
+
+    static void moveTowardsEnemies(RobotController rc) throws GameActionException {
+        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
+        if (visibleEnemies.length != 0) {
+            MapLocation enemyLocation = averageLoc(visibleEnemies);
+            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
+            // If you are outside 3/4 the enemy's action radius, move towards it, else move away
+            if (visibleEnemies[0].getLocation().distanceSquaredTo(rc.getLocation()) > rc.getType().actionRadiusSquared * 5/6) {
+                Pathing.moveTowards(rc, enemyLocation);
+            }
+            else {
+                MapLocation ourLoc = rc.getLocation();
+                MapLocation runAwayLocation = new MapLocation(ourLoc.x-enemyLocation.x, ourLoc.y-enemyLocation.y);
+                Pathing.moveTowards(rc, runAwayLocation);
+            }
+        }
+    }
+
+    static void moveTowardsEnemies(RobotController rc, int radius) throws GameActionException {
+        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
+        if (visibleEnemies.length != 0) {
+            MapLocation enemyLocation = averageLoc(visibleEnemies);
+            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
+            // If you are outside 3/4 the enemy's action radius, move towards it, else move away
+            if (visibleEnemies[0].getLocation().distanceSquaredTo(rc.getLocation()) > radius) {
+                Pathing.moveTowards(rc, enemyLocation);
+            }
+            else {
+                MapLocation ourLoc = rc.getLocation();
+                MapLocation runAwayLocation = new MapLocation(ourLoc.x-enemyLocation.x, ourLoc.y-enemyLocation.y);
+                Pathing.moveTowards(rc, runAwayLocation);
+            }
+        }
+    }
+
+    static MapLocation averageLoc(RobotInfo[] robots) {
+        int sumX = 0;
+        int sumY = 0;
+        for (int i = 0; i < robots.length; i++) {
+            MapLocation loc = robots[i].getLocation();
+            sumX += loc.x;
+            sumY += loc.y;
+        }
+        return new MapLocation((int) ((float)sumX / robots.length), (int) ((float) sumY / robots.length));
+
     }
 }

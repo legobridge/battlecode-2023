@@ -1,6 +1,7 @@
 package tacoplayer;
 
 import battlecode.common.*;
+
 import static tacoplayer.RobotPlayer.*;
 
 public class LauncherStrategy {
@@ -21,36 +22,28 @@ public class LauncherStrategy {
         // Movement
         moveTowardsEnemyIslands(rc);
         moveTowardsEnemies(rc);
+        moveTowardsEnemyHq(rc);
         Pathing.moveRandomly(rc);
 
         // Update islands - only every 4 rounds, it's expensive and not necessary every round
         if (rc.getRoundNum() % 4 == 0) {
+            closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
             Comms.updateIslands(rc);
         }
     }
 
     private static void moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
-        MapLocation closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
         if (closestEnemyIslandLoc != null) {
             rc.setIndicatorString("Moving towards enemy island! " + closestEnemyIslandLoc);
             Pathing.moveTowards(rc, closestEnemyIslandLoc);
         }
     }
 
-    private static void moveTowardsEnemies(RobotController rc) throws GameActionException {
-        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
-        if (visibleEnemies.length != 0) {
-            MapLocation enemyLocation = visibleEnemies[0].getLocation();
-            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
-            Pathing.moveTowards(rc, enemyLocation);
-        }
-    }
-
     private static void attackEnemies(RobotController rc) throws GameActionException {
         int radius = RobotType.LAUNCHER.actionRadiusSquared;
         RobotInfo[] enemies = rc.senseNearbyRobots(radius, theirTeam);
-        int lowestHealth = 1000;
-        int smallestDistance = 100;
+        int lowestHealth = Integer.MAX_VALUE;
+        int smallestDistance = Integer.MAX_VALUE;
         RobotInfo target = null;
         if (enemies.length > 0) {
             for (RobotInfo enemy : enemies) {
@@ -72,6 +65,13 @@ public class LauncherStrategy {
                     rc.attack(target.getLocation());
                 }
             }
+        }
+    }
+
+    private static void moveTowardsEnemyHq(RobotController rc) throws GameActionException {
+        if (closestEnemyHqLoc != null) {
+            rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
+            Pathing.moveTowards(rc, closestEnemyHqLoc);
         }
     }
 }

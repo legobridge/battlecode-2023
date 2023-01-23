@@ -1,6 +1,7 @@
 package tacoplayer;
 
 import battlecode.common.*;
+
 import static tacoplayer.RobotPlayer.*;
 
 public class CarrierStrategy {
@@ -26,15 +27,16 @@ public class CarrierStrategy {
         depositResource(rc, ResourceType.MANA);
         depositResource(rc, ResourceType.ELIXIR);
 
+        // TODO - Last hit
         // Occasionally try out the carriers attack
-        if (rng.nextInt(20) == 1) {
-            RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-            if (enemyRobots.length > 0) {
-                if (rc.canAttack(enemyRobots[0].location)) {
-                    rc.attack(enemyRobots[0].location);
-                }
-            }
-        }
+//        if (rng.nextInt(20) == 1) {
+//            RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+//            if (enemyRobots.length > 0) {
+//                if (rc.canAttack(enemyRobots[0].location)) {
+//                    rc.attack(enemyRobots[0].location);
+//                }
+//            }
+//        }
 
         int total = getTotalResources(rc);
 
@@ -43,8 +45,8 @@ public class CarrierStrategy {
             anchorMode = true;
         }
 
+        closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
         if (anchorMode) { // In anchor mode, go plant that flag
-            MapLocation closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
             if (closestNeutralIslandLoc == null) {
                 Pathing.moveRandomly(rc);
                 Pathing.moveRandomly(rc);
@@ -53,7 +55,7 @@ public class CarrierStrategy {
                 Pathing.moveTowards(rc, closestNeutralIslandLoc);
                 Pathing.moveTowards(rc, closestNeutralIslandLoc);
             }
-            if (rc.canPlaceAnchor()) {
+            if (rc.canPlaceAnchor() && closestNeutralIslandLoc.distanceSquaredTo(rc.getLocation()) == 0) {
                 rc.placeAnchor();
                 anchorMode = false;
             }
