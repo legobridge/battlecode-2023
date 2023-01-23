@@ -293,7 +293,7 @@ public class HeadquartersStrategy {
         for (int i = 0; i++ < adQueue.length; ) {
             totalAd += adQueue[i - 1];
         }
-        return totalAd / adQueue.length;
+        return (float) totalAd / adQueue.length;
     }
 
     static float mnGetMovingAverage() {
@@ -301,6 +301,6 @@ public class HeadquartersStrategy {
         for (int i = 0; i++ < mnQueue.length; ) {
             totalMn += mnQueue[i - 1];
         }
-        return totalMn / mnQueue.length;
+        return (float) totalMn / mnQueue.length;
     }
 }
