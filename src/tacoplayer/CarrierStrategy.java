@@ -1,6 +1,7 @@
 package tacoplayer;
 
 import battlecode.common.*;
+import static tacoplayer.RobotPlayer.*;
 
 public class CarrierStrategy {
 
@@ -16,8 +17,8 @@ public class CarrierStrategy {
         Comms.updateRobotCount(rc);
 
         // Collect from well if close and inventory not full
-        if (RobotPlayer.closestWellLoc != null && rc.canCollectResource(RobotPlayer.closestWellLoc, -1)) {
-            rc.collectResource(RobotPlayer.closestWellLoc, -1);
+        if (closestWellLoc != null && rc.canCollectResource(closestWellLoc, -1)) {
+            rc.collectResource(closestWellLoc, -1);
         }
 
         //Transfer resource to headquarters
@@ -26,7 +27,7 @@ public class CarrierStrategy {
         depositResource(rc, ResourceType.ELIXIR);
 
         // Occasionally try out the carriers attack
-        if (RobotPlayer.rng.nextInt(20) == 1) {
+        if (rng.nextInt(20) == 1) {
             RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
             if (enemyRobots.length > 0) {
                 if (rc.canAttack(enemyRobots[0].location)) {
@@ -37,19 +38,19 @@ public class CarrierStrategy {
 
         int total = getTotalResources(rc);
 
-        if (rc.canTakeAnchor(RobotPlayer.closestHqLoc, Anchor.STANDARD)) {
-            rc.takeAnchor(RobotPlayer.closestHqLoc, Anchor.STANDARD);
+        if (rc.canTakeAnchor(closestHqLoc, Anchor.STANDARD)) {
+            rc.takeAnchor(closestHqLoc, Anchor.STANDARD);
             anchorMode = true;
         }
 
         if (anchorMode) { // In anchor mode, go plant that flag
-            if (RobotPlayer.closestNeutralIslandLoc == null) {
+            if (closestNeutralIslandLoc == null) {
                 Pathing.moveRandomly(rc);
                 Pathing.moveRandomly(rc);
             }
             else {
-                Pathing.moveTowards(rc, RobotPlayer.closestNeutralIslandLoc);
-                Pathing.moveTowards(rc, RobotPlayer.closestNeutralIslandLoc);
+                Pathing.moveTowards(rc, closestNeutralIslandLoc);
+                Pathing.moveTowards(rc, closestNeutralIslandLoc);
             }
             if (rc.canPlaceAnchor()) {
                 rc.placeAnchor();
@@ -57,11 +58,11 @@ public class CarrierStrategy {
             }
         } else {
             if (total == 0) { // No resources -> look for well
-                if (RobotPlayer.closestWellLoc != null) {
+                if (closestWellLoc != null) {
                     MapLocation selfLoc = rc.getLocation();
-                    if (!selfLoc.isAdjacentTo(RobotPlayer.closestWellLoc)) {
-                        Pathing.moveTowards(rc, RobotPlayer.closestWellLoc);
-                        Pathing.moveTowards(rc, RobotPlayer.closestWellLoc);
+                    if (!selfLoc.isAdjacentTo(closestWellLoc)) {
+                        Pathing.moveTowards(rc, closestWellLoc);
+                        Pathing.moveTowards(rc, closestWellLoc);
                     }
                 } else {
                     Pathing.moveRandomly(rc);
@@ -71,8 +72,8 @@ public class CarrierStrategy {
 
             // Full resources -> go to HQ
             if (total == GameConstants.CARRIER_CAPACITY) {
-                Pathing.moveTowards(rc, RobotPlayer.closestHqLoc);
-                Pathing.moveTowards(rc, RobotPlayer.closestHqLoc);
+                Pathing.moveTowards(rc, closestHqLoc);
+                Pathing.moveTowards(rc, closestHqLoc);
             }
         }
     }
@@ -80,8 +81,8 @@ public class CarrierStrategy {
     static void depositResource(RobotController rc, ResourceType type) throws GameActionException {
         int amount = rc.getResourceAmount(type);
         if (amount > 0) {
-            if (rc.canTransferResource(RobotPlayer.closestHqLoc, type, amount)) {
-                rc.transferResource(RobotPlayer.closestHqLoc, type, amount);
+            if (rc.canTransferResource(closestHqLoc, type, amount)) {
+                rc.transferResource(closestHqLoc, type, amount);
             }
         }
     }

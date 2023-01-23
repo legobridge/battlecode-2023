@@ -4,6 +4,7 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
+import static tacoplayer.RobotPlayer.*;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -64,9 +65,9 @@ public class Pathing {
         MapLocation selfLoc = rc.getLocation();
         ArrayList<Direction> backupDirectionsToTry = new ArrayList<>();
         boolean moved = false;
-        int numDirections = RobotPlayer.directions.length;
+        int numDirections = directions.length;
         for (int i = 0; i < numDirections; i++) {
-            Direction dir = RobotPlayer.directions[RobotPlayer.rng.nextInt(numDirections)];
+            Direction dir = directions[rng.nextInt(numDirections)];
             MapLocation targetLoc = selfLoc.add(dir);
             if (lastFewLocs.contains(targetLoc)) { // If we've been here recently, avoid it
                 backupDirectionsToTry.add(dir);
