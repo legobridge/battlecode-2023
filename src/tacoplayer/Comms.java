@@ -48,10 +48,7 @@ public class Comms {
 
     static int getNumFromBits(int num, int bit_index1, int bit_index2) {
         int shifted = num >> (bit_index1 - 1);
-        int mask = 0;
-        for (int i = 0; i < bit_index2 - bit_index1 + 1; i++) {
-            mask += 1 << i;
-        }
+        int mask = (1 << (bit_index2 - bit_index1 + 1)) - 1;
         return shifted & mask;
     }
 
