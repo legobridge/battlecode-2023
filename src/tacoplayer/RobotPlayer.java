@@ -2,6 +2,7 @@ package tacoplayer;
 
 import battlecode.common.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -276,5 +277,23 @@ public strictfp class RobotPlayer {
         }
         return new MapLocation((int) ((float)sumX / robots.length), (int) ((float) sumY / robots.length));
 
+    }
+
+    static void moveTowardsRobots(RobotController rc, RobotInfo[] robots) throws GameActionException {
+        MapLocation target = averageLoc(robots);
+        Pathing.moveTowards(rc, target);
+    }
+
+    static void moveAwayFromRobots(RobotController rc, RobotInfo[] robots) throws GameActionException {
+        MapLocation target = averageLoc(robots);
+        moveAwayFromLocation(rc, target);
+    }
+
+    static void moveAwayFromLocation(RobotController rc, MapLocation loc) throws GameActionException {
+        MapLocation robotLoc = rc.getLocation();
+        int dx = robotLoc.x - loc.x;
+        int dy = robotLoc.y - loc.y;
+        MapLocation awayLoc = new MapLocation(robotLoc.x + dx, robotLoc.y + dy);
+        Pathing.moveTowards(rc, awayLoc);
     }
 }
