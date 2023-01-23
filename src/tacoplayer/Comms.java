@@ -93,10 +93,10 @@ public class Comms {
         return tryToWriteToSharedArray(rc, index, num_robots);
     }
 
-    static int getPrevRobotCount(RobotController rc, RobotType robot) {
+    static int getPrevRobotCount(RobotController rc, RobotType robot) throws GameActionException {
         int index = 3 + robot.ordinal();
         return getNumFromBits(
-                sharedArrayLocal[index], 9, 16);
+                rc.readSharedArray(index), 9, 16);
     }
 
     // Moves the first 8 bits to the last 8 bits of all the robot counts
@@ -143,7 +143,7 @@ public class Comms {
                 neutralIslands.add(hashedLoc);
             }
         }
-        MapLocation closest = MapLocationUtil.getClosestLocation(rc.getLocation(), neutralIslands);
+        MapLocation closest = getClosestLocation(rc.getLocation(), neutralIslands);
         return closest;
     }
 
@@ -157,7 +157,26 @@ public class Comms {
                 neutralIslands.add(hashedLoc);
             }
         }
-        return MapLocationUtil.getClosestLocation(rc.getLocation(), neutralIslands);
+        MapLocation closest = getClosestLocation(rc.getLocation(), neutralIslands);
+        return closest;
+    }
+
+    static MapLocation getClosestLocation(MapLocation startLoc, List<Integer> hashedLocs) {
+        MapLocation closestLoc = null;
+        int closest_distance = 10000;
+        for (int hashedLoc : hashedLocs) {
+            MapLocation loc = MapLocationUtil.unhashMapLocation(hashedLoc);
+            int distance = Math.abs(startLoc.x - loc.x) + Math.abs(startLoc.y - loc.y);
+            if (closestLoc == null) {
+                closestLoc = loc;
+                closest_distance = distance;
+            } else if (distance < closest_distance) {
+                closestLoc = loc;
+                closest_distance = distance;
+            }
+        }
+
+        return closestLoc;
     }
 
     private static void countIslands(RobotController rc) {
@@ -252,7 +271,7 @@ public class Comms {
 
         // If we don't control the island and we can write to the shared array, write it
         if (!our_team && rc.canWriteSharedArray(index, 0)) {
-//            System.out.println("ADDING ISLAND: " + island_id);
+            System.out.println("ADDING ISLAND: " + island_id);
 
             // Get the hashed location of an island square
             MapLocation island_loc = rc.senseNearbyIslandLocations(island_id)[0];
@@ -312,7 +331,7 @@ public class Comms {
 
         // If the team has changed, update it
         if (team != island_team_int) {
-//            System.out.println("CHANGING ISLAND TEAM: " + Integer.valueOf(team) + " TO " + Integer.valueOf(island_team_int));
+            System.out.println("CHANGING ISLAND TEAM: " + Integer.valueOf(team) + " TO " + Integer.valueOf(island_team_int));
             int new_element = bitHack(hashed_loc, island_team_int, 12, 2);
             tryToWriteToSharedArray(rc, index, new_element);
         }
@@ -320,7 +339,7 @@ public class Comms {
 
     private static void removeIsland(RobotController rc, int index) throws GameActionException {
         if (rc.canWriteSharedArray(index, 0)) {
-//            System.out.println("REMOVING ISLAND");
+            System.out.println("REMOVING ISLAND");
 
             // Erase location-team data
             tryToWriteToSharedArray(rc, index, 0);

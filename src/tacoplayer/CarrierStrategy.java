@@ -1,6 +1,7 @@
 package tacoplayer;
 
 import battlecode.common.*;
+
 import static tacoplayer.RobotPlayer.*;
 
 public class CarrierStrategy {
@@ -43,8 +44,8 @@ public class CarrierStrategy {
             anchorMode = true;
         }
 
+        closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
         if (anchorMode) { // In anchor mode, go plant that flag
-            MapLocation closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
             if (closestNeutralIslandLoc == null) {
                 Pathing.moveRandomly(rc);
                 Pathing.moveRandomly(rc);
@@ -53,7 +54,7 @@ public class CarrierStrategy {
                 Pathing.moveTowards(rc, closestNeutralIslandLoc);
                 Pathing.moveTowards(rc, closestNeutralIslandLoc);
             }
-            if (rc.canPlaceAnchor()) {
+            if (rc.canPlaceAnchor() && closestNeutralIslandLoc.distanceSquaredTo(rc.getLocation()) == 0) {
                 rc.placeAnchor();
                 anchorMode = false;
             }
@@ -88,7 +89,7 @@ public class CarrierStrategy {
         }
     }
 
-    static int getTotalResources(RobotController rc) {
+    static int getTotalResources(RobotController rc) throws GameActionException {
         return rc.getResourceAmount(ResourceType.ADAMANTIUM)
                 + rc.getResourceAmount(ResourceType.MANA)
                 + rc.getResourceAmount(ResourceType.ELIXIR);

@@ -58,13 +58,19 @@ public strictfp class RobotPlayer {
 
     // TODO - Convert all ArrayLists to arrays later for bytecode optimization
     // TODO - "Closest" is just straight line distance, improve upon that
+    // TODO - Stop getting confused by other robots
     static MapLocation closestHqLoc;
-    static MapLocation closestEnemyHqLoc;
     static MapLocation[] ourHqLocs = new MapLocation[4];
     static MapLocation[] enemyHqLocs = new MapLocation[12];
 
     static MapLocation closestWellLoc;
     static ArrayList<MapLocation> knownWellLocs = new ArrayList<>();
+
+    public static MapLocation closestNeutralIslandLoc;
+    static ArrayList<MapLocation> knownNeutralIslandLocs = new ArrayList<>();
+
+    public static MapLocation closestEnemyIslandLoc;
+    static ArrayList<MapLocation> knownEnemyIslandLocs = new ArrayList<>();
 
     // Lists to hold values that couldn't be written to shared array
     // but should be once the bot is in range to write
@@ -107,13 +113,14 @@ public strictfp class RobotPlayer {
                 scanObstacles(rc);
                 scanRobots(rc);
                 scanWells(rc);
-//                scanIslands(rc);
+                scanIslands(rc);
 
                 updateEnemyHqLocs();
 
                 if (rc.getType() != RobotType.HEADQUARTERS) {
-                    closestHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, ourHqLocs);
+                    closestHqLoc = getClosestMapLocEuclidean(rc, ourHqLocs, hqCount);
                 }
+                // TODO - guess all enemy hq locations and decide on the closest one
 
                 // The same run() function is called for every robot on your team, even if they are
                 // different types. Here, we separate the control depending on the RobotType, so we can
@@ -182,7 +189,7 @@ public strictfp class RobotPlayer {
         boolean[] symmetries = Comms.getMapSymmetries();
         for (int i = -1; ++i < hqCount;) {
             for (int j = -1; ++j < symmetries.length;) {
-                if (!symmetries[j]) {
+                if (symmetries[j]) {
                     enemyHqLocs[j * 4 + i] = null;
                 }
                 else {
@@ -190,6 +197,20 @@ public strictfp class RobotPlayer {
                 }
             }
         }
+    }
+
+    private static MapLocation getClosestMapLocEuclidean(RobotController rc, MapLocation[] mapLocations, int arLen) {
+        MapLocation selfLoc = rc.getLocation();
+        MapLocation closestLoc = null;
+        int closestLocDistSq = MAX_MAP_DIST_SQ;
+        for (int i = -1; ++i < arLen;) {
+            int thisDistSq = selfLoc.distanceSquaredTo(mapLocations[i]);
+            if (closestLoc == null || thisDistSq < closestLocDistSq) {
+                closestLoc = mapLocations[i];
+                closestLocDistSq = thisDistSq;
+            }
+        }
+        return closestLoc;
     }
 
 
@@ -216,16 +237,14 @@ public strictfp class RobotPlayer {
         for (RobotInfo robot : robots) {
             switch (robot.getType()) {
                 case HEADQUARTERS:
-                    if (robot.getTeam() == theirTeam) {
-                        // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
-                        // TODO - stop doing this once fairly confident of symmetry
-                        int mostSymmetryPossible = 0;
-                        MapLocation enemyHqLoc = robot.getLocation();
-                        for (int i = -1; ++i < hqCount;) {
-                            mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyHqLoc);
-                        }
-                        Comms.updateSymmetry(rc, mostSymmetryPossible);
+                    // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
+                    // TODO - stop doing this once fairly confident of symmetry
+                    int mostSymmetryPossible = 0;
+                    MapLocation enemyHqLoc = robot.getLocation();
+                    for (int i = -1; ++i < hqCount;) {
+                        mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyHqLoc);
                     }
+                    Comms.updateSymmetry(rc, mostSymmetryPossible);
                     break;
                 default: // TODO - sense other robots
                     break;
@@ -247,6 +266,84 @@ public strictfp class RobotPlayer {
             if (closestWellLoc == null || wellDistSq < closestWellDistSq) {
                 closestWellLoc = wellLoc;
                 closestWellDistSq = wellDistSq;
+            }
+        }
+    }
+
+    static void moveTowardsEnemies(RobotController rc) throws GameActionException {
+        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
+        if (visibleEnemies.length != 0) {
+            MapLocation enemyLocation = averageLoc(visibleEnemies);
+            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
+            // If you are outside 3/4 the enemy's action radius, move towards it, else move away
+            if (visibleEnemies[0].getLocation().distanceSquaredTo(rc.getLocation()) > rc.getType().actionRadiusSquared * 5/6) {
+                Pathing.moveTowards(rc, enemyLocation);
+            }
+            else {
+                MapLocation ourLoc = rc.getLocation();
+                MapLocation runAwayLocation = new MapLocation(ourLoc.x-enemyLocation.x, ourLoc.y-enemyLocation.y);
+                Pathing.moveTowards(rc, runAwayLocation);
+            }
+        }
+    }
+
+    static void moveTowardsEnemies(RobotController rc, int radius) throws GameActionException {
+        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
+        if (visibleEnemies.length != 0) {
+            MapLocation enemyLocation = averageLoc(visibleEnemies);
+            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
+            // If you are outside 3/4 the enemy's action radius, move towards it, else move away
+            if (visibleEnemies[0].getLocation().distanceSquaredTo(rc.getLocation()) > radius) {
+                Pathing.moveTowards(rc, enemyLocation);
+            }
+            else {
+                MapLocation ourLoc = rc.getLocation();
+                MapLocation runAwayLocation = new MapLocation(ourLoc.x-enemyLocation.x, ourLoc.y-enemyLocation.y);
+                Pathing.moveTowards(rc, runAwayLocation);
+            }
+        }
+    }
+
+    static MapLocation averageLoc(RobotInfo[] robots) {
+        int sumX = 0;
+        int sumY = 0;
+        for (int i = 0; i < robots.length; i++) {
+            MapLocation loc = robots[i].getLocation();
+            sumX += loc.x;
+            sumY += loc.y;
+        }
+        return new MapLocation((int) ((float)sumX / robots.length), (int) ((float) sumY / robots.length));
+
+    }
+
+    static void scanIslands(RobotController rc) throws GameActionException {
+        int[] ids = rc.senseNearbyIslands();
+        MapLocation selfLoc = rc.getLocation();
+        int closestIslandDistSq = MAX_MAP_DIST_SQ;
+
+        for (int id : ids) {
+            MapLocation[] islandLocs = rc.senseNearbyIslandLocations(id);
+            for (MapLocation islandLoc : islandLocs) {
+                Team teamOccupyingIsland = rc.senseTeamOccupyingIsland(id);
+                if (teamOccupyingIsland == Team.NEUTRAL) {
+                    if (!knownNeutralIslandLocs.contains(islandLoc)) {
+                        knownNeutralIslandLocs.add(islandLoc);
+                    }
+                    int islandDistSq = selfLoc.distanceSquaredTo(islandLoc);
+                    if (closestNeutralIslandLoc == null || islandDistSq < closestIslandDistSq) {
+                        closestNeutralIslandLoc = islandLoc;
+                        closestIslandDistSq = islandDistSq;
+                    }
+                } else if (teamOccupyingIsland == theirTeam) {
+                    if (!knownEnemyIslandLocs.contains(islandLoc)) {
+                        knownEnemyIslandLocs.add(islandLoc);
+                    }
+                    int islandDistSq = selfLoc.distanceSquaredTo(islandLoc);
+                    if (closestEnemyIslandLoc == null || islandDistSq < closestIslandDistSq) {
+                        closestEnemyIslandLoc = islandLoc;
+                        closestIslandDistSq = islandDistSq;
+                    }
+                }
             }
         }
     }
