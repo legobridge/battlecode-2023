@@ -19,8 +19,10 @@ public class HeadquartersStrategy {
     // TODO: Come up with something better than for(int i = 0; i++ < 5; )
 
     final static int SMALL_MAP_THRESH = 1000;
-    final static int MAGIC_NUM_TURNS = 200;
-    final static int MAGIC_ANCHOR_NUM_TURNS = 100;
+    final static int MAGIC_NUM_TURNS_TURTLE = 200;
+    final static int MAGIC_ANCHOR_NUM_TURNS_TURTLE = 100;
+    final static int MAGIC_NUM_TURNS_RUSH = 500;
+    final static int MAGIC_ANCHOR_NUM_TURNS_RUSH = 200;
     // Number of turns for moving average
     final static int AVERAGE_PERIOD = 30;
     static int[] adQueue = new int[AVERAGE_PERIOD];
@@ -28,6 +30,12 @@ public class HeadquartersStrategy {
     static int lastBuiltAnchor = 0;
     static int mapSize = 0;
     static MapLocation mapCenter = null;
+    // total 10 cooldown / 2 per action = 5
+    final static int ACTIONS_PER_TURN = 5;
+    static int carriersBuilt = 0;
+    final static int MAX_CARRIERS_BUILT = 50;
+    static int launchersBuilt = 0;
+    final static int MIN_LAUNCHERS_BUILT = 100;
 
     static void runHeadquarters(RobotController rc) throws GameActionException {
         if (rc.getRoundNum() == 1) {
@@ -52,25 +60,24 @@ public class HeadquartersStrategy {
             if (rc.getRoundNum() == 1) {
                 System.out.print("RUSHHHHHHH!");
             }
-        } else {
-            // TURTLE
-            if (rc.getRoundNum() == 1) {
-                System.out.print("TURTLE UP");
-            }
             lastBuiltAnchor++;
             if (turnCount == 1) {
-                for (int i = 0; i++ < 5; ) {
+                // initially build 3 launchers and 2 carriers
+                for (int i = 0; i++ < 3; ) {
                     if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                         rc.setIndicatorString("Building a launcher");
+                        launchersBuilt++;
                     }
                 }
-                if (tryToBuildRobot(rc, RobotType.CARRIER)) {
-                    rc.setIndicatorString("Building a carrier");
+                for (int i = 0; i++ < 2; ) {
+                    if (tryToBuildRobot(rc, RobotType.CARRIER)) {
+                        rc.setIndicatorString("Building a carrier");
+                        carriersBuilt++;
+                    }
                 }
             }
-            // if it has been 200 turns, and we see a neutral island make an anchor
             /** MAGIC NUMBERS USED **/
-            else if (turnCount > MAGIC_NUM_TURNS && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS) {
+            else if (turnCount > MAGIC_NUM_TURNS_RUSH && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_RUSH) {
                 // wait for resources and build an anchor
                 rc.setIndicatorString("Trying to build an anchor");
                 if (rc.canBuildAnchor(Anchor.STANDARD)) {
@@ -78,7 +85,72 @@ public class HeadquartersStrategy {
                     rc.buildAnchor(Anchor.STANDARD);
                     lastBuiltAnchor = 0;
                 } else {
-                    for (int i = 0; i++ < 5; ) {
+                    for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
+                        if (mana > RobotType.LAUNCHER.getBuildCost(ResourceType.MANA) + Anchor.STANDARD.getBuildCost(ResourceType.MANA)) {
+                            if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                                rc.setIndicatorString("Building a launcher");
+                                launchersBuilt++;
+                            }
+                        /** MAGIC NUMBER USED **/
+                        } else if (ad > RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM) + Anchor.STANDARD.getBuildCost(ResourceType.ADAMANTIUM) && (carriersBuilt < MAX_CARRIERS_BUILT || launchersBuilt > MIN_LAUNCHERS_BUILT)) {
+                            if (tryToBuildRobot(rc, RobotType.CARRIER)) {
+                                rc.setIndicatorString("Building a carrier");
+                                carriersBuilt++;
+                            }
+                        } else {
+                            // wait for resources
+                            rc.setIndicatorString("Waiting for resources");
+                        }
+                    }
+                }
+            }
+            else {
+                for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
+                    if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                        rc.setIndicatorString("Building a launcher");
+                        launchersBuilt++;
+                    /** MAGIC NUMBER USED **/
+                    } else if (carriersBuilt < MAX_CARRIERS_BUILT || launchersBuilt > MIN_LAUNCHERS_BUILT) {
+                        if (tryToBuildRobot(rc, RobotType.CARRIER)) {
+                            rc.setIndicatorString("Building a carrier");
+                            carriersBuilt++;
+                        }
+                    } else {
+                        rc.setIndicatorString("Waiting for resources");
+                    }
+                }
+            }
+        }
+
+        else {
+            // TURTLE
+            if (rc.getRoundNum() == 1) {
+                System.out.print("TURTLE UP");
+            }
+            lastBuiltAnchor++;
+            if (turnCount == 1) {
+                for (int i = 0; i++ < 3; ) {
+                    if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                        rc.setIndicatorString("Building a launcher");
+                    }
+                }
+                for (int i = 0; i++ < 2; ) {
+                    if (tryToBuildRobot(rc, RobotType.CARRIER)) {
+                        rc.setIndicatorString("Building a carrier");
+                    }
+                }
+            }
+            // if it has been 200 turns, and we see a neutral island make an anchor
+            /** MAGIC NUMBERS USED **/
+            else if (turnCount > MAGIC_NUM_TURNS_TURTLE && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_TURTLE) {
+                // wait for resources and build an anchor
+                rc.setIndicatorString("Trying to build an anchor");
+                if (rc.canBuildAnchor(Anchor.STANDARD)) {
+                    rc.setIndicatorString("Building an anchor");
+                    rc.buildAnchor(Anchor.STANDARD);
+                    lastBuiltAnchor = 0;
+                } else {
+                    for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
                         if (mana > RobotType.LAUNCHER.getBuildCost(ResourceType.MANA) + Anchor.STANDARD.getBuildCost(ResourceType.MANA)) {
                             if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                                 rc.setIndicatorString("Building a launcher");
@@ -99,7 +171,7 @@ public class HeadquartersStrategy {
                 if (turnCount > AVERAGE_PERIOD) {
                     if (adGetMovingAverage() > mnGetMovingAverage()) {
                         // more ad being gathered per turn
-                        for (int i = 0; i++ < 5; ) {
+                        for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
                             if (tryToBuildRobot(rc, RobotType.CARRIER)) {
                                 rc.setIndicatorString("Building a carrier");
                             } else if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
@@ -110,7 +182,7 @@ public class HeadquartersStrategy {
                         }
                     } else {
                         // more mana being gathered per turn
-                        for (int i = 0; i++ < 5; ) {
+                        for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
                             if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                                 rc.setIndicatorString("Building a launcher");
                             } else if (tryToBuildRobot(rc, RobotType.CARRIER)) {
@@ -123,7 +195,7 @@ public class HeadquartersStrategy {
                 }
                 // we don't have moving average
                 else {
-                    for (int i = 0; i++ < 5; ) {
+                    for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
                         if (tryToBuildRobot(rc, RobotType.CARRIER)) {
                             rc.setIndicatorString("Building a carrier");
                         } else if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
