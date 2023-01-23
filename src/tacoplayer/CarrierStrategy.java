@@ -27,15 +27,16 @@ public class CarrierStrategy {
         depositResource(rc, ResourceType.MANA);
         depositResource(rc, ResourceType.ELIXIR);
 
+        // TODO - Last hit
         // Occasionally try out the carriers attack
-        if (rng.nextInt(20) == 1) {
-            RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-            if (enemyRobots.length > 0) {
-                if (rc.canAttack(enemyRobots[0].location)) {
-                    rc.attack(enemyRobots[0].location);
-                }
-            }
-        }
+//        if (rng.nextInt(20) == 1) {
+//            RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+//            if (enemyRobots.length > 0) {
+//                if (rc.canAttack(enemyRobots[0].location)) {
+//                    rc.attack(enemyRobots[0].location);
+//                }
+//            }
+//        }
 
         int total = getTotalResources(rc);
 
@@ -89,7 +90,7 @@ public class CarrierStrategy {
         }
     }
 
-    static int getTotalResources(RobotController rc) throws GameActionException {
+    static int getTotalResources(RobotController rc) {
         return rc.getResourceAmount(ResourceType.ADAMANTIUM)
                 + rc.getResourceAmount(ResourceType.MANA)
                 + rc.getResourceAmount(ResourceType.ELIXIR);

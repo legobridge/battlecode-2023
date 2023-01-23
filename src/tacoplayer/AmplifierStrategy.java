@@ -1,10 +1,8 @@
 package tacoplayer;
 
-import battlecode.common.Clock;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 
-import static quesadillaplayer.RobotPlayer.closestEnemyIslandLoc;
 
 public class AmplifierStrategy {
     /**
@@ -15,14 +13,7 @@ public class AmplifierStrategy {
         // Update alive counter
         Comms.updateRobotCount(rc);
 
-        RobotPlayer.moveTowardsEnemies(rc, 25);
         Pathing.moveRandomly(rc);
-        if (rc.getRoundNum() % 4 == 0) {
-            closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
-            int b1 = Clock.getBytecodesLeft();
-            Comms.updateIslands(rc);
-//            System.out.println("bc: " + String.valueOf(b1 - Clock.getBytecodesLeft()));
-        }
     }
 
 }

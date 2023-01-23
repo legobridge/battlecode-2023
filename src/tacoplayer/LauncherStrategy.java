@@ -2,8 +2,7 @@ package tacoplayer;
 
 import battlecode.common.*;
 
-import static tacoplayer.RobotPlayer.closestEnemyIslandLoc;
-import static tacoplayer.RobotPlayer.theirTeam;
+import static tacoplayer.RobotPlayer.*;
 
 public class LauncherStrategy {
     /**
@@ -14,20 +13,22 @@ public class LauncherStrategy {
         // Update alive counter
         Comms.updateRobotCount(rc);
 
+        // Update closest Enemy HQ Location
+        closestEnemyHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, enemyHqLocs);
+
         // Attack
         attackEnemies(rc);
 
         // Movement
         moveTowardsEnemyIslands(rc);
-        RobotPlayer.moveTowardsEnemies(rc);
+        moveTowardsEnemies(rc);
+        moveTowardsEnemyHq(rc);
         Pathing.moveRandomly(rc);
 
-        // Update islands - only every 4 rounds, its expensive and not necessary every round
+        // Update islands - only every 4 rounds, it's expensive and not necessary every round
         if (rc.getRoundNum() % 4 == 0) {
             closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
-            int b1 = Clock.getBytecodesLeft();
             Comms.updateIslands(rc);
-//            System.out.println("bc: " + String.valueOf(b1 - Clock.getBytecodesLeft()));
         }
     }
 
@@ -41,8 +42,8 @@ public class LauncherStrategy {
     private static void attackEnemies(RobotController rc) throws GameActionException {
         int radius = RobotType.LAUNCHER.actionRadiusSquared;
         RobotInfo[] enemies = rc.senseNearbyRobots(radius, theirTeam);
-        int lowestHealth = 1000;
-        int smallestDistance = 100;
+        int lowestHealth = Integer.MAX_VALUE;
+        int smallestDistance = Integer.MAX_VALUE;
         RobotInfo target = null;
         if (enemies.length > 0) {
             for (RobotInfo enemy : enemies) {
@@ -64,6 +65,13 @@ public class LauncherStrategy {
                     rc.attack(target.getLocation());
                 }
             }
+        }
+    }
+
+    private static void moveTowardsEnemyHq(RobotController rc) throws GameActionException {
+        if (closestEnemyHqLoc != null) {
+            rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
+            Pathing.moveTowards(rc, closestEnemyHqLoc);
         }
     }
 }
