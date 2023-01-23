@@ -16,14 +16,111 @@ public class LauncherStrategy {
         // Update closest Enemy HQ Location
         closestEnemyHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, enemyHqLocs);
 
+        // move together
+        // sense nearby robots
+        RobotInfo[] alliedRobots = rc.senseNearbyRobots(-1, ourTeam);
+        int launchersNearby = 0;
+        // go through the nearby robots (launchers) and assign yourself as leader or follow a leader
+        int leader_id = Integer.MAX_VALUE;
+        RobotInfo leader = null;
+        for (int i = 0; i++ < alliedRobots.length; ) {
+            if (alliedRobots[i - 1].getType() == RobotType.LAUNCHER) {
+                if (alliedRobots[i - 1].getID() < leader_id) {
+                    leader_id = alliedRobots[i -1].getID();
+                    leader = alliedRobots[i - 1];
+                    launchersNearby++;
+                }
+            }
+        }
+        // not enough launchers nearby
+        if (launchersNearby < 3) {
+            Pathing.moveRandomly(rc);
+            rc.setIndicatorString("moving randomly");
+//            // move towards our own closest HQ
+//            int leastDistance = Integer.MAX_VALUE;
+//            MapLocation targetHqLoc = null;
+//            for (int i = 0; i++ < ourHqLocs.length; ) {
+//                if (ourHqLocs[i -1] != null) {
+//                    if (rc.getLocation().distanceSquaredTo(ourHqLocs[i - 1]) < leastDistance) {
+//                        leastDistance = rc.getLocation().distanceSquaredTo(ourHqLocs[i - 1]);
+//                        targetHqLoc = ourHqLocs[i - 1];
+//                    }
+//                }
+//            }
+//            if (targetHqLoc != null) {
+//                Direction dir = rc.getLocation().directionTo(targetHqLoc);
+//                if (rc.canMove(dir)) {
+//                    rc.move(dir);
+//                    rc.setIndicatorString("moving towards closest home hq");
+//                }
+//                else {
+//                    Pathing.moveRandomly(rc);
+//                    rc.setIndicatorString("moving randomly");
+//                }
+//            }
+//            else {
+//                Pathing.moveRandomly(rc);
+//                rc.setIndicatorString("moving randomly");
+//            }
+        }
+        // I am the leader!
+        else if (leader_id > rc.getID()) {
+            rc.setIndicatorString("I am a leader!");
+            if (moveTowardsEnemies(rc)) {
+                System.out.print("enemy Bot");
+                rc.setIndicatorString("moving towards enemy robots");
+            }
+            else {
+//                if (moveTowardsEnemyHq(rc)) {
+//                    System.out.print("enemy HQ");
+//                    rc.setIndicatorString("moving towards enemy hq");
+//                }
+//                else {
+//                    if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
+//                        rc.move(rc.getLocation().directionTo(mapCenter));
+//                        rc.setIndicatorString("moving towards center");
+//                    }
+//                    else {
+//                        Pathing.moveRandomly(rc);
+//                        rc.setIndicatorString("moving randomly");
+//                    }
+//                }
+                if (moveTowardsEnemyIslands(rc)) {
+                    rc.setIndicatorString("moving towards enemy island");
+                }
+                else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
+                    System.out.print("Center");
+                    rc.move(rc.getLocation().directionTo(mapCenter));
+                    rc.setIndicatorString("moving towards center");
+                }
+                else {
+                    System.out.print("Random");
+                    Pathing.moveRandomly(rc);
+                    rc.setIndicatorString("moving randomly");
+                }
+            }
+        }
+        // follow the leader
+        else {
+            Direction dir = rc.getLocation().directionTo(leader.getLocation());
+            if (rc.canMove(dir)) {
+                rc.move(dir);
+                System.out.print("Heil!");
+                rc.setIndicatorString("moving towards leader " + leader_id);
+            } else {
+                Pathing.moveRandomly(rc);
+                rc.setIndicatorString("moving randomly");
+            }
+        }
+
         // Attack
         attackEnemies(rc);
 
         // Movement
-        moveTowardsEnemyIslands(rc);
-        moveTowardsEnemies(rc);
-        moveTowardsEnemyHq(rc);
-        Pathing.moveRandomly(rc);
+        // moveTowardsEnemyIslands(rc);
+        // moveTowardsEnemies(rc);
+        // moveTowardsEnemyHq(rc);
+        // Pathing.moveRandomly(rc);
 
         // Update islands - only every 4 rounds, it's expensive and not necessary every round
         if (rc.getRoundNum() % 4 == 0) {
@@ -32,11 +129,13 @@ public class LauncherStrategy {
         }
     }
 
-    private static void moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
+    private static boolean moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
         if (closestEnemyIslandLoc != null) {
             rc.setIndicatorString("Moving towards enemy island! " + closestEnemyIslandLoc);
             Pathing.moveTowards(rc, closestEnemyIslandLoc);
+            return true;
         }
+        return false;
     }
 
     private static void attackEnemies(RobotController rc) throws GameActionException {
@@ -68,10 +167,13 @@ public class LauncherStrategy {
         }
     }
 
-    private static void moveTowardsEnemyHq(RobotController rc) throws GameActionException {
+    private static boolean moveTowardsEnemyHq(RobotController rc) throws GameActionException {
         if (closestEnemyHqLoc != null) {
             rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
             Pathing.moveTowards(rc, closestEnemyHqLoc);
+            return true;
         }
+        return false;
     }
+
 }

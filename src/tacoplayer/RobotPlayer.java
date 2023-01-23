@@ -232,7 +232,7 @@ public strictfp class RobotPlayer {
         }
     }
 
-    static void moveTowardsEnemies(RobotController rc) throws GameActionException {
+    static boolean moveTowardsEnemies(RobotController rc) throws GameActionException {
         RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
         if (visibleEnemies.length != 0) {
             MapLocation enemyLocation = averageLoc(visibleEnemies);
@@ -240,13 +240,16 @@ public strictfp class RobotPlayer {
             // If you are outside 3/4 the enemy's action radius, move towards it, else move away
             if (visibleEnemies[0].getLocation().distanceSquaredTo(rc.getLocation()) > rc.getType().actionRadiusSquared * 5/6) {
                 Pathing.moveTowards(rc, enemyLocation);
+                return true;
             }
             else {
                 MapLocation ourLoc = rc.getLocation();
                 MapLocation runAwayLocation = new MapLocation(ourLoc.x-enemyLocation.x, ourLoc.y-enemyLocation.y);
                 Pathing.moveTowards(rc, runAwayLocation);
+                return true;
             }
         }
+        return false;
     }
 
     static void moveTowardsEnemies(RobotController rc, int radius) throws GameActionException {
