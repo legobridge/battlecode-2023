@@ -90,8 +90,11 @@ public strictfp class RobotPlayer {
         // Set game constants
         setGameConstants(rc);
 
-        updateAlliedHqLocs(rc);
-        updateEnemyHqLocs();
+        Comms.readAndStoreSharedArray(rc);
+        initializeAlliedHqLocs(rc);
+        if (Comms.isFirstHQ(rc)) {
+            Comms.initializeSymmetry(rc);
+        }
 
         //noinspection InfiniteLoopStatement
         while (true) {
@@ -112,7 +115,11 @@ public strictfp class RobotPlayer {
                 scanWells(rc);
                 scanIslands(rc);
 
-                closestHqLoc = getClosestMapLocEuclidean(rc, ourHqLocs, hqCount);
+                updateEnemyHqLocs();
+
+                if (rc.getType() != RobotType.HEADQUARTERS) {
+                    closestHqLoc = getClosestMapLocEuclidean(rc, ourHqLocs, hqCount);
+                }
                 // TODO - guess all enemy hq locations and decide on the closest one
 
                 // The same run() function is called for every robot on your team, even if they are
@@ -161,21 +168,33 @@ public strictfp class RobotPlayer {
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
 
-    private static void updateAlliedHqLocs(RobotController rc) throws GameActionException {
+    private static void initializeAlliedHqLocs(RobotController rc) throws GameActionException {
         if (rc.getType() == RobotType.HEADQUARTERS) {
             Comms.updateHQLocation(rc);
         }
         else { // Note that this means HQs don't know about other allied HQs
-            for (int i = 0; i++ < hqCount;) {
+            while (++hqCount < 4) {
+                if (Comms.sharedArrayLocal[hqCount] == 0) {
+                    break;
+                }
+            }
+//            System.out.println("We have " + hqCount + " HQs.");
+            for (int i = -1; ++i < hqCount;) {
                 ourHqLocs[i] = MapLocationUtil.unhashMapLocation(Comms.sharedArrayLocal[i]);
             }
         }
     }
 
     private static void updateEnemyHqLocs() {
-        for (int i = 0; i++ < hqCount;) {
-            for (int j = 0; j++ < SymmetryType.values().length;) {
-                enemyHqLocs[j * 4 + i] = MapLocationUtil.calcSymmetricLoc(ourHqLocs[i], SymmetryType.values()[j]);
+        boolean[] symmetries = Comms.getMapSymmetries();
+        for (int i = -1; ++i < hqCount;) {
+            for (int j = -1; ++j < symmetries.length;) {
+                if (symmetries[j]) {
+                    enemyHqLocs[j * 4 + i] = null;
+                }
+                else {
+                    enemyHqLocs[j * 4 + i] = MapLocationUtil.calcSymmetricLoc(ourHqLocs[i], SymmetryType.values()[j]);
+                }
             }
         }
     }
@@ -184,7 +203,7 @@ public strictfp class RobotPlayer {
         MapLocation selfLoc = rc.getLocation();
         MapLocation closestLoc = null;
         int closestLocDistSq = MAX_MAP_DIST_SQ;
-        for (int i = 0; i++ < arLen;) {
+        for (int i = -1; ++i < arLen;) {
             int thisDistSq = selfLoc.distanceSquaredTo(mapLocations[i]);
             if (closestLoc == null || thisDistSq < closestLocDistSq) {
                 closestLoc = mapLocations[i];
@@ -203,7 +222,6 @@ public strictfp class RobotPlayer {
             ourTeam = Team.B;
             theirTeam = Team.A;
         }
-        hqCount = rc.getRobotCount();
         islandCount = rc.getIslandCount();
         mapWidth = rc.getMapWidth();
         mapHeight = rc.getMapHeight();
@@ -219,9 +237,11 @@ public strictfp class RobotPlayer {
         for (RobotInfo robot : robots) {
             switch (robot.getType()) {
                 case HEADQUARTERS:
+                    // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
+                    // TODO - stop doing this once fairly confident of symmetry
                     int mostSymmetryPossible = 0;
                     MapLocation enemyHqLoc = robot.getLocation();
-                    for (int i = 0; i++ < hqCount;) {
+                    for (int i = -1; ++i < hqCount;) {
                         mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyHqLoc);
                     }
                     Comms.updateSymmetry(rc, mostSymmetryPossible);
