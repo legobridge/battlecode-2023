@@ -2,6 +2,8 @@ package tacoplayer;
 
 import battlecode.common.*;
 
+import static tacoplayer.RobotPlayer.*;
+
 public class HeadquartersStrategy {
 
     /**
@@ -41,9 +43,9 @@ public class HeadquartersStrategy {
         }
 
         int ad = rc.getResourceAmount(ResourceType.ADAMANTIUM);
-        adQueue[RobotPlayer.turnCount % AVERAGE_PERIOD] = ad - adQueue[(RobotPlayer.turnCount - 1) % AVERAGE_PERIOD];
+        adQueue[turnCount % AVERAGE_PERIOD] = ad - adQueue[(turnCount - 1) % AVERAGE_PERIOD];
         int mana = rc.getResourceAmount(ResourceType.MANA);
-        mnQueue[RobotPlayer.turnCount % AVERAGE_PERIOD] = mana - mnQueue[(RobotPlayer.turnCount - 1) % AVERAGE_PERIOD];
+        mnQueue[turnCount % AVERAGE_PERIOD] = mana - mnQueue[(turnCount - 1) % AVERAGE_PERIOD];
 
         if (mapSize < SMALL_MAP_THRESH) {
             // RUSH
@@ -56,7 +58,7 @@ public class HeadquartersStrategy {
                 System.out.print("TURTLE UP");
             }
             lastBuiltAnchor++;
-            if (RobotPlayer.turnCount == 1) {
+            if (turnCount == 1) {
                 for (int i = 0; i++ < 5; ) {
                     if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                         rc.setIndicatorString("Building a launcher");
@@ -68,7 +70,7 @@ public class HeadquartersStrategy {
             }
             // if it has been 200 turns, and we see a neutral island make an anchor
             /** MAGIC NUMBERS USED **/
-            else if (RobotPlayer.turnCount > MAGIC_NUM_TURNS && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS) {
+            else if (turnCount > MAGIC_NUM_TURNS && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS) {
                 // wait for resources and build an anchor
                 rc.setIndicatorString("Trying to build an anchor");
                 if (rc.canBuildAnchor(Anchor.STANDARD)) {
@@ -94,7 +96,7 @@ public class HeadquartersStrategy {
             } else {
                 // build bots
                 // we have moving average
-                if (RobotPlayer.turnCount > AVERAGE_PERIOD) {
+                if (turnCount > AVERAGE_PERIOD) {
                     if (adGetMovingAverage() > mnGetMovingAverage()) {
                         // more ad being gathered per turn
                         for (int i = 0; i++ < 5; ) {
@@ -135,7 +137,7 @@ public class HeadquartersStrategy {
 
 //        adQueuePush(rc.getResourceAmount(ResourceType.ADAMANTIUM) - adQueue[0]);
 //        mnQueuePush(rc.getResourceAmount(ResourceType.MANA) - mnQueue[0]);
-//        if (RobotPlayer.turnCount > 20) {
+//        if (turnCount > 20) {
 //            float adMovingAverageDividedCarrierCost = adGetMovingAverage() / RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM);
 //            float mnMovingAverageDividedLauncherCost = mnGetMovingAverage() / RobotType.LAUNCHER.getBuildCost(ResourceType.MANA);
 //            float ratioAdMn = adMovingAverageDividedCarrierCost / mnMovingAverageDividedLauncherCost;
@@ -178,10 +180,10 @@ public class HeadquartersStrategy {
                 break;
 
             default:
-                for (int i = 0; i++ < RobotPlayer.directions.length;) {
-                    MapLocation candidateBuildLoc = rc.getLocation().add(RobotPlayer.directions[i-1]);
-                    while (rc.getLocation().isWithinDistanceSquared(candidateBuildLoc.add(RobotPlayer.directions[i-1]), RobotType.HEADQUARTERS.actionRadiusSquared)) {
-                        candidateBuildLoc = candidateBuildLoc.add(RobotPlayer.directions[i-1]);
+                for (int i = 0; i++ < directions.length;) {
+                    MapLocation candidateBuildLoc = rc.getLocation().add(directions[i-1]);
+                    while (rc.getLocation().isWithinDistanceSquared(candidateBuildLoc.add(directions[i-1]), RobotType.HEADQUARTERS.actionRadiusSquared)) {
+                        candidateBuildLoc = candidateBuildLoc.add(directions[i-1]);
                     }
                     if (rc.canBuildRobot(robotTypeToBuild, candidateBuildLoc)) {
                         rc.buildRobot(robotTypeToBuild, candidateBuildLoc);
