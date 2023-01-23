@@ -44,6 +44,7 @@ public class CarrierStrategy {
         }
 
         if (anchorMode) { // In anchor mode, go plant that flag
+            MapLocation closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
             if (closestNeutralIslandLoc == null) {
                 Pathing.moveRandomly(rc);
                 Pathing.moveRandomly(rc);
@@ -87,7 +88,7 @@ public class CarrierStrategy {
         }
     }
 
-    static int getTotalResources(RobotController rc) throws GameActionException {
+    static int getTotalResources(RobotController rc) {
         return rc.getResourceAmount(ResourceType.ADAMANTIUM)
                 + rc.getResourceAmount(ResourceType.MANA)
                 + rc.getResourceAmount(ResourceType.ELIXIR);

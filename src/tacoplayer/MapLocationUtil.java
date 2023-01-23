@@ -1,6 +1,10 @@
 package tacoplayer;
 
 import battlecode.common.MapLocation;
+import battlecode.common.RobotController;
+
+import java.util.List;
+
 import static tacoplayer.RobotPlayer.*;
 
 public class MapLocationUtil {
@@ -53,5 +57,40 @@ public class MapLocationUtil {
             symmetries += 1; // ROTATIONAL
         }
         return symmetries;
+    }
+
+    static MapLocation getClosestMapLocEuclidean(RobotController rc, MapLocation[] mapLocations) {
+        MapLocation selfLoc = rc.getLocation();
+        MapLocation closestLoc = null;
+        int closestLocDistSq = MAX_MAP_DIST_SQ;
+        for (int i = -1; ++i < mapLocations.length;) {
+            if (mapLocations[i] == null) {
+                continue;
+            }
+            int thisDistSq = selfLoc.distanceSquaredTo(mapLocations[i]);
+            if (closestLoc == null || thisDistSq < closestLocDistSq) {
+                closestLoc = mapLocations[i];
+                closestLocDistSq = thisDistSq;
+            }
+        }
+        return closestLoc;
+    }
+
+    static MapLocation getClosestLocation(MapLocation startLoc, List<Integer> hashedLocs) {
+        MapLocation closestLoc = null;
+        int closest_distance = 10000;
+        for (int hashedLoc : hashedLocs) {
+            MapLocation loc = unhashMapLocation(hashedLoc);
+            int distance = Math.abs(startLoc.x - loc.x) + Math.abs(startLoc.y - loc.y);
+            if (closestLoc == null) {
+                closestLoc = loc;
+                closest_distance = distance;
+            } else if (distance < closest_distance) {
+                closestLoc = loc;
+                closest_distance = distance;
+            }
+        }
+
+        return closestLoc;
     }
 }

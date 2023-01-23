@@ -14,8 +14,9 @@ public class Pathing {
 
     static Direction currentDirection = null;
 
-    static int MAX_PREV_LOCS_TO_STORE = 5;
-    static LinkedList<MapLocation> lastFewLocs = new LinkedList<>();
+    final static int MAX_PREV_LOCS_TO_STORE = 5;
+    static int lastFewLocsIndex = 0;
+    static MapLocation[] lastFewLocs = new MapLocation[MAX_PREV_LOCS_TO_STORE];
 
     // TODO - Move (and act) as many times as cooldown allows
     // TODO - consider currents to be obstacles (soft)
@@ -31,7 +32,7 @@ public class Pathing {
         MapLocation selfLoc = rc.getLocation();
         Direction dir = rc.getLocation().directionTo(target);
         MapLocation targetLoc = selfLoc.add(dir);
-        if (!lastFewLocs.contains(targetLoc) && rc.canMove(dir)) {
+        if (!ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc) && rc.canMove(dir)) {
             moveAndUpdateLastFewLocs(rc, dir);
             currentDirection = null;
         } else {
@@ -42,7 +43,7 @@ public class Pathing {
             boolean moved = false;
             for (int i = 0; i < 8; i++) {
                 targetLoc = selfLoc.add(currentDirection);
-                if (!lastFewLocs.contains(targetLoc) && rc.canMove(currentDirection)) {
+                if (!ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc) && rc.canMove(currentDirection)) {
                     moveAndUpdateLastFewLocs(rc, currentDirection);
                     currentDirection = currentDirection.rotateRight();
                     moved = true;
@@ -69,7 +70,7 @@ public class Pathing {
         for (int i = 0; i < numDirections; i++) {
             Direction dir = directions[rng.nextInt(numDirections)];
             MapLocation targetLoc = selfLoc.add(dir);
-            if (lastFewLocs.contains(targetLoc)) { // If we've been here recently, avoid it
+            if (ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)) { // If we've been here recently, avoid it
                 backupDirectionsToTry.add(dir);
             } else if (rc.canMove(dir)) {
                 moved = true;
@@ -89,9 +90,6 @@ public class Pathing {
 
     private static void moveAndUpdateLastFewLocs(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
-        lastFewLocs.addLast(rc.getLocation());
-        if (lastFewLocs.size() > MAX_PREV_LOCS_TO_STORE) {
-            lastFewLocs.removeFirst();
-        }
+        lastFewLocs[(lastFewLocsIndex++) % MAX_PREV_LOCS_TO_STORE] = rc.getLocation();
     }
 }
