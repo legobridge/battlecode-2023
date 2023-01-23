@@ -3,6 +3,8 @@ package tacoplayer;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
 
+import static tacoplayer.RobotPlayer.*;
+
 
 public class AmplifierStrategy {
     /**
@@ -12,8 +14,12 @@ public class AmplifierStrategy {
     static void runAmplifier(RobotController rc) throws GameActionException {
         // Update alive counter
         Comms.updateRobotCount(rc);
-
-        Pathing.moveRandomly(rc);
+        if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
+            rc.move(rc.getLocation().directionTo(mapCenter));
+        }
+        else {
+            Pathing.moveRandomly(rc);
+        }
     }
 
 }

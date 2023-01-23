@@ -69,6 +69,19 @@ public class HeadquartersStrategy {
                     }
                 }
             }
+            else if (turnCount >= MAGIC_NUM_TURNS_RUSH && turnCount % 200 == 0) {
+                for (int i = 0; i++ < 2; ) {
+                    if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
+                        rc.setIndicatorString("Building an amplifierr");
+                    }
+                }
+                for (int i = 0; i++ < 3; ) {
+                    if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                        rc.setIndicatorString("Building a launcher");
+                        launchersBuilt++;
+                    }
+                }
+            }
             /** MAGIC NUMBERS USED **/
             else if (turnCount > MAGIC_NUM_TURNS_RUSH
                     && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_RUSH
@@ -133,6 +146,19 @@ public class HeadquartersStrategy {
                 for (int i = 0; i++ < 2; ) {
                     if (tryToBuildRobot(rc, RobotType.CARRIER)) {
                         rc.setIndicatorString("Building a carrier");
+                    }
+                }
+            }
+            else if (turnCount >= MAGIC_NUM_TURNS_RUSH && turnCount % 200 == 0) {
+                for (int i = 0; i++ < 2; ) {
+                    if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
+                        rc.setIndicatorString("Building an amplifierr");
+                    }
+                }
+                for (int i = 0; i++ < 3; ) {
+                    if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                        rc.setIndicatorString("Building a launcher");
+                        launchersBuilt++;
                     }
                 }
             }
