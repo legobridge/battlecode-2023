@@ -4,10 +4,11 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import static tacoplayer.RobotPlayer.*;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+
+import static tacoplayer.RobotPlayer.directions;
+import static tacoplayer.RobotPlayer.rng;
 
 public class Pathing {
     // Basic bug nav - Bug 0
@@ -59,7 +60,7 @@ public class Pathing {
     }
 
     static void moveRandomly(RobotController rc) throws GameActionException {
-        rc.setIndicatorString("Moving Randomly!");
+//        rc.setIndicatorString("Moving Randomly!");
         if (!rc.isMovementReady()) {
             return;
         }

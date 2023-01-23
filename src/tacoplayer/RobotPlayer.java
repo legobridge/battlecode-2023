@@ -89,7 +89,7 @@ public strictfp class RobotPlayer {
                 scanRobots(rc);
                 scanWells(rc); // TODO - pick well based on what we need. Also push to shared array.
 
-                updateEnemyHqLocs();
+                updateEnemyHqLocs(rc);
 
                 if (rc.getType() != RobotType.HEADQUARTERS) {
                     closestHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, ourHqLocs);
@@ -159,7 +159,7 @@ public strictfp class RobotPlayer {
         }
     }
 
-    private static void updateEnemyHqLocs() {
+    private static void updateEnemyHqLocs(RobotController rc) throws GameActionException {
         boolean[] symmetries = Comms.getMapSymmetries();
         for (int i = -1; ++i < hqCount;) {
             for (int j = -1; ++j < symmetries.length;) {
@@ -171,6 +171,34 @@ public strictfp class RobotPlayer {
                 }
             }
         }
+        for (int i = -1; ++i < hqCount;) {
+            if (enemyHqLocs[0 * 4 + i] != null && rc.canSenseLocation(enemyHqLocs[0 * 4 + i]) && rc.senseRobotAtLocation(enemyHqLocs[0 * 4 + i]) == null) {
+                // 0 is not a valid symmetry!
+                Comms.updateSymmetry(rc, 3);
+            }
+            if (enemyHqLocs[1 * 4 + i] != null && rc.canSenseLocation(enemyHqLocs[1 * 4 + i]) && rc.senseRobotAtLocation(enemyHqLocs[1 * 4 + i]) == null) {
+                // 1 is not a valid symmetry!
+                Comms.updateSymmetry(rc, 5);
+            }
+            if (enemyHqLocs[2 * 4 + i] != null && rc.canSenseLocation(enemyHqLocs[2 * 4 + i]) && rc.senseRobotAtLocation(enemyHqLocs[2 * 4 + i]) == null) {
+                // 2 is not a valid symmetry!
+                Comms.updateSymmetry(rc, 6);
+            }
+        }
+        symmetries = Comms.getMapSymmetries();
+        for (int i = -1; ++i < hqCount;) {
+            for (int j = -1; ++j < symmetries.length;) {
+                if (!symmetries[j]) {
+                    enemyHqLocs[j * 4 + i] = null;
+                }
+                else {
+                    enemyHqLocs[j * 4 + i] = MapLocationUtil.calcSymmetricLoc(ourHqLocs[i], SymmetryType.values()[j]);
+                }
+            }
+        }
+        // Update closest Enemy HQ Location
+        closestEnemyHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, enemyHqLocs);
+        System.out.println(closestEnemyHqLoc);
     }
 
     private static void setGameConstants(RobotController rc) {
@@ -190,6 +218,7 @@ public strictfp class RobotPlayer {
     }
 
     private static void scanObstacles(RobotController rc) {
+        // TODO - scan for clouds and currents and add to local memory
     }
 
     static void scanRobots(RobotController rc) throws GameActionException {
