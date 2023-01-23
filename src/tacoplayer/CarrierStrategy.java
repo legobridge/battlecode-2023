@@ -54,10 +54,10 @@ public class CarrierStrategy {
             else {
                 Pathing.moveTowards(rc, closestNeutralIslandLoc);
                 Pathing.moveTowards(rc, closestNeutralIslandLoc);
-            }
-            if (rc.canPlaceAnchor() && closestNeutralIslandLoc.distanceSquaredTo(rc.getLocation()) == 0) {
-                rc.placeAnchor();
-                anchorMode = false;
+                if (rc.canPlaceAnchor() && closestNeutralIslandLoc.distanceSquaredTo(rc.getLocation()) == 0) {
+                    rc.placeAnchor();
+                    anchorMode = false;
+                }
             }
         } else {
             if (total == 0) { // No resources -> look for well

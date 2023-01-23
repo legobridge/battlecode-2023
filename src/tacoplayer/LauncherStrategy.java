@@ -13,9 +13,6 @@ public class LauncherStrategy {
         // Update alive counter
         Comms.updateRobotCount(rc);
 
-        // Update closest Enemy HQ Location
-        closestEnemyHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, enemyHqLocs);
-
         // Attack
         attackEnemies(rc);
 
@@ -27,8 +24,8 @@ public class LauncherStrategy {
 
         // Update islands - only every 4 rounds, it's expensive and not necessary every round
         if (rc.getRoundNum() % 4 == 0) {
-            closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
             Comms.updateIslands(rc);
+            closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
         }
     }
 
@@ -36,6 +33,13 @@ public class LauncherStrategy {
         if (closestEnemyIslandLoc != null) {
             rc.setIndicatorString("Moving towards enemy island! " + closestEnemyIslandLoc);
             Pathing.moveTowards(rc, closestEnemyIslandLoc);
+        }
+    }
+
+    private static void moveTowardsEnemyHq(RobotController rc) throws GameActionException {
+        if (closestEnemyHqLoc != null) {
+            rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
+            Pathing.moveTowards(rc, closestEnemyHqLoc);
         }
     }
 
@@ -65,13 +69,6 @@ public class LauncherStrategy {
                     rc.attack(target.getLocation());
                 }
             }
-        }
-    }
-
-    private static void moveTowardsEnemyHq(RobotController rc) throws GameActionException {
-        if (closestEnemyHqLoc != null) {
-            rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
-            Pathing.moveTowards(rc, closestEnemyHqLoc);
         }
     }
 }

@@ -27,6 +27,7 @@ public class Comms {
     static int numEnemyIslands = 0;
     static int numNeutralIslands = 0;
     static int roundUpdated = 0;
+    static int locallyKnownSymmetry = 7;
 
     static void readAndStoreSharedArray(RobotController rc) throws GameActionException {
         // TODO - maybe don't do this
@@ -148,17 +149,17 @@ public class Comms {
         return closest;
     }
 
-    static MapLocation getClosestEnemyIsland(RobotController rc) throws GameActionException {
+    static MapLocation getClosestEnemyIsland(RobotController rc)  {
         updateClassIslandArrays(rc);
-        List<Integer> neutralIslands = new ArrayList<>();
+        List<Integer> enemyIslands = new ArrayList<>();
         for (int arrayElement : islandLocsTeams) {
             int hashedLoc = getNumFromBits(arrayElement, 1, 12); // Bits 1-12 are for location
             int team = getNumFromBits(arrayElement, 13, 14); // Bits 13-14 are for team
             if (team == 1) {
-                neutralIslands.add(hashedLoc);
+                enemyIslands.add(hashedLoc);
             }
         }
-        return MapLocationUtil.getClosestLocation(rc.getLocation(), neutralIslands);
+        return MapLocationUtil.getClosestLocation(rc.getLocation(), enemyIslands);
     }
 
     private static void countIslands(RobotController rc) {
@@ -336,11 +337,14 @@ public class Comms {
     }
 
     public static void updateSymmetry(RobotController rc, int mostSymmetryPossible) throws GameActionException {
-        tryToWriteToSharedArray(rc, SYMMETRY_INDEX, sharedArrayLocal[SYMMETRY_INDEX] & mostSymmetryPossible);
+        // TODO - sharedArrayLocal[SYMMETRY_INDEX]
+        locallyKnownSymmetry = locallyKnownSymmetry & mostSymmetryPossible;
+        tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
     }
 
     public static boolean[] getMapSymmetries() {
-        switch (sharedArrayLocal[SYMMETRY_INDEX]) {
+        // TODO - sharedArrayLocal[SYMMETRY_INDEX]
+        switch (locallyKnownSymmetry) {
             case 1:
                 return new boolean[]{false, false, true};
             case 2:
