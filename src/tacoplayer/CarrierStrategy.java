@@ -38,6 +38,13 @@ public class CarrierStrategy {
 //            }
 //        }
 
+        // Move away from enemies
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
+        if (enemies.length > 0) {
+            moveAwayFromRobots(rc, enemies);
+            moveAwayFromRobots(rc, enemies);
+        }
+
         int total = getTotalResources(rc);
 
         if (rc.canTakeAnchor(closestHqLoc, Anchor.STANDARD)) {
@@ -60,7 +67,7 @@ public class CarrierStrategy {
                 }
             }
         } else {
-            if (total == 0) { // No resources -> look for well
+            if (total != GameConstants.CARRIER_CAPACITY) { // No resources -> look for well
                 if (closestWellLoc != null) {
                     MapLocation selfLoc = rc.getLocation();
                     if (!selfLoc.isAdjacentTo(closestWellLoc)) {
