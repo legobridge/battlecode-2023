@@ -19,22 +19,14 @@ public class AmplifierStrategy {
         // MUST move away from enemies
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
         if (enemies.length > 0) {
-            Movement.moveAwayFromRobots(rc, enemies);
-            Movement.moveAwayFromRobots(rc, enemies);
-            Movement.moveAwayFromRobots(rc, enemies);
-        }
-
-        // Alternate wandering and staying grouped with friendlies
-        RobotInfo[] friendlies = rc.senseNearbyRobots(-1, ourTeam);
-        if (rc.getRoundNum() % 2 == 0 || friendlies.length == 0) {
-            Pathing.moveRandomly(rc);
-            Pathing.moveRandomly(rc);
-            Pathing.moveRandomly(rc);
+            Movement.moveTowardsLocation(rc, closestHqLoc);
+            Movement.moveTowardsLocation(rc, closestHqLoc);
+            Movement.moveTowardsLocation(rc, closestHqLoc);
         }
         else {
-            Movement.moveTowardsRobots(rc, friendlies);
-            Movement.moveTowardsRobots(rc, friendlies);
-            Movement.moveTowardsRobots(rc, friendlies);
+            Pathing.moveRandomly(rc);
+            Pathing.moveRandomly(rc);
+            Pathing.moveRandomly(rc);
         }
 
         // Sense islands

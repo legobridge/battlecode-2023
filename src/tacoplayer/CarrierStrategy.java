@@ -58,8 +58,8 @@ public class CarrierStrategy {
         // Move away from enemies
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
         if (enemies.length > 0) {
-            Movement.moveAwayFromRobots(rc, enemies);
-            Movement.moveAwayFromRobots(rc, enemies);
+            Movement.moveTowardsLocation(rc, closestHqLoc);
+            Movement.moveTowardsLocation(rc, closestHqLoc);
         }
 
         int total = getTotalResources(rc);
