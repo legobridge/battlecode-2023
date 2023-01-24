@@ -47,12 +47,24 @@ public strictfp class RobotPlayer {
     static MapLocation[] ourHqLocs = new MapLocation[4];
     static MapLocation[] enemyHqLocs = new MapLocation[12];
 
-    static MapLocation closestWellLoc;
     static ArrayList<MapLocation> knownWellLocs = new ArrayList<>();
 
     public static MapLocation closestNeutralIslandLoc;
 
     public static MapLocation closestEnemyIslandLoc;
+
+    static MapLocation nearestADWell;
+    static MapLocation nearestMNWell;
+    static MapLocation nearestEXWell;
+    static MapLocation secondNearestADWell;
+    static MapLocation secondNearestMNWell;
+    static MapLocation secondNearestEXWell;
+    static int nearestADWellDistSq = Integer.MAX_VALUE;
+    static int nearestMNWellDistSq = Integer.MAX_VALUE;
+    static int nearestEXWellDistSq = Integer.MAX_VALUE;
+    static int secondNearestADWellDistSq = Integer.MAX_VALUE;
+    static int secondNearestMNWellDistSq= Integer.MAX_VALUE;
+    static int secondNearestEXWellDistSq= Integer.MAX_VALUE;
 
     // Lists to hold values that couldn't be written to shared array
     // but should be once the bot is in range to write
@@ -246,85 +258,82 @@ public strictfp class RobotPlayer {
     static void scanWells(RobotController rc) throws GameActionException {
         WellInfo[] wells = rc.senseNearbyWells();
         MapLocation selfLoc = rc.getLocation();
-        int closestWellDistSq = MAX_MAP_DIST_SQ;
 
         for (WellInfo well : wells) {
             MapLocation wellLoc = well.getMapLocation();
+            ResourceType wellType = well.getResourceType();
             if (!knownWellLocs.contains(wellLoc)) {
                 knownWellLocs.add(wellLoc);
             }
             int wellDistSq = selfLoc.distanceSquaredTo(wellLoc);
+
+            MapLocation closestWellLoc = nearestADWell;
+            MapLocation secondClosestWellLoc = secondNearestADWell;
+            int closestWellDistSq = nearestADWellDistSq;
+            int secondClosestWellDistSq = secondNearestADWellDistSq;
+
+            switch (wellType) {
+                case ADAMANTIUM:
+                    closestWellLoc = nearestADWell;
+                    closestWellDistSq = nearestADWellDistSq;
+                    secondClosestWellLoc = secondNearestADWell;
+                    secondClosestWellDistSq = secondNearestADWellDistSq;
+                    break;
+                case MANA:
+                    closestWellLoc = nearestMNWell;
+                    closestWellDistSq = nearestMNWellDistSq;
+                    secondClosestWellLoc = secondNearestMNWell;
+                    secondClosestWellDistSq = secondNearestMNWellDistSq;
+                    break;
+                case ELIXIR:
+                    closestWellLoc = nearestEXWell;
+                    closestWellDistSq = nearestEXWellDistSq;
+                    secondClosestWellLoc = secondNearestEXWell;
+                    secondClosestWellDistSq = secondNearestEXWellDistSq;
+                    break;
+            }
+
             if (closestWellLoc == null || wellDistSq < closestWellDistSq) {
-                closestWellLoc = wellLoc;
-                closestWellDistSq = wellDistSq;
+                updateNearestWell(wellLoc, wellDistSq, wellType);
+            }
+            else if (secondClosestWellLoc == null ||
+                    (wellDistSq >= closestWellDistSq && wellDistSq < secondClosestWellDistSq)) {
+                updateSecondNearestWell(wellLoc, wellDistSq, wellType);
             }
         }
     }
 
-    static boolean moveTowardsEnemies(RobotController rc) throws GameActionException {
-        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
-        if (visibleEnemies.length != 0) {
-            MapLocation enemyLocation = averageLoc(visibleEnemies);
-            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
-            // If you are outside 3/4 the enemy's action radius, move towards it, else move away
-            if (visibleEnemies[0].getLocation().distanceSquaredTo(rc.getLocation()) > rc.getType().actionRadiusSquared * 5/6) {
-                Pathing.moveTowards(rc, enemyLocation);
-                return true;
-            }
-            else {
-                MapLocation ourLoc = rc.getLocation();
-                MapLocation runAwayLocation = new MapLocation(ourLoc.x-enemyLocation.x, ourLoc.y-enemyLocation.y);
-                Pathing.moveTowards(rc, runAwayLocation);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static void moveTowardsEnemies(RobotController rc, int radius) throws GameActionException {
-        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
-        if (visibleEnemies.length != 0) {
-            MapLocation enemyLocation = averageLoc(visibleEnemies);
-            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
-            // If you are outside 3/4 the enemy's action radius, move towards it, else move away
-            if (visibleEnemies[0].getLocation().distanceSquaredTo(rc.getLocation()) > radius) {
-                Pathing.moveTowards(rc, enemyLocation);
-            }
-            else {
-                MapLocation ourLoc = rc.getLocation();
-                MapLocation runAwayLocation = new MapLocation(ourLoc.x-enemyLocation.x, ourLoc.y-enemyLocation.y);
-                Pathing.moveTowards(rc, runAwayLocation);
-            }
+    static void updateNearestWell (MapLocation loc, int distSq, ResourceType res) {
+        switch (res) {
+            case ADAMANTIUM:
+                nearestADWell = loc;
+                nearestADWellDistSq = distSq;
+                break;
+            case MANA:
+                nearestMNWell = loc;
+                nearestMNWellDistSq = distSq;
+                break;
+            case ELIXIR:
+                nearestEXWell = loc;
+                nearestEXWellDistSq = distSq;
+                break;
         }
     }
 
-    static MapLocation averageLoc(RobotInfo[] robots) {
-        int sumX = 0;
-        int sumY = 0;
-        for (int i = 0; i < robots.length; i++) {
-            MapLocation loc = robots[i].getLocation();
-            sumX += loc.x;
-            sumY += loc.y;
+    static void updateSecondNearestWell (MapLocation loc, int distSq, ResourceType res) {
+        switch (res) {
+            case ADAMANTIUM:
+                secondNearestADWell = loc;
+                secondNearestADWellDistSq = distSq;
+                break;
+            case MANA:
+                secondNearestMNWell = loc;
+                secondNearestMNWellDistSq = distSq;
+                break;
+            case ELIXIR:
+                secondNearestEXWell = loc;
+                secondNearestEXWellDistSq = distSq;
+                break;
         }
-        return new MapLocation((int) ((float)sumX / robots.length), (int) ((float) sumY / robots.length));
-
-    }
-
-    static void moveTowardsRobots(RobotController rc, RobotInfo[] robots) throws GameActionException {
-        MapLocation target = averageLoc(robots);
-        Pathing.moveTowards(rc, target);
-    }
-
-    static void moveAwayFromRobots(RobotController rc, RobotInfo[] robots) throws GameActionException {
-        MapLocation target = averageLoc(robots);
-        moveAwayFromLocation(rc, target);
-    }
-
-    static void moveAwayFromLocation(RobotController rc, MapLocation loc) throws GameActionException {
-        MapLocation robotLoc = rc.getLocation();
-        int dx = robotLoc.x - loc.x;
-        int dy = robotLoc.y - loc.y;
-        MapLocation awayLoc = new MapLocation(robotLoc.x + dx, robotLoc.y + dy);
-        Pathing.moveTowards(rc, awayLoc);
     }
 }

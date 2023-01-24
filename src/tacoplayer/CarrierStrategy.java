@@ -7,12 +7,14 @@ import static tacoplayer.RobotPlayer.*;
 public class CarrierStrategy {
 
     static boolean anchorMode = false;
+    static MapLocation closestWellLoc;
     // TODO - Run away from enemy launchers!
 
     /**
      * Run a single turn for a Carrier.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
+
     static void runCarrier(RobotController rc) throws GameActionException {
         if (rc.getRoundNum() % 4 == 0) {
             Comms.updateIslands(rc);
@@ -21,6 +23,16 @@ public class CarrierStrategy {
 
         // Update alive counter
         Comms.updateRobotCount(rc);
+
+        // Update well priority
+        if (closestWellLoc == null) {
+            if (rc.getRoundNum() % 2 == 0) {
+                closestWellLoc = nearestADWell;
+            }
+            else {
+                closestWellLoc = nearestMNWell;
+            }
+        }
 
         // Collect from well if close and inventory not full
         if (closestWellLoc != null && rc.canCollectResource(closestWellLoc, -1)) {
@@ -46,8 +58,8 @@ public class CarrierStrategy {
         // Move away from enemies
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
         if (enemies.length > 0) {
-            moveAwayFromRobots(rc, enemies);
-            moveAwayFromRobots(rc, enemies);
+            Movement.moveAwayFromRobots(rc, enemies);
+            Movement.moveAwayFromRobots(rc, enemies);
         }
 
         int total = getTotalResources(rc);
@@ -59,7 +71,7 @@ public class CarrierStrategy {
 
         closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
         if (closestNeutralIslandLoc == null) {
-            closestNeutralIslandLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, Comms.knownNeutralIslandLocations);
+            closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
         }
         if (anchorMode) { // In anchor mode, go plant that flag
             if (closestNeutralIslandLoc == null) {
