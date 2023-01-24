@@ -63,6 +63,10 @@ public class Movement {
         moveAwayFromLocation(rc, target);
     }
 
+    static void moveTowardsLocation(RobotController rc, MapLocation loc) throws GameActionException {
+        Pathing.moveTowards(rc, loc);
+    }
+
     static void moveAwayFromLocation(RobotController rc, MapLocation loc) throws GameActionException {
         MapLocation robotLoc = rc.getLocation();
         int dx = robotLoc.x - loc.x;
