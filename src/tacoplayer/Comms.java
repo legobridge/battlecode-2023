@@ -2,6 +2,7 @@ package tacoplayer;
 
 import battlecode.common.*;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +32,8 @@ public class Comms {
     static int numNeutralIslands = 0;
     static int roundUpdated = 0;
     static int locallyKnownSymmetry = 7;
+    static int numHQs = 0;
+    static boolean HQsCounted = false;
 
     static void readAndStoreSharedArray(RobotController rc) throws GameActionException {
         // TODO - maybe don't do this
@@ -80,6 +83,17 @@ public class Comms {
         }
     }
 
+    static int getNumHQs(RobotController rc) throws GameActionException {
+        if (!HQsCounted && rc.getRoundNum() > 1) {
+            for (int i = 0; i < 4; i++) {
+                if (rc.readSharedArray(i) > 0) {
+                    numHQs++;
+                }
+            }
+            HQsCounted = true;
+        }
+        return numHQs;
+    }
     static boolean isFirstHQ(RobotController rc) {
         int robot_location = MapLocationUtil.hashMapLocation(rc.getLocation());
         return robot_location == sharedArrayLocal[0];
@@ -88,11 +102,7 @@ public class Comms {
     static boolean updateRobotCount(RobotController rc) throws GameActionException {
         int index = 3 + rc.getType().ordinal();
         int num_robots = sharedArrayLocal[index];
-        if (rc.getRoundNum() % 2 == 1) {
-            num_robots += 1;
-        } else {
-            num_robots += Math.pow(2, 8);
-        }
+        num_robots++;
 
         // Try to write
         return tryToWriteToSharedArray(rc, index, num_robots);
@@ -109,7 +119,8 @@ public class Comms {
         for (int i = 4; i < 9; i++) {
             int save_count = getNumFromBits(
                     sharedArrayLocal[i], 1, 8);
-            save_count = save_count << 8;
+//            save_count = save_count << 8;
+            save_count = bitHack(0, save_count, 8, 8);
             tryToWriteToSharedArray(rc, i, save_count);
         }
     }
