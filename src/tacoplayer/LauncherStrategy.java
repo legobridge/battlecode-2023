@@ -63,7 +63,7 @@ public class LauncherStrategy {
         // I am the leader!
         else if (leader_id > rc.getID()) {
             rc.setIndicatorString("I am a leader!");
-            if (moveTowardsEnemies(rc)) {
+            if (Movement.moveTowardsEnemies(rc)) {
 //                System.out.print("enemy Bot");
                 rc.setIndicatorString("moving towards enemy robots");
             }
@@ -82,7 +82,7 @@ public class LauncherStrategy {
 //                        rc.setIndicatorString("moving randomly");
 //                    }
 //                }
-                if (moveTowardsEnemyIslands(rc)) {
+                if (Movement.moveTowardsEnemyIslands(rc)) {
                     rc.setIndicatorString("moving towards enemy island");
                 }
                 else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
@@ -126,15 +126,6 @@ public class LauncherStrategy {
         }
     }
 
-    private static boolean moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
-        if (closestEnemyIslandLoc != null) {
-            rc.setIndicatorString("Moving towards enemy island! " + closestEnemyIslandLoc);
-            Pathing.moveTowards(rc, closestEnemyIslandLoc);
-            return true;
-        }
-        return false;
-    }
-
     private static void attackEnemies(RobotController rc) throws GameActionException {
         int radius = RobotType.LAUNCHER.actionRadiusSquared;
         RobotInfo[] enemies = rc.senseNearbyRobots(radius, theirTeam);
@@ -163,14 +154,4 @@ public class LauncherStrategy {
             }
         }
     }
-
-    private static boolean moveTowardsEnemyHq(RobotController rc) throws GameActionException {
-        if (closestEnemyHqLoc != null) {
-            rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
-            Pathing.moveTowards(rc, closestEnemyHqLoc);
-            return true;
-        }
-        return false;
-    }
-
 }
