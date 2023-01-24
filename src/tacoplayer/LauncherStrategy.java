@@ -13,6 +13,8 @@ public class LauncherStrategy {
         // Update alive counter
         Comms.updateRobotCount(rc);
 
+        closestEnemyIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, theirTeam);
+
         // move together
         // sense nearby robots
         RobotInfo[] alliedRobots = rc.senseNearbyRobots(-1, ourTeam);
@@ -118,12 +120,6 @@ public class LauncherStrategy {
         // moveTowardsEnemies(rc);
         // moveTowardsEnemyHq(rc);
         // Pathing.moveRandomly(rc);
-
-        // Update islands - only every 4 rounds, it's expensive and not necessary every round
-        if (rc.getRoundNum() % 4 == 0) {
-            Comms.updateIslands(rc);
-            closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
-        }
     }
 
     private static boolean moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
