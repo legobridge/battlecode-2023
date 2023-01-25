@@ -11,7 +11,7 @@ import static tacoplayer.RobotPlayer.*;
  */
 public class Comms {
 
-    // Only using keeping track of 10 neutral/enemy islands for bytecode purposes atm
+    final static int ROBOT_COUNT_START_INDEX = 3;
     final static int NUM_ISLANDS_STORED = 15;
     final static int ISLAND_LOCS_START_INDEX = 9;
     final static int ISLAND_IDS_START_INDEX = ISLAND_LOCS_START_INDEX + NUM_ISLANDS_STORED;
@@ -156,27 +156,18 @@ public class Comms {
         }
     }
 
-    static boolean updateRobotCount(RobotController rc) throws GameActionException {
-        // TODO - maybe don't do all of this
-        int index = 3 + rc.getType().ordinal();
+    static void updateRobotCount(RobotController rc) throws GameActionException {
+        int index = ROBOT_COUNT_START_INDEX + rc.getType().ordinal();
         int num_robots = rc.readSharedArray(index);
-        if (rc.getRoundNum() % 2 == 1) {
-            num_robots += 1;
-        } else {
-            num_robots += Math.pow(2, 8);
-        }
-
-        // Try to write
-        return tryToWriteToSharedArray(rc, index, num_robots);
+        tryToWriteToSharedArray(rc, index, num_robots + 1);
     }
 
-    static int getPrevRobotCount(RobotController rc, RobotType robot) throws GameActionException {
-        int index = 3 + robot.ordinal();
+    static int getPrevRobotCount(RobotController rc, RobotType robotType) throws GameActionException {
+        int index = ROBOT_COUNT_START_INDEX + robotType.ordinal();
         return getNumFromBits(rc.readSharedArray(index), 9, 16);
     }
 
     // Moves the first 8 bits to the last 8 bits of all the robot counts
-
     static void resetCounts(RobotController rc) throws GameActionException {
         for (int i = 4; i < 9; i++) {
             int save_count = getNumFromBits(rc.readSharedArray(i), 1, 8);
