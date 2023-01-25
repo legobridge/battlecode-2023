@@ -142,33 +142,46 @@ public class HeadquartersStrategy {
                 // build bots
                 // we have moving average
                 if (turnCount > AVERAGE_PERIOD) {
-                    if (adGetMovingAverage() > mnGetMovingAverage()) {
-                        // TODO - new carriers should go mine Mn
-                        // more ad being gathered per turn
-                        buildBots(rc, RobotType.CARRIER, ACTIONS_PER_TURN);
-                    } else {
-                        // more mana being gathered per turn
-                        buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
-                    }
+                    buildBotsWithMovingAverage(rc);
                 }
                 // we don't have moving average
                 else {
                     buildBots(rc, RobotType.CARRIER, ACTIONS_PER_TURN);
                 }
             }
+        }
+    }
 
-//        adQueuePush(rc.getResourceAmount(ResourceType.ADAMANTIUM) - adQueue[0]);
-//        mnQueuePush(rc.getResourceAmount(ResourceType.MANA) - mnQueue[0]);
-//        if (turnCount > 20) {
-//            float adMovingAverageDividedCarrierCost = adGetMovingAverage() / RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM);
-//            float mnMovingAverageDividedLauncherCost = mnGetMovingAverage() / RobotType.LAUNCHER.getBuildCost(ResourceType.MANA);
-//            float ratioAdMn = adMovingAverageDividedCarrierCost / mnMovingAverageDividedLauncherCost;
-//            if (floor(ratioAdMn) > 1) {
-//              // we are generating enough to create more than 1 carrier for every 1 launcher we create -> adjust build order accordingly
-//              // look for more mana
-//              // meanwhile create more carriers and flag all carriers to attack when possible?
-//            }
-//        }
+    static void buildBotsWithMovingAverage(RobotController rc) throws GameActionException {
+        float adMovingAverageDividedCarrierCost = adGetMovingAverage() / RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM);
+        float mnMovingAverageDividedLauncherCost = mnGetMovingAverage() / RobotType.LAUNCHER.getBuildCost(ResourceType.MANA);
+        float ratioAdMn = adMovingAverageDividedCarrierCost / mnMovingAverageDividedLauncherCost;
+        if (ratioAdMn > 1) {
+            int carriersToBuild = Math.round((float) ACTIONS_PER_TURN / ratioAdMn);
+            int launchersToBuild = ACTIONS_PER_TURN - carriersToBuild;
+            int remainingActions = ACTIONS_PER_TURN;
+            for (int i = 0; i++ < launchersToBuild; ) {
+                if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                    rc.setIndicatorString("Building a launcher");
+                    remainingActions--;
+                }
+                else {
+                    rc.setIndicatorString("Not enough resources to build a launcher");
+                }
+            }
+            for (int i = 0; i++ < carriersToBuild; ) {
+                if (tryToBuildRobot(rc, RobotType.CARRIER)) {
+                    rc.setIndicatorString("Building a carrier");
+                    remainingActions--;
+                }
+                else {
+                    rc.setIndicatorString("Not enough resources to build a carrier");
+                }
+            }
+            buildBots(rc, RobotType.LAUNCHER, remainingActions);
+        }
+        else {
+            buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
         }
     }
 
