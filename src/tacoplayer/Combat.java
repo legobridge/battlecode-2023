@@ -11,7 +11,7 @@ public class Combat {
 
     /** attack mode */
     static void attack(RobotController rc) throws GameActionException {
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam); // TODO - use universal sensing
         if (enemies.length == 0) {
             return;
         }
@@ -121,7 +121,7 @@ public class Combat {
         // If you're at an island, stay there until healed
         // else move to nearest friendly HQ if you haven't reached one since retreat mode was activated
         // If you have reached one, wander until you find a friendly island
-        if (!isHealing(rc)) {
+        if (!isHealing()) {
 //            MapLocation islandLoc = Comms.getClosestFriendlyIsland(rc);
 //            if (islandLoc == null) {
 //                //TODO - add move randomly to movement class

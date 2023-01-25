@@ -2,7 +2,6 @@ package tacoplayer;
 
 import battlecode.common.*;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -190,124 +189,12 @@ public strictfp class RobotPlayer {
         mapCenter = new MapLocation(rc.getMapWidth() / 2, rc.getMapHeight() / 2);
         map = new int[mapWidth][mapHeight];
     }
-
-    private static void scanObstacles(RobotController rc) {
-        // TODO - scan for clouds and currents and add to local memory
-    }
-
-    static void scanRobots(RobotController rc) throws GameActionException {
-        RobotInfo[] robots = rc.senseNearbyRobots();
-
-        for (int j = -1; ++j < robots.length;) {
-            switch (robots[j].getType()) {
-                case HEADQUARTERS:
-                    if (robots[j].team == theirTeam) {
-                        // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
-                        // TODO - stop doing this once fairly confident of symmetry
-                        int mostSymmetryPossible = 0;
-                        MapLocation enemyHqLoc = robots[j].getLocation();
-                        for (int i = -1; ++i < hqCount; ) {
-                            mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyHqLoc);
-                        }
-                        Comms.updateSymmetry(mostSymmetryPossible);
-                    }
-                    break;
-                default: // TODO - sense other robots
-                    break;
-            }
-        }
-    }
-
-    static void scanWells(RobotController rc) throws GameActionException {
-        WellInfo[] wells = rc.senseNearbyWells();
-        MapLocation selfLoc = rc.getLocation();
-
-        for (WellInfo well : wells) {
-            MapLocation wellLoc = well.getMapLocation();
-            ResourceType wellType = well.getResourceType();
-            if (!knownWellLocs.contains(wellLoc)) {
-                knownWellLocs.add(wellLoc);
-            }
-            int wellDistSq = selfLoc.distanceSquaredTo(wellLoc);
-
-            MapLocation closestWellLoc = nearestADWell;
-            MapLocation secondClosestWellLoc = secondNearestADWell;
-            int closestWellDistSq = nearestADWellDistSq;
-            int secondClosestWellDistSq = secondNearestADWellDistSq;
-
-            switch (wellType) {
-                case ADAMANTIUM:
-                    closestWellLoc = nearestADWell;
-                    closestWellDistSq = nearestADWellDistSq;
-                    secondClosestWellLoc = secondNearestADWell;
-                    secondClosestWellDistSq = secondNearestADWellDistSq;
-                    break;
-                case MANA:
-                    closestWellLoc = nearestMNWell;
-                    closestWellDistSq = nearestMNWellDistSq;
-                    secondClosestWellLoc = secondNearestMNWell;
-                    secondClosestWellDistSq = secondNearestMNWellDistSq;
-                    break;
-                case ELIXIR:
-                    closestWellLoc = nearestEXWell;
-                    closestWellDistSq = nearestEXWellDistSq;
-                    secondClosestWellLoc = secondNearestEXWell;
-                    secondClosestWellDistSq = secondNearestEXWellDistSq;
-                    break;
-            }
-
-            if (closestWellLoc == null || wellDistSq < closestWellDistSq) {
-                updateNearestWell(wellLoc, wellDistSq, wellType);
-            }
-            else if (secondClosestWellLoc == null ||
-                    (wellDistSq >= closestWellDistSq && wellDistSq < secondClosestWellDistSq)) {
-                updateSecondNearestWell(wellLoc, wellDistSq, wellType);
-            }
-        }
-    }
-
-    static void updateNearestWell (MapLocation loc, int distSq, ResourceType res) {
-        switch (res) {
-            case ADAMANTIUM:
-                nearestADWell = loc;
-                nearestADWellDistSq = distSq;
-                break;
-            case MANA:
-                nearestMNWell = loc;
-                nearestMNWellDistSq = distSq;
-                break;
-            case ELIXIR:
-                nearestEXWell = loc;
-                nearestEXWellDistSq = distSq;
-                break;
-        }
-    }
-
-    static void updateSecondNearestWell (MapLocation loc, int distSq, ResourceType res) {
-        switch (res) {
-            case ADAMANTIUM:
-                secondNearestADWell = loc;
-                secondNearestADWellDistSq = distSq;
-                break;
-            case MANA:
-                secondNearestMNWell = loc;
-                secondNearestMNWellDistSq = distSq;
-                break;
-            case ELIXIR:
-                secondNearestEXWell = loc;
-                secondNearestEXWellDistSq = distSq;
-                break;
-        }
-    }
     static void updateHealth(RobotController rc) {
         lastRoundHealth = thisRoundHealth;
         thisRoundHealth = rc.getHealth();
     }
 
-    static boolean isHealing(RobotController rc) {
-        if (thisRoundHealth > lastRoundHealth) {
-            return true;
-        }
-        return false;
+    static boolean isHealing() {
+        return thisRoundHealth > lastRoundHealth;
     }
 }

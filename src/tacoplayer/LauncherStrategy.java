@@ -47,7 +47,7 @@ public class LauncherStrategy {
         }
         else if (leaderId > rc.getID()) { // I am the leader!
             rc.setIndicatorString("I am a leader!");
-            if (moveTowardsEnemies(rc)) {
+            if (moveTowardsVisibleEnemies(rc)) {
                 rc.setIndicatorString("moving towards enemy robots");
             } else if (moveTowardsEnemyIslands(rc)) {
                 rc.setIndicatorString("moving towards enemy island");

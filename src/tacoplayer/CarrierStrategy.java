@@ -9,7 +9,6 @@ public class CarrierStrategy {
 
     static boolean anchorMode = false;
     static MapLocation closestWellLoc;
-    // TODO - Run away from enemy launchers!
 
     /**
      * Run a single turn for a Carrier.
