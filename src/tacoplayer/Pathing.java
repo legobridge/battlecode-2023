@@ -94,7 +94,7 @@ public class Pathing {
         lastFewLocs[(lastFewLocsIndex++) % MAX_PREV_LOCS_TO_STORE] = rc.getLocation();
     }
 
-    private static MapLocation getNearestEnemyHQLoc(RobotController rc) throws GameActionException {
+    static MapLocation getNearestEnemyHQLoc(RobotController rc) throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
         MapLocation nearestHQ = null;
         MapLocation ourLoc = rc.getLocation();
@@ -112,7 +112,7 @@ public class Pathing {
         return nearestHQ;
     }
 
-    private static boolean safeFromHQ(RobotController rc, MapLocation loc) {
+    static boolean safeFromHQ(RobotController rc, MapLocation loc) {
         if (loc == null) {
             return true;
         }
