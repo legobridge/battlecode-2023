@@ -60,10 +60,10 @@ public class LauncherStrategy {
             rc.setIndicatorString("I am a leader!");
             if (moveTowardsEnemies(rc)) {
                 rc.setIndicatorString("moving towards enemy robots");
-            } else if (moveTowardsEnemyHq(rc)) {
-                rc.setIndicatorString("moving towards enemy hq");
             } else if (moveTowardsEnemyIslands(rc)) {
                 rc.setIndicatorString("moving towards enemy island");
+            } else if (moveTowardsEnemyHq(rc)) {
+                rc.setIndicatorString("moving towards enemy hq");
             } else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
                 rc.move(rc.getLocation().directionTo(mapCenter));
                 rc.setIndicatorString("moving towards center");
