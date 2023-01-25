@@ -25,6 +25,7 @@ public class Combat {
         int lowestLauncherDistSq = Integer.MAX_VALUE;
         int lowestHealth = Integer.MAX_VALUE;
         int numLaunchers = 0;
+        int numEnemies = 0;
 
         // Go through nearby enemies
         for (int i = 0; i < enemies.length; i++) {
@@ -34,32 +35,45 @@ public class Combat {
             RobotType enemyType = enemy.getType();
             int distSqToEnemy = ourLoc.distanceSquaredTo(enemyLoc);
             int enemyHealth = enemy.getHealth();
+            boolean isHQ = enemyType == RobotType.HEADQUARTERS;
+
+            // Update enemy count
+            if (!isHQ) {
+                numEnemies++;
+            }
+
             // Update the launcher count
             if (enemyType == RobotType.LAUNCHER) {
                 numLaunchers++;
             }
 
             // Update closest enemy
-            if (distSqToEnemy < closestEnemyDistSq) {
+            if (distSqToEnemy < closestEnemyDistSq && !isHQ) {
                 closestEnemyLoc = enemyLoc;
                 closestEnemyType = enemyType;
                 closestEnemyDistSq = distSqToEnemy;
             }
 
             // Update closest enemy launcher
-            if (enemyType == RobotType.LAUNCHER && distSqToEnemy < lowestLauncherDistSq) {
+            if (enemyType == RobotType.LAUNCHER && distSqToEnemy < lowestLauncherDistSq && !isHQ) {
                 lowestLauncherLoc = enemyLoc;
                 lowestLauncherDistSq = distSqToEnemy;
             }
 
             // Update lowest health enemy
-            if (enemyHealth < lowestHealth) {
+            if (enemyHealth < lowestHealth && !isHQ) {
                 lowestHealthLoc = enemyLoc;
                 lowestHealth = enemyHealth;
             }
 
 
         }
+        // If only HQs were found, exit
+        if (numEnemies == 0) {
+            return;
+        }
+
+        MapLocation closestEnemyHQ = Pathing.getNearestEnemyHQLoc(rc);
 
         // If retreat mode, attack nearest enemy if in range and keep haulin ass
         // else if enemy is low on health and within movement range, dive and attack it
@@ -74,7 +88,7 @@ public class Combat {
                 tryAttack(rc, closestEnemyLoc);
             }
         }
-        if (lowestHealth <= MAGIC_DIVE_HEALTH || numLaunchers == 0) {
+        if ((lowestHealth <= MAGIC_DIVE_HEALTH || numLaunchers == 0) && Pathing.safeFromHQ(rc, closestEnemyHQ)) {
             // Prioritize attack launchers
             rc.setIndicatorString("DIVE");
             attackDive(rc, lowestHealthLoc);
