@@ -16,17 +16,13 @@ public class LauncherStrategy {
         // Update alive counter
         Comms.updateRobotCount(rc);
 
+        closestEnemyIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, theirTeam);
+
         // Movement
         move(rc);
 
         // Attack
         attackEnemies(rc);
-
-        // Update islands - only every 4 rounds, it's expensive and not necessary every round
-        if (rc.getRoundNum() % 4 == 0) {
-            Comms.updateIslands(rc);
-            closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
-        }
     }
 
     private static void move(RobotController rc) throws GameActionException {
@@ -64,10 +60,10 @@ public class LauncherStrategy {
             rc.setIndicatorString("I am a leader!");
             if (moveTowardsEnemies(rc)) {
                 rc.setIndicatorString("moving towards enemy robots");
-            } else if (moveTowardsEnemyHq(rc)) {
-                rc.setIndicatorString("moving towards enemy hq");
             } else if (moveTowardsEnemyIslands(rc)) {
                 rc.setIndicatorString("moving towards enemy island");
+            } else if (moveTowardsEnemyHq(rc)) {
+                rc.setIndicatorString("moving towards enemy hq");
             } else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
                 rc.move(rc.getLocation().directionTo(mapCenter));
                 rc.setIndicatorString("moving towards center");

@@ -65,7 +65,7 @@ public class HeadquartersStrategy {
             // try make amps
             /** MAGIC NUMBERS USED **/
             else if (turnCount >= MAGIC_AMP_NUM_TURNS
-                    && Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < Comms.getNumHQs(rc)) {
+                    && Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount) {
                 rc.setIndicatorString("Trying to build am amplifier");
                 if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
                     rc.setIndicatorString("Building an amplifier");
