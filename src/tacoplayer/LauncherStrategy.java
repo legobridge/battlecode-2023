@@ -30,78 +30,40 @@ public class LauncherStrategy {
         for (int i = 0; i++ < alliedRobots.length; ) {
             if (alliedRobots[i - 1].getType() == RobotType.LAUNCHER) {
                 if (alliedRobots[i - 1].getID() < leader_id) {
-                    leader_id = alliedRobots[i -1].getID();
+                    leader_id = alliedRobots[i - 1].getID();
                     leader = alliedRobots[i - 1];
-                    launchersNearby++;
                 }
+                launchersNearby++;
             }
         }
         // not enough launchers nearby
         if (launchersNearby < 3) {
-            Pathing.moveRandomly(rc);
-            rc.setIndicatorString("moving randomly");
-//            // move towards our own closest HQ
-//            int leastDistance = Integer.MAX_VALUE;
-//            MapLocation targetHqLoc = null;
-//            for (int i = 0; i++ < ourHqLocs.length; ) {
-//                if (ourHqLocs[i -1] != null) {
-//                    if (rc.getLocation().distanceSquaredTo(ourHqLocs[i - 1]) < leastDistance) {
-//                        leastDistance = rc.getLocation().distanceSquaredTo(ourHqLocs[i - 1]);
-//                        targetHqLoc = ourHqLocs[i - 1];
-//                    }
-//                }
-//            }
-//            if (targetHqLoc != null) {
-//                Direction dir = rc.getLocation().directionTo(targetHqLoc);
-//                if (rc.canMove(dir)) {
-//                    rc.move(dir);
-//                    rc.setIndicatorString("moving towards closest home hq");
-//                }
-//                else {
-//                    Pathing.moveRandomly(rc);
-//                    rc.setIndicatorString("moving randomly");
-//                }
-//            }
-//            else {
-//                Pathing.moveRandomly(rc);
-//                rc.setIndicatorString("moving randomly");
-//            }
+            if (closestHqLoc != null) {
+                if (rc.canMove(rc.getLocation().directionTo(closestHqLoc))) {
+                    rc.move(rc.getLocation().directionTo(closestHqLoc));
+                    rc.setIndicatorString("moving towards enemy HQ");
+                }
+            }
+            else {
+                Pathing.moveRandomly(rc);
+                rc.setIndicatorString("moving randomly");
+            }
         }
         // I am the leader!
         else if (leader_id > rc.getID()) {
             rc.setIndicatorString("I am a leader!");
-            if (Movement.moveTowardsEnemies(rc)) {
-//                System.out.print("enemy Bot");
+            if (moveTowardsEnemies(rc)) {
                 rc.setIndicatorString("moving towards enemy robots");
-            }
-            else {
-//                if (moveTowardsEnemyHq(rc)) {
-//                    System.out.print("enemy HQ");
-//                    rc.setIndicatorString("moving towards enemy hq");
-//                }
-//                else {
-//                    if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
-//                        rc.move(rc.getLocation().directionTo(mapCenter));
-//                        rc.setIndicatorString("moving towards center");
-//                    }
-//                    else {
-//                        Pathing.moveRandomly(rc);
-//                        rc.setIndicatorString("moving randomly");
-//                    }
-//                }
-                if (Movement.moveTowardsEnemyIslands(rc)) {
-                    rc.setIndicatorString("moving towards enemy island");
-                }
-                else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
-//                    System.out.print("Center");
-                    rc.move(rc.getLocation().directionTo(mapCenter));
-                    rc.setIndicatorString("moving towards center");
-                }
-                else {
-//                    System.out.print("Random");
-                    Pathing.moveRandomly(rc);
-                    rc.setIndicatorString("moving randomly");
-                }
+            } else if (moveTowardsEnemyIslands(rc)) {
+                rc.setIndicatorString("moving towards enemy island");
+            } else if (moveTowardsEnemyHq(rc)) {
+                rc.setIndicatorString("moving towards enemy hq");
+            } else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
+                rc.move(rc.getLocation().directionTo(mapCenter));
+                rc.setIndicatorString("moving towards center");
+            } else {
+                Pathing.moveRandomly(rc);
+                rc.setIndicatorString("moving randomly");
             }
         }
         // follow the leader
@@ -117,6 +79,9 @@ public class LauncherStrategy {
             }
         }
 
+        // Attack
+        attackEnemies(rc);
+
         // Movement
         // moveTowardsEnemyIslands(rc);
         // moveTowardsEnemies(rc);
@@ -131,23 +96,29 @@ public class LauncherStrategy {
     }
 
     private static void attackEnemies(RobotController rc) throws GameActionException {
-        int radius = RobotType.LAUNCHER.actionRadiusSquared;
-        RobotInfo[] enemies = rc.senseNearbyRobots(radius, theirTeam);
-        int lowestHealth = Integer.MAX_VALUE;
-        int smallestDistance = Integer.MAX_VALUE;
-        RobotInfo target = null;
-        if (enemies.length > 0) {
-            for (RobotInfo enemy : enemies) {
-                int enemyHealth = enemy.getHealth();
-                int enemyDistance = enemy.getLocation().distanceSquaredTo(rc.getLocation());
-                if (enemyHealth < lowestHealth) {
-                    target = enemy;
-                    lowestHealth = enemyHealth;
-                    smallestDistance = enemyDistance;
-                } else if (enemyHealth == lowestHealth) {
-                    if (enemyDistance < smallestDistance) {
-                        target = enemy;
-                        smallestDistance = enemyDistance;
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
+        // get lowest health launcher, carrier, amp, destabs, and boosters in this pass
+        RobotInfo carrierTarget = null;
+        int lowestHPCarrier = Integer.MAX_VALUE;
+        RobotInfo ampTarget = null;
+        int lowestHPAmp = Integer.MAX_VALUE;
+        RobotInfo destabTarget = null;
+        int lowestHPDestab = Integer.MAX_VALUE;
+        RobotInfo boosterTarget = null;
+        int lowestHPBooster = Integer.MAX_VALUE;
+        RobotInfo launcherTarget = null;
+        int lowestHPLauncher = Integer.MAX_VALUE;
+        RobotInfo carrierWithAccAnchorTarget = null;
+        int lowestHPCarrierWithAccAnchor = Integer.MAX_VALUE;
+        RobotInfo carrierWithStdAnchorTarget = null;
+        int lowestHPCarrierWithStdAnchor = Integer.MAX_VALUE;
+        for (int i = 0; i++ < enemies.length; ) {
+            int enemyHealth = enemies[i - 1].getHealth();
+            switch (enemies[i - 1].getType()) {
+                case LAUNCHER:
+                    if (enemyHealth < lowestHPLauncher) {
+                        lowestHPLauncher = enemyHealth;
+                        launcherTarget = enemies[i - 1];
                     }
                 }
             }

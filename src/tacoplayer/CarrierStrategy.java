@@ -2,6 +2,7 @@ package tacoplayer;
 
 import battlecode.common.*;
 
+import static battlecode.common.Team.NEUTRAL;
 import static tacoplayer.RobotPlayer.*;
 
 public class CarrierStrategy {
@@ -16,10 +17,6 @@ public class CarrierStrategy {
      */
 
     static void runCarrier(RobotController rc) throws GameActionException {
-        if (rc.getRoundNum() % 4 == 0) {
-            Comms.updateIslands(rc);
-            closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
-        }
 
         // Update alive counter
         Comms.updateRobotCount(rc);
@@ -40,6 +37,7 @@ public class CarrierStrategy {
         }
 
         //Transfer resource to headquarters
+        // TODO - This is inefficient is robot is adjacent to both hq and resource at once
         depositResource(rc, ResourceType.ADAMANTIUM);
         depositResource(rc, ResourceType.MANA);
         depositResource(rc, ResourceType.ELIXIR);
@@ -67,11 +65,6 @@ public class CarrierStrategy {
         if (rc.canTakeAnchor(closestHqLoc, Anchor.STANDARD)) {
             rc.takeAnchor(closestHqLoc, Anchor.STANDARD);
             anchorMode = true;
-        }
-
-        closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
-        if (closestNeutralIslandLoc == null) {
-            closestNeutralIslandLoc = Comms.getClosestNeutralIsland(rc);
         }
         if (anchorMode) { // In anchor mode, go plant that flag
             if (closestNeutralIslandLoc == null) {
@@ -101,6 +94,7 @@ public class CarrierStrategy {
             }
 
             // Full resources -> go to HQ
+            // TODO - Use the formula
             if (total == GameConstants.CARRIER_CAPACITY) {
                 Pathing.moveTowards(rc, closestHqLoc);
                 Pathing.moveTowards(rc, closestHqLoc);

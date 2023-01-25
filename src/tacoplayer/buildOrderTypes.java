@@ -43,7 +43,7 @@ public class buildOrderTypes {
                     }
                 } else {
                     // wait for resources
-                    rc.setIndicatorString("Waiting for resources");
+                    rc.setIndicatorString("Waiting for resources for amp");
                 }
             }
         }
@@ -61,7 +61,7 @@ public class buildOrderTypes {
                     }
                 } else {
                     // wait for resources
-                    rc.setIndicatorString("Waiting for resources");
+                    rc.setIndicatorString("Waiting for resources for amp");
                 }
             }
         }
@@ -84,7 +84,7 @@ public class buildOrderTypes {
                     }
                 } else {
                     // wait for resources
-                    rc.setIndicatorString("Waiting for resources");
+                    rc.setIndicatorString("Waiting for resources for anchor");
                 }
             }
         }

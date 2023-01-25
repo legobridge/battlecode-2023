@@ -28,8 +28,5 @@ public class AmplifierStrategy {
             Pathing.moveRandomly(rc);
             Pathing.moveRandomly(rc);
         }
-
-        // Sense islands
-        Comms.updateIslands(rc);
     }
 }

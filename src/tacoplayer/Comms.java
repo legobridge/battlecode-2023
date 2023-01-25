@@ -2,10 +2,8 @@ package tacoplayer;
 
 import battlecode.common.*;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import static battlecode.common.Team.NEUTRAL;
+import static tacoplayer.RobotPlayer.*;
 
 /**
  * Comms is the class used for robot communication
@@ -13,38 +11,33 @@ import java.util.List;
  */
 public class Comms {
 
-    // Only using keeping track of 10 neutral/enemy islands for bytecode purposes atm
-    final static int islandLocsStart = 9;
-    final static int islandLocsEnd = 18;
-    final static int islandIDsStart = 19;
-    final static int islandIDsEnd = 23;
+    final static int ROBOT_COUNT_START_INDEX = 3;
+    final static int NUM_ISLANDS_STORED = 15;
+    final static int ISLAND_LOCS_START_INDEX = 9;
+    final static int ISLAND_IDS_START_INDEX = ISLAND_LOCS_START_INDEX + NUM_ISLANDS_STORED;
     final static int SYMMETRY_INDEX = 63;
-    private static final int ALL_SYMMETRIES = 7;
+    final static int ALL_SYMMETRIES = 7;
+
     // The entire comms array at the start of this robot's turn
-    static int[] sharedArrayLocal = new int[GameConstants.SHARED_ARRAY_LENGTH];
-    static int[] islandLocsTeams = new int[islandLocsEnd - islandLocsStart + 1];
-    static int[] islandIDs = new int[islandIDsEnd - islandIDsStart + 1];
-    static MapLocation[] knownNeutralIslandLocations = new MapLocation[10];
-    static int island_index = 0;
+//    static int[] sharedArrayLocal = new int[GameConstants.SHARED_ARRAY_LENGTH];
+    static int[] islandLocsTeams = new int[NUM_ISLANDS_STORED];
+    static int[] islandIDsTurns = new int[NUM_ISLANDS_STORED];
 
     // Keep track of number of enemy and neutral islands
-    static int numEnemyIslands = 0;
+    static int numFriendlyIslands = 0;
     static int numNeutralIslands = 0;
+    static int numEnemyIslands = 0;
     static int roundUpdated = 0;
     static int locallyKnownSymmetry = 7;
-    static int numHQs = 0;
-    static boolean HQsCounted = false;
 
-    static void readAndStoreSharedArray(RobotController rc) throws GameActionException {
-        // TODO - maybe don't do this
-        for (int i = -1; ++i < GameConstants.SHARED_ARRAY_LENGTH; ) {
-            sharedArrayLocal[i] = rc.readSharedArray(i);
-        }
+    static void readAndStoreFromSharedArray(RobotController rc) throws GameActionException {
+        // Read only the indices we're using, and update local knowledge with shared array knowledge.
+        // Ensure that local knowledge is always a superset of shared array knowledge
+        updateClassIslandArrays(rc);
+        locallyKnownSymmetry &= rc.readSharedArray(SYMMETRY_INDEX);
     }
 
     private static boolean tryToWriteToSharedArray(RobotController rc, int index, int value) throws GameActionException {
-        sharedArrayLocal[index] = value; // TODO - Store this somewhere, write to shared array once in signal range.
-                                         //        As of now, it will be overwritten on the next turn.
         if (rc.canWriteSharedArray(index, value)) {
             rc.writeSharedArray(index, value);
             return true;
@@ -63,305 +56,265 @@ public class Comms {
         int nBitInPlace = nBit & mask; // write the n-bit number to the first n bits
 
         int mBitShifted = mBit << n; // left-shift the m-bit number by n bits
-        int result = nBitInPlace | mBitShifted; // use bitwise OR to write the m-bit number to the next m bits
 
-        return result;
+        return nBitInPlace | mBitShifted;
     }
 
-    static void updateHQLocation(RobotController rc) throws GameActionException {
-        // Hash the 2D coordinate to a 1D coordinate
-        MapLocation hq_loc = rc.getLocation();
-        int hashed_loc = MapLocationUtil.hashMapLocation(hq_loc);
+    static void putHqLocationOnline(RobotController rc) throws GameActionException {
+        // This function is called only once by each HQ
+        // Hash the 2D coordinates to 1D coordinates
+        int hashed_loc = MapLocationUtil.hashMapLocation(rc.getLocation());
 
         // Write it to the shared array if it hasn't been written yet
         for (int i = 0; i < 4; i++) {
             // hashMapLocation adds 1 so the value of hashed_loc can never be 0
-            if (sharedArrayLocal[i] == 0) {
+            if (rc.readSharedArray(i) == 0) {
                 tryToWriteToSharedArray(rc, i, hashed_loc);
                 break;
             }
         }
     }
 
-    static int getNumHQs(RobotController rc) throws GameActionException {
-        if (!HQsCounted && rc.getRoundNum() > 1) {
-            for (int i = 0; i < 4; i++) {
-                if (rc.readSharedArray(i) > 0) {
-                    numHQs++;
+    static void readOurHqLocs(RobotController rc) throws GameActionException {
+        // This function is called only once by each Robot
+        while (hqCount < 4) {
+            int hqLocFromSharedArray = rc.readSharedArray(hqCount);
+            if (hqLocFromSharedArray == 0) {
+                break;
+            } else {
+                ourHqLocs[hqCount++] = MapLocationUtil.unhashMapLocation(hqLocFromSharedArray);
+            }
+        }
+    }
+
+    static boolean isFirstHQ(RobotController rc) throws GameActionException {
+        int robot_location = MapLocationUtil.hashMapLocation(rc.getLocation());
+        return robot_location == rc.readSharedArray(0);
+    }
+
+    static void updateEnemyHqLocs(RobotController rc) throws GameActionException {
+        for (int i = -1; ++i < hqCount; ) { // If we are in range of an enemy HQ, check if symmetry assumptions are valid
+            validateSymmetry(rc, i, SymmetryType.HORIZONTAL.ordinal(), 3);
+            validateSymmetry(rc, i, SymmetryType.VERTICAL.ordinal(), 5);
+            validateSymmetry(rc, i, SymmetryType.ROTATIONAL.ordinal(), 6);
+        }
+        boolean[] symmetries = getMapSymmetries();
+        for (int i = -1; ++i < hqCount; ) { // Based on current symmetry assumptions, populate guesses for enemy HQ locs
+            for (int j = -1; ++j < symmetries.length; ) {
+                if (!symmetries[j]) {
+                    enemyHqLocs[j * 4 + i] = null;
+                } else {
+                    enemyHqLocs[j * 4 + i] = MapLocationUtil.calcSymmetricLoc(ourHqLocs[i], SymmetryType.values()[j]);
                 }
             }
-            HQsCounted = true;
         }
-        return numHQs;
-    }
-    static boolean isFirstHQ(RobotController rc) {
-        int robot_location = MapLocationUtil.hashMapLocation(rc.getLocation());
-        return robot_location == sharedArrayLocal[0];
+        // Update closest Enemy HQ Location
+        closestEnemyHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, enemyHqLocs);
     }
 
-    static boolean updateRobotCount(RobotController rc) throws GameActionException {
-        int index = 3 + rc.getType().ordinal();
-        int num_robots = sharedArrayLocal[index];
-        num_robots++;
-
-        // Try to write
-        return tryToWriteToSharedArray(rc, index, num_robots);
+    private static void validateSymmetry(RobotController rc, int hqNum, int symmetryType, int mostSymmetryPossible) throws GameActionException {
+        MapLocation enemyHqLoc = enemyHqLocs[symmetryType * 4 + hqNum];
+        if (enemyHqLoc == null) {
+            return;
+        }
+        if (rc.canSenseLocation(enemyHqLoc)) {
+            RobotInfo robotInfo = rc.senseRobotAtLocation(enemyHqLoc);
+            if (robotInfo == null || robotInfo.type != RobotType.HEADQUARTERS || robotInfo.team != theirTeam) {
+                // This is not a valid symmetry!
+                updateSymmetry(mostSymmetryPossible);
+            }
+        }
     }
 
-    static int getPrevRobotCount(RobotController rc, RobotType robot) {
-        int index = 3 + robot.ordinal();
-        return getNumFromBits(
-                sharedArrayLocal[index], 9, 16);
+    private static void updateClassIslandArrays(RobotController rc) throws GameActionException {
+        // TODO - replace data struct with custom hashmap
+        for (int i = -1; ++i < NUM_ISLANDS_STORED; ) {
+            // For each island in the shared array, check if we know about it locally
+            islandLocsTeams[i] = rc.readSharedArray(i + ISLAND_LOCS_START_INDEX);
+            islandIDsTurns[i] = rc.readSharedArray(i + ISLAND_IDS_START_INDEX);
+            if (islandLocsTeams[i] == 0 || islandIDsTurns[i] == 0) {
+                continue;
+            }
+
+            IslandInfo onlineIslandInfo = new IslandInfo(islandLocsTeams[i], islandIDsTurns[i]);
+
+            for (int j = -1; ++j < knownIslands.length; ) {
+                if (knownIslands[j] == null) {
+                    // This is a new island, add it to local array
+                    knownIslands[j] = onlineIslandInfo;
+                    break;
+                } else if (knownIslands[j].id == onlineIslandInfo.id) {
+                    if (knownIslands[j].turnLastSensed < onlineIslandInfo.turnLastSensed) {
+                        // We know about this island, but the data online is more recent.
+                        // Let's reset its values again, in case the team has changed
+                        knownIslands[j].team = onlineIslandInfo.team;
+                        knownIslands[j].turnLastSensed = onlineIslandInfo.turnLastSensed;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    static void updateRobotCount(RobotController rc) throws GameActionException {
+        int index = ROBOT_COUNT_START_INDEX + rc.getType().ordinal();
+        int num_robots = rc.readSharedArray(index);
+        tryToWriteToSharedArray(rc, index, num_robots + 1);
+    }
+
+    static int getPrevRobotCount(RobotController rc, RobotType robotType) throws GameActionException {
+        int index = ROBOT_COUNT_START_INDEX + robotType.ordinal();
+        return getNumFromBits(rc.readSharedArray(index), 9, 16);
     }
 
     // Moves the first 8 bits to the last 8 bits of all the robot counts
     static void resetCounts(RobotController rc) throws GameActionException {
         for (int i = 4; i < 9; i++) {
-            int save_count = getNumFromBits(
-                    sharedArrayLocal[i], 1, 8);
-//            save_count = save_count << 8;
-            save_count = bitHack(0, save_count, 8, 8);
+            int save_count = getNumFromBits(rc.readSharedArray(i), 1, 8);
+            save_count = save_count << 8;
             tryToWriteToSharedArray(rc, i, save_count);
         }
     }
 
-    static int getNumNeutralIslands(RobotController rc) throws GameActionException {
-        // If the array has already been searched by an HQ, this number has been recorded
-        if (roundUpdated == rc.getRoundNum()) {
-            return numNeutralIslands;
-        }
-
-        // Else count neutral and enemy islands
+    static int getNumFriendlyIslands(RobotController rc) {
+        // Count neutral and enemy islands
         countIslands(rc);
+        return numFriendlyIslands;
+    }
 
+    static int getNumNeutralIslands(RobotController rc) {
+        // Count neutral and enemy islands
+        countIslands(rc);
         return numNeutralIslands;
     }
 
-    static int getNumEnemyIslands(RobotController rc) throws GameActionException {
-        // If the array has already been searched by an HQ, this number has been recorded
-        if (roundUpdated == rc.getRoundNum()) {
-            return numEnemyIslands;
-        }
-
-        // Else count neutral and enemy islands
+    static int getNumEnemyIslands(RobotController rc) {
+        // Count neutral and enemy islands
         countIslands(rc);
-
         return numEnemyIslands;
     }
 
-    static MapLocation getClosestNeutralIsland(RobotController rc) throws GameActionException {
-        updateClassIslandArrays(rc);
-        List<Integer> neutralIslands = new ArrayList<>();
-        for (int arrayElement : islandLocsTeams) {
-            int hashedLoc = getNumFromBits(arrayElement, 1, 12); // Bits 1-12 are for location
-            int team = getNumFromBits(arrayElement, 13, 14); // Bits 13-14 are for team
-            if (team == 2) {
-                neutralIslands.add(hashedLoc);
-            }
-        }
-        MapLocation closest = MapLocationUtil.getClosestLocation(rc.getLocation(), neutralIslands);
-        return closest;
-    }
-
-    static MapLocation getClosestEnemyIsland(RobotController rc)  {
-        updateClassIslandArrays(rc);
-        List<Integer> enemyIslands = new ArrayList<>();
-        for (int arrayElement : islandLocsTeams) {
-            int hashedLoc = getNumFromBits(arrayElement, 1, 12); // Bits 1-12 are for location
-            int team = getNumFromBits(arrayElement, 13, 14); // Bits 13-14 are for team
-            if (team == 1) {
-                enemyIslands.add(hashedLoc);
-            }
-        }
-        return MapLocationUtil.getClosestLocation(rc.getLocation(), enemyIslands);
-    }
-
     private static void countIslands(RobotController rc) {
+        if (roundUpdated == rc.getRoundNum()) {
+            return;
+        }
         roundUpdated = rc.getRoundNum();
+        numFriendlyIslands = 0;
         numNeutralIslands = 0;
         numEnemyIslands = 0;
-        for (int i = islandLocsStart; i <= islandLocsEnd; i++) {
-            int array_element = sharedArrayLocal[i];
-            int team = getNumFromBits(array_element, 13, 14);
-            if (team == 1) {
+        for (int i = -1; ++i < knownIslands.length; ) {
+            if (knownIslands[i] == null) {
+                break;
+            }
+            if (knownIslands[i].team == ourTeam) {
+                numFriendlyIslands++;
+            } else
+            if (knownIslands[i].team == theirTeam) {
                 numEnemyIslands++;
-            } else if (team == 2) {
+            } else if (knownIslands[i].team == NEUTRAL) {
                 numNeutralIslands++;
             }
         }
-//        System.out.println("ROUND: " + String.valueOf(roundUpdated));
-//        System.out.println("NEUTRAL: " + String.valueOf(numNeutralIslands));
-//        System.out.println("ENEMY: " + String.valueOf(numEnemyIslands));
     }
 
-    static void updateIslands(RobotController rc) throws GameActionException {
-        // Record Island data once so byte code doesn't have to be
-        // wasted by reading the shared array many times
-        updateClassIslandArrays(rc);
-
-        int[] island_ids = rc.senseNearbyIslands();
-
+    static void putIslandsOnline(RobotController rc) throws GameActionException {
+        // Check if we are in wi-fi range
+        if (!rc.canWriteSharedArray(0, 0)) {
+            return;
+        }
         // Check if each sensed island ID has not been found
         // Also update the island team
-        for (int island_id : island_ids) {
-            boolean found = false; // Flag for whether or not the island_id is in the shared array
-            int first_zero = islandIDsStart; // First open space in island data for new data to be recorded
-            Team island_team = rc.senseTeamOccupyingIsland(island_id); // Team that occupies the island
+        for (int i = -1; ++i < knownIslands.length; ) {
+            IslandInfo islandInfo = knownIslands[i];
+            if (islandInfo == null) {
+                break;
+            }
+
+            boolean found = false; // Flag for whether the island_id is in the shared array
+            int firstZeroIndex = -1; // First open space in island data for new data to be recorded
 
             // Iterate through all island IDs
-            for (int i = islandIDsStart; i <= islandIDsEnd; i++) {
-                // Read the ids from the shared array
-                int ids = islandIDs[i - islandIDsStart];
+            for (int j = -1; ++j < NUM_ISLANDS_STORED; ) {
 
-                // Each index holds 2 6-bit IDs
-                int id1 = getNumFromBits(ids, 1, 6);
-                int id2 = getNumFromBits(ids, 7, 12);
+                // Record the first 0 that occurs
+                if (islandIDsTurns[j] == 0) {
+                    if (firstZeroIndex == -1) {
+                        firstZeroIndex = j;
+                    }
+                    continue;
+                }
+
+                // Read the island info from the shared array
+                IslandInfo onlineIslandInfo = new IslandInfo(islandLocsTeams[j], islandIDsTurns[j]);
 
                 // See if island_ids matches either of the ids at this index
-                if (island_id == id1 || island_id == id2) {
+                if (islandInfo.id == onlineIslandInfo.id) {
                     // Mark that we found it
                     found = true;
-
-                    // Get the index for the island's location data
-                    int idLocIndex = islandLocsStart + 2 * (i - islandIDsStart);
-                    if (island_id == id2) {
-                        idLocIndex++;
-                    }
-
-                    // If we own the island, remove it
-                    // Otherwise update its team
-                    if (island_team == rc.getTeam()) {
-                        removeIsland(rc, idLocIndex);
-                    } else {
-                        updateIslandTeam(rc, island_team, idLocIndex);
+                    if (onlineIslandInfo.turnLastSensed < islandInfo.turnLastSensed) { // We have fresh data, let's upload it
+                        if (islandInfo.team != onlineIslandInfo.team){ // Otherwise update its team
+                            updateIslandTeam(rc, islandInfo, j);
+                        }
                     }
                     break;
                 }
-
-                // Record the first 0 that occurs
-                if (id1 == 0 && first_zero == islandIDsStart) {
-                    first_zero = islandLocsStart + 2 * (i - islandIDsStart);
-                }
-                if (id2 == 0 && first_zero == islandIDsStart) {
-                    first_zero = islandLocsStart + 1 + 2 * (i - islandIDsStart);
-                }
             }
-
             // If the island was not found in the array, add it if there's space
-            if (!found && first_zero < islandIDsStart) {
-                addIsland(rc, island_id, island_team, first_zero);
+            if (!found && firstZeroIndex != -1) {
+                addIsland(rc, islandInfo, firstZeroIndex);
             }
         }
     }
 
-    private static void updateClassIslandArrays(RobotController rc) {
-        if (rc.getRoundNum() != roundUpdated) {
-            System.arraycopy(sharedArrayLocal, islandLocsStart, islandLocsTeams, 0, islandLocsEnd - 8);
-            System.arraycopy(sharedArrayLocal, islandIDsStart, islandIDs, 0, islandIDsEnd - 18);
-            roundUpdated = rc.getRoundNum();
-        }
+    private static void addIsland(RobotController rc, IslandInfo islandInfo, int index) throws GameActionException {
+        System.out.println("ADDING ISLAND: " + islandInfo.id);
+
+        // Get the hashed location of an island square
+        int islandLocHashed = MapLocationUtil.hashMapLocation(islandInfo.locations[0]);
+        int islandTeamInt = islandInfo.team.ordinal();
+        int newIslandLocTeam = bitHack(islandLocHashed, islandTeamInt, 12, 2);
+
+        // Write location-team value
+        islandLocsTeams[index] = newIslandLocTeam;
+        tryToWriteToSharedArray(rc, index + ISLAND_LOCS_START_INDEX, newIslandLocTeam);
+
+        // Get the combined island id and turn sensed
+        int islandIdTurn = IslandInfo.hashIslandIdAndTurnSensed(islandInfo.id, islandInfo.turnLastSensed);
+
+        // Write island ID
+        islandIDsTurns[index] = islandIdTurn;
+        tryToWriteToSharedArray(rc, index + ISLAND_IDS_START_INDEX, islandIdTurn);
     }
 
-    private static void addIsland(RobotController rc, int island_id, Team island_team, int index) throws GameActionException {
-        // Determine if the island is under our control
-        boolean our_team = island_team == rc.getTeam();
+    private static void updateIslandTeam(RobotController rc, IslandInfo islandInfo, int index) throws GameActionException {
 
-        // If we don't control the island and we can write to the shared array, write it
-        // TODO -  && rc.canWriteSharedArray(index, 0)
-        if (!our_team) {
-//            System.out.println("ADDING ISLAND: " + island_id);
+        // Get the existing values from the shared array for this island
+        int hashed_loc = getNumFromBits(islandLocsTeams[index], 1, 12);
+        int oldTeamInt = getNumFromBits(islandLocsTeams[index], 13, 14);
 
-            // Get the hashed location of an island square
-            MapLocation island_loc = rc.senseNearbyIslandLocations(island_id)[0];
-            int island_loc_hashed = MapLocationUtil.hashMapLocation(island_loc);
+        // Write the combined location and team to the shared array
+        int islandTeamInt = islandInfo.team.ordinal();
+        int newLocTeamInt = bitHack(hashed_loc, islandTeamInt, 12, 2);
+        islandLocsTeams[index] = newLocTeamInt;
+        tryToWriteToSharedArray(rc, index + ISLAND_LOCS_START_INDEX, newLocTeamInt);
 
-            // TODO
-            knownNeutralIslandLocations[(island_index++) % 10] = island_loc;
+        // Write the combined island id and turn sensed
+        int islandIdTurn = IslandInfo.hashIslandIdAndTurnSensed(islandInfo.id, islandInfo.turnLastSensed);
+        islandIDsTurns[index] = islandIdTurn;
+        tryToWriteToSharedArray(rc, index + ISLAND_IDS_START_INDEX, islandIdTurn);
 
-            // Write location-team value
-            tryToWriteToSharedArray(rc, index, island_loc_hashed);
-            updateIslandTeam(rc, island_team, index);
-
-            // Write island ID
-            updateIslandID(rc, island_id, index);
-        }
-    }
-
-    private static void updateIslandID(RobotController rc, int island_id, int loc_index) throws GameActionException {
-        // Get the island's ID index based on its location index
-        int id_index = (loc_index - islandLocsStart) / 2 + islandIDsStart;
-
-        // Determine if the ID is the first 6 bits or the next 6 bits and write it
-        if ((loc_index - islandLocsStart) % 2 == 0) {
-            // Update first 6 bits of the array element
-            int ids = islandIDs[id_index - islandIDsStart];
-            int id1 = island_id;
-            int id2 = getNumFromBits(ids, 7, 12);
-            int new_element = bitHack(id1, id2, 6, 6);
-            tryToWriteToSharedArray(rc, id_index, new_element);
-        } else {
-            // Update bits 7-12 of the array element
-            int ids = islandIDs[id_index - islandIDsStart];
-            int id1 = getNumFromBits(ids, 1, 6);
-            int id2 = island_id;
-            int new_element = bitHack(id1, id2, 6, 6);
-            tryToWriteToSharedArray(rc, id_index, new_element);
-        }
-    }
-
-    private static void updateIslandTeam(RobotController rc, Team island_team, int index) throws GameActionException {
-        int island_team_int = 0; // 0 - Ours, 1 - Enemy, 2 - Neutral, 3 - Unknown
-
-        // If the island is ours, discard it for now
-        // Else convert the team to a 2 bit number to be stored
-        if (island_team == rc.getTeam()) {
-            removeIsland(rc, index);
-            return;
-        } else {
-            if (island_team == Team.NEUTRAL) {
-                island_team_int = 2;
-            } else {
-                island_team_int = 1;
-            }
-        }
-
-        // Get the values from the shared array for this island
-        int array_element = sharedArrayLocal[index];
-        int hashed_loc = getNumFromBits(array_element, 1, 12);
-        int team = getNumFromBits(array_element, 13, 14);
-
-        // If the team has changed, update it
-        if (team != island_team_int) {
-//            System.out.println("CHANGING ISLAND TEAM: " + Integer.valueOf(team) + " TO " + Integer.valueOf(island_team_int));
-            int new_element = bitHack(hashed_loc, island_team_int, 12, 2);
-            tryToWriteToSharedArray(rc, index, new_element);
-        }
-    }
-
-    private static void removeIsland(RobotController rc, int index) throws GameActionException {
-        if (rc.canWriteSharedArray(index, 0)) {
-//            System.out.println("REMOVING ISLAND");
-
-            // Erase location-team data
-            tryToWriteToSharedArray(rc, index, 0);
-
-            // Erase id data
-            updateIslandID(rc, 0, index);
-        }
+        System.out.println("CHANGED ISLAND TEAM: " + oldTeamInt + " TO " + islandTeamInt);
     }
 
     public static void initializeSymmetry(RobotController rc) throws GameActionException {
         tryToWriteToSharedArray(rc, SYMMETRY_INDEX, ALL_SYMMETRIES);
     }
 
-    public static void updateSymmetry(RobotController rc, int mostSymmetryPossible) throws GameActionException {
-        // TODO - sharedArrayLocal[SYMMETRY_INDEX]
+    public static void updateSymmetry(int mostSymmetryPossible) {
         locallyKnownSymmetry = locallyKnownSymmetry & mostSymmetryPossible;
-        tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
     }
 
     public static boolean[] getMapSymmetries() {
-        // TODO - sharedArrayLocal[SYMMETRY_INDEX]
         switch (locallyKnownSymmetry) {
             case 1:
                 return new boolean[]{false, false, true};
@@ -377,6 +330,16 @@ public class Comms {
                 return new boolean[]{true, true, false};
             default:
                 return new boolean[]{true, true, true};
+        }
+    }
+
+    public static void putSymmetryOnline(RobotController rc) throws GameActionException {
+        // Check if we are in wi-fi range
+        if (!rc.canWriteSharedArray(0, 0)) {
+            return;
+        }
+        if (rc.readSharedArray(SYMMETRY_INDEX) > locallyKnownSymmetry) {
+            tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
         }
     }
 }
