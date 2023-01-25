@@ -91,7 +91,7 @@ public class Pathing {
         lastFewLocs[(lastFewLocsIndex++) % MAX_PREV_LOCS_TO_STORE] = rc.getLocation();
     }
 
-    private static boolean safeFromHQ(RobotController rc, MapLocation loc) {
+    static boolean safeFromHQ(RobotController rc, MapLocation loc) {
         if (loc == null) {
             return true;
         }
