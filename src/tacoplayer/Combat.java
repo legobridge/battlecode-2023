@@ -6,7 +6,6 @@ import static tacoplayer.RobotPlayer.*;
 import java.awt.*;
 
 public class Combat {
-    static boolean retreatMode = false;
     static int MAGIC_DIVE_HEALTH = 40;
     static int MAGIC_RETREAT_HEALTH = 20;
 
@@ -98,7 +97,7 @@ public class Combat {
     /** Mission failed, we'll get em next time */
     static void retreat(RobotController rc) throws GameActionException {
         // If low health begin retreat
-        if (rc.getHealth() <= MAGIC_RETREAT_HEALTH) {
+        if (rc.getHealth() <= MAGIC_RETREAT_HEALTH && closestFriendlyIslandLoc != null) {
             retreatMode = true;
         }
         // If not in retreat or fully healed, end retreat
@@ -118,7 +117,7 @@ public class Combat {
 //            else {
 //                Movement.moveTowardsLocation(rc, islandLoc);
 //            }
-            Pathing.moveRandomly(rc);
+            Movement.moveTowardsLocation(rc, closestFriendlyIslandLoc);
             System.out.println("RETREAT");
         }
     }

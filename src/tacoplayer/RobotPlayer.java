@@ -66,6 +66,7 @@ public strictfp class RobotPlayer {
     static int secondNearestEXWellDistSq= Integer.MAX_VALUE;
     static int lastRoundHealth;
     static int thisRoundHealth;
+    static boolean retreatMode = false;
 
     // Lists to hold values that couldn't be written to shared array
     // but should be once the bot is in range to write
