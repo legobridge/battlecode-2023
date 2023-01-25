@@ -66,8 +66,6 @@ public class CarrierStrategy {
             rc.takeAnchor(closestHqLoc, Anchor.STANDARD);
             anchorMode = true;
         }
-
-        closestNeutralIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, NEUTRAL);
         if (anchorMode) { // In anchor mode, go plant that flag
             if (closestNeutralIslandLoc == null) {
                 Pathing.moveRandomly(rc);

@@ -16,8 +16,6 @@ public class LauncherStrategy {
         // Update alive counter
         Comms.updateRobotCount(rc);
 
-        closestEnemyIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, theirTeam);
-
         // Movement
         move(rc);
 

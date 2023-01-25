@@ -2,6 +2,7 @@ package tacoplayer;
 
 import battlecode.common.*;
 
+import static battlecode.common.Team.NEUTRAL;
 import static tacoplayer.RobotPlayer.*;
 
 public class Sensing {
@@ -122,12 +123,9 @@ public class Sensing {
         for (int i = -1; ++i < islandIds.length; ) {
             int islandId = islandIds[i];
             Team islandTeam = rc.senseTeamOccupyingIsland(islandId);
-            if (islandTeam == ourTeam) {
-                continue;
-            }
             for (int j = -1; ++j < knownIslands.length; ) {
                 if (knownIslands[j] == null) { // I haven't seen this island
-                    knownIslands[j] = new IslandInfo(islandId, islandTeam, rc.senseNearbyIslandLocations(islandId), rc.getRoundNum());
+                    knownIslands[j] = new IslandInfo(islandId, rc.getRoundNum(), islandTeam, rc.senseNearbyIslandLocations(islandId));
                     break;
                 } else if (islandId == knownIslands[j].id) { // I've seen this island before
                     knownIslands[j].team = islandTeam; // Set the team again, in case it has changed
@@ -136,5 +134,8 @@ public class Sensing {
                 }
             }
         }
+        closestFriendlyIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, ourTeam);
+        closestNeutralIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, NEUTRAL);
+        closestEnemyIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, theirTeam);
     }
 }
