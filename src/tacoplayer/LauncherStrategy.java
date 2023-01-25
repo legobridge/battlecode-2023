@@ -13,6 +13,13 @@ public class LauncherStrategy {
         // Update alive counter
         Comms.updateRobotCount(rc);
 
+        // Update health
+        updateHealth(rc);
+
+        // Attack
+        Combat.attack(rc);
+        Combat.retreat(rc);
+
         // move together
         // sense nearby robots
         RobotInfo[] alliedRobots = rc.senseNearbyRobots(-1, ourTeam);
@@ -109,9 +116,6 @@ public class LauncherStrategy {
                 rc.setIndicatorString("moving randomly");
             }
         }
-
-        // Attack
-        attackEnemies(rc);
 
         // Movement
         // moveTowardsEnemyIslands(rc);

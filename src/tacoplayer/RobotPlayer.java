@@ -65,6 +65,8 @@ public strictfp class RobotPlayer {
     static int secondNearestADWellDistSq = Integer.MAX_VALUE;
     static int secondNearestMNWellDistSq= Integer.MAX_VALUE;
     static int secondNearestEXWellDistSq= Integer.MAX_VALUE;
+    static int lastRoundHealth;
+    static int thisRoundHealth;
 
     // Lists to hold values that couldn't be written to shared array
     // but should be once the bot is in range to write
@@ -335,5 +337,17 @@ public strictfp class RobotPlayer {
                 secondNearestEXWellDistSq = distSq;
                 break;
         }
+    }
+
+    static void updateHealth(RobotController rc) {
+        lastRoundHealth = thisRoundHealth;
+        thisRoundHealth = rc.getHealth();
+    }
+
+    static boolean isHealing(RobotController rc) {
+        if (thisRoundHealth > lastRoundHealth) {
+            return true;
+        }
+        return false;
     }
 }
