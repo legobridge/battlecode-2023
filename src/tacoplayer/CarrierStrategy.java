@@ -2,8 +2,8 @@ package tacoplayer;
 
 import battlecode.common.*;
 
-import static battlecode.common.Team.NEUTRAL;
 import static tacoplayer.RobotPlayer.*;
+import static tacoplayer.Sensing.*;
 
 public class CarrierStrategy {
 
@@ -54,8 +54,7 @@ public class CarrierStrategy {
 //        }
 
         // Move away from enemies
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
-        if (enemies.length > 0) {
+        if (enemyLauncherCount + enemyDestabCount > 0) {
             Movement.moveTowardsLocation(rc, closestHqLoc);
             Movement.moveTowardsLocation(rc, closestHqLoc);
         }

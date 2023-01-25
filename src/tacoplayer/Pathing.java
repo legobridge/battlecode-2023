@@ -18,44 +18,42 @@ public class Pathing {
     // TODO - Move (and act) as many times as cooldown allows
     // TODO - consider currents to be obstacles (soft)
     // TODO - this is very bytecode inefficient!!!
-    static void moveTowards(RobotController rc, MapLocation target) throws GameActionException {
-        rc.setIndicatorString("Moving towards target! (" + target + ")");
+    static boolean moveTowards(RobotController rc, MapLocation target) throws GameActionException {
+//        rc.setIndicatorString("Moving towards target! (" + target + ")");
         if (rc.getLocation().equals(target)) {
-            return;
+            return false;
         }
         if (!rc.isMovementReady()) {
-            return;
+            return false;
         }
-        MapLocation nearestEnemyHQLoc = getNearestEnemyHQLoc(rc);
         MapLocation selfLoc = rc.getLocation();
         Direction dir = rc.getLocation().directionTo(target);
         MapLocation targetLoc = selfLoc.add(dir);
+        boolean hasMoved = false;
         if (!ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)
                 && rc.canMove(dir)
-                && safeFromHQ(rc, nearestEnemyHQLoc)) {
+                && safeFromHQ(rc, closestEnemyHqLoc)) {
             moveAndUpdateLastFewLocs(rc, dir);
             currentDirection = null;
+            hasMoved = true;
         } else {
             if (currentDirection == null) {
                 currentDirection = dir;
             }
             // Try to move in a way that keeps the obstacle on our right
-            boolean moved = false;
             for (int i = 0; i < 8; i++) {
                 targetLoc = selfLoc.add(currentDirection);
                 if (!ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc) && rc.canMove(currentDirection)) {
                     moveAndUpdateLastFewLocs(rc, currentDirection);
                     currentDirection = currentDirection.rotateRight();
-                    moved = true;
+                    hasMoved = true;
                     break;
                 } else {
                     currentDirection = currentDirection.rotateLeft();
                 }
             }
-            if (!moved) {
-                moveRandomly(rc);
-            }
         }
+        return hasMoved;
     }
 
     static void moveRandomly(RobotController rc) throws GameActionException {
@@ -63,7 +61,6 @@ public class Pathing {
         if (!rc.isMovementReady()) {
             return;
         }
-        MapLocation nearestEnemyHQLoc = getNearestEnemyHQLoc(rc);
         MapLocation selfLoc = rc.getLocation();
         ArrayList<Direction> backupDirectionsToTry = new ArrayList<>();
         boolean moved = false;
@@ -73,7 +70,7 @@ public class Pathing {
             MapLocation targetLoc = selfLoc.add(dir);
             if (ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)) { // If we've been here recently, avoid it
                 backupDirectionsToTry.add(dir);
-            } else if (rc.canMove(dir) && safeFromHQ(rc, nearestEnemyHQLoc)) {
+            } else if (rc.canMove(dir) && safeFromHQ(rc, closestEnemyHqLoc)) {
                 moved = true;
                 rc.setIndicatorString("I moved to a brand new place, by moving: " + dir);
                 moveAndUpdateLastFewLocs(rc, dir);
@@ -92,24 +89,6 @@ public class Pathing {
     private static void moveAndUpdateLastFewLocs(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
         lastFewLocs[(lastFewLocsIndex++) % MAX_PREV_LOCS_TO_STORE] = rc.getLocation();
-    }
-
-    private static MapLocation getNearestEnemyHQLoc(RobotController rc) throws GameActionException {
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
-        MapLocation nearestHQ = null;
-        MapLocation ourLoc = rc.getLocation();
-        int closestHQDistSq = Integer.MAX_VALUE;
-        for (int i = 0; i < enemies.length; i++) {
-            RobotInfo enemy = enemies[i];
-            if (enemy.getType() == RobotType.HEADQUARTERS) {
-                int distSq = ourLoc.distanceSquaredTo(enemy.getLocation());
-                if (distSq < closestHQDistSq) {
-                    nearestHQ = enemy.getLocation();
-                    closestHQDistSq = distSq;
-                }
-            }
-        }
-        return nearestHQ;
     }
 
     private static boolean safeFromHQ(RobotController rc, MapLocation loc) {

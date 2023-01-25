@@ -4,12 +4,11 @@ import battlecode.common.*;
 
 import static tacoplayer.RobotPlayer.*;
 import static tacoplayer.Movement.*;
+import static tacoplayer.Sensing.*;
 
 public class LauncherStrategy {
-    /**
-     * Run a single turn for a Launcher.
-     * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
-     */
+
+    static int LAUNCHER_BATTALION_SIZE = 3;
 
     // TODO - move first attack later or attack first and move later?
     static void runLauncher(RobotController rc) throws GameActionException {
@@ -24,37 +23,23 @@ public class LauncherStrategy {
     }
 
     private static void move(RobotController rc) throws GameActionException {
-        // move together
-        // sense nearby robots
-        RobotInfo[] alliedRobots = rc.senseNearbyRobots(-1, ourTeam);
-        int launchersNearby = 0;
-        // go through the nearby robots (launchers) and assign yourself as leader or follow a leader
-        int leader_id = Integer.MAX_VALUE;
+        // Move together
+        // Go through the nearby launchers and elect a leader
+        int leaderId = Integer.MAX_VALUE;
         RobotInfo leader = null;
-        for (int i = 0; i++ < alliedRobots.length; ) {
-            if (alliedRobots[i - 1].getType() == RobotType.LAUNCHER) {
-                if (alliedRobots[i - 1].getID() < leader_id) {
-                    leader_id = alliedRobots[i - 1].getID();
-                    leader = alliedRobots[i - 1];
-                }
-                launchersNearby++;
+        for (int i = -1; ++i < ourLauncherCount; ) {
+            if (ourLaunchers[i].getID() < leaderId) {
+                leaderId = ourLaunchers[i].getID();
+                leader = ourLaunchers[i];
             }
         }
-        // not enough launchers nearby
-        if (launchersNearby < 3) {
+        if (ourLauncherCount < LAUNCHER_BATTALION_SIZE) { // Not enough launchers nearby
             if (closestHqLoc != null) {
-                if (rc.canMove(rc.getLocation().directionTo(closestHqLoc))) {
-                    rc.move(rc.getLocation().directionTo(closestHqLoc));
-                    rc.setIndicatorString("moving towards enemy HQ");
-                }
-            }
-            else {
-                Pathing.moveRandomly(rc);
-                rc.setIndicatorString("moving randomly");
+                rc.setIndicatorString("Moving towards own HQ");
+                moveTowardsLocation(rc, closestHqLoc);
             }
         }
-        // I am the leader!
-        else if (leader_id > rc.getID()) {
+        else if (leaderId > rc.getID()) { // I am the leader!
             rc.setIndicatorString("I am a leader!");
             if (moveTowardsEnemies(rc)) {
                 rc.setIndicatorString("moving towards enemy robots");
@@ -70,12 +55,12 @@ public class LauncherStrategy {
                 rc.setIndicatorString("moving randomly");
             }
         }
-        // follow the leader
+        // Follow the leader
         else {
             Direction dir = rc.getLocation().directionTo(leader.getLocation());
             if (rc.canMove(dir)) {
                 rc.move(dir);
-                rc.setIndicatorString("moving towards leader " + leader_id);
+                rc.setIndicatorString("moving towards leader " + leaderId);
             } else {
                 Pathing.moveRandomly(rc);
                 rc.setIndicatorString("moving randomly");
@@ -84,7 +69,7 @@ public class LauncherStrategy {
     }
 
     private static void attackEnemies(RobotController rc) throws GameActionException {
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam); // TODO - use unified sensing
         // get lowest health launcher, carrier, amp, destabs, and boosters in this pass
         RobotInfo carrierTarget = null;
         int lowestHPCarrier = Integer.MAX_VALUE;

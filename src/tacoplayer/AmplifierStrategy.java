@@ -2,9 +2,9 @@ package tacoplayer;
 
 import battlecode.common.GameActionException;
 import battlecode.common.RobotController;
-import battlecode.common.RobotInfo;
 
 import static tacoplayer.RobotPlayer.*;
+import static tacoplayer.Sensing.*;
 
 
 public class AmplifierStrategy {
@@ -17,15 +17,10 @@ public class AmplifierStrategy {
         Comms.updateRobotCount(rc);
 
         // MUST move away from enemies
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
-        if (enemies.length > 0) {
-            Movement.moveTowardsLocation(rc, closestHqLoc);
-            Movement.moveTowardsLocation(rc, closestHqLoc);
+        if (enemyLauncherCount + enemyDestabCount > 0) {
             Movement.moveTowardsLocation(rc, closestHqLoc);
         }
         else {
-            Pathing.moveRandomly(rc);
-            Pathing.moveRandomly(rc);
             Pathing.moveRandomly(rc);
         }
     }

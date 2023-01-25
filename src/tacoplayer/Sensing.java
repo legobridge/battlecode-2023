@@ -6,13 +6,31 @@ import static battlecode.common.Team.NEUTRAL;
 import static tacoplayer.RobotPlayer.*;
 
 public class Sensing {
+
+    final static int MAX_SENSED_ROBOTS = 120;
+
+    static int ourCarrierCount;
+    static int enemyCarrierCount;
+    static int ourLauncherCount;
+    static int enemyLauncherCount;
+    static int ourDestabCount;
+    static int enemyDestabCount;
+    static RobotInfo[] ourCarriers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] enemyCarriers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] ourLaunchers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] enemyLaunchers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] ourDestab = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] enemyDestab = new RobotInfo[MAX_SENSED_ROBOTS];
     static void scanObstacles(RobotController rc) {
         // TODO - scan for clouds and currents and add to local memory
     }
 
     static void scanRobots(RobotController rc) throws GameActionException {
+        ourCarrierCount = 0;
+        enemyCarrierCount = 0;
+        ourLauncherCount = 0;
+        enemyLauncherCount = 0;
         RobotInfo[] robots = rc.senseNearbyRobots();
-
         for (int j = -1; ++j < robots.length; ) {
             switch (robots[j].getType()) {
                 case HEADQUARTERS:
@@ -28,10 +46,26 @@ public class Sensing {
                     }
                     break;
                 case CARRIER:
+                    if (robots[j].team == ourTeam) {
+                        ourCarriers[ourCarrierCount++] = robots[j];
+                    }
+                    else {
+                        enemyCarriers[enemyCarrierCount++] = robots[j];
+                    }
                     break;
                 case LAUNCHER:
+                    if (robots[j].team == ourTeam) {
+                        ourLaunchers[ourLauncherCount++] = robots[j];
+                    }
+                    else {
+                        enemyLaunchers[enemyLauncherCount++] = robots[j];
+                    }
                     break;
-                default: // TODO - sense other robots
+                case AMPLIFIER: // TODO - sense these robots
+                    break;
+                case BOOSTER:
+                    break;
+                case DESTABILIZER:
                     break;
             }
         }
@@ -84,7 +118,7 @@ public class Sensing {
         }
     }
 
-    static void updateNearestWell (MapLocation loc, int distSq, ResourceType res) {
+    static void updateNearestWell(MapLocation loc, int distSq, ResourceType res) {
         switch (res) {
             case ADAMANTIUM:
                 nearestADWell = loc;
