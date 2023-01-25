@@ -11,7 +11,7 @@ public class Combat {
 
     /** attack mode */
     static void attack(RobotController rc) throws GameActionException {
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam); // TODO - use universal sensing
         if (enemies.length == 0) {
             return;
         }
@@ -73,8 +73,6 @@ public class Combat {
             return;
         }
 
-        MapLocation closestEnemyHQ = Pathing.getNearestEnemyHQLoc(rc);
-
         // If retreat mode, attack nearest enemy if in range and keep haulin ass
         // else if enemy is low on health and within movement range, dive and attack it
         // else kite
@@ -88,7 +86,7 @@ public class Combat {
                 tryAttack(rc, closestEnemyLoc);
             }
         }
-        if ((lowestHealth <= MAGIC_DIVE_HEALTH || numLaunchers == 0) && Pathing.safeFromHQ(rc, closestEnemyHQ)) {
+        if ((lowestHealth <= MAGIC_DIVE_HEALTH || numLaunchers == 0) && Pathing.safeFromHQ(rc, closestEnemyHqLoc)) {
             // Prioritize attack launchers
             rc.setIndicatorString("DIVE");
             attackDive(rc, lowestHealthLoc);
@@ -123,7 +121,7 @@ public class Combat {
         // If you're at an island, stay there until healed
         // else move to nearest friendly HQ if you haven't reached one since retreat mode was activated
         // If you have reached one, wander until you find a friendly island
-        if (!isHealing(rc)) {
+        if (!isHealing()) {
 //            MapLocation islandLoc = Comms.getClosestFriendlyIsland(rc);
 //            if (islandLoc == null) {
 //                //TODO - add move randomly to movement class
@@ -132,7 +130,6 @@ public class Combat {
 //                Movement.moveTowardsLocation(rc, islandLoc);
 //            }
             Movement.moveTowardsLocation(rc, closestFriendlyIslandLoc);
-            System.out.println("RETREAT");
         }
     }
 

@@ -6,33 +6,91 @@ import static battlecode.common.Team.NEUTRAL;
 import static tacoplayer.RobotPlayer.*;
 
 public class Sensing {
+
+    final static int MAX_SENSED_ROBOTS = 120;
+
+    static int ourCarrierCount;
+    static int ourLauncherCount;
+    static int ourDestabCount;
+    static RobotInfo[] ourCarriers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] ourLaunchers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] ourDestab = new RobotInfo[MAX_SENSED_ROBOTS];
+
+    static int visibleEnemiesCount;
+    static int closestVisibleEnemyRobotDistSq;
+    static MapLocation closestVisibleEnemyRobotLocation;
+    static int enemyCarrierCount;
+    static int enemyLauncherCount;
+    static int enemyDestabCount;
+    static RobotInfo[] enemyCarriers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] enemyLaunchers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] enemyDestab = new RobotInfo[MAX_SENSED_ROBOTS];
+
     static void scanObstacles(RobotController rc) {
         // TODO - scan for clouds and currents and add to local memory
     }
 
     static void scanRobots(RobotController rc) throws GameActionException {
-        RobotInfo[] robots = rc.senseNearbyRobots();
+        ourCarrierCount = 0;
+        ourLauncherCount = 0;
+        ourDestabCount = 0;
 
+        visibleEnemiesCount = 0;
+        closestVisibleEnemyRobotDistSq = Integer.MAX_VALUE;
+        closestVisibleEnemyRobotLocation = null;
+        enemyCarrierCount = 0;
+        enemyLauncherCount = 0;
+        enemyDestabCount = 0;
+        RobotInfo[] robots = rc.senseNearbyRobots();
         for (int j = -1; ++j < robots.length; ) {
-            switch (robots[j].getType()) {
-                case HEADQUARTERS:
-                    if (robots[j].team == theirTeam) {
+            if (robots[j].team == ourTeam) {
+                switch (robots[j].getType()) {
+                    case HEADQUARTERS:
+                        break;
+                    case CARRIER:
+                        ourCarriers[ourCarrierCount++] = robots[j];
+                        break;
+                    case LAUNCHER:
+                        ourLaunchers[ourLauncherCount++] = robots[j];
+                        break;
+                    case AMPLIFIER: // TODO - sense these robots
+                        break;
+                    case BOOSTER:
+                        break;
+                    case DESTABILIZER:
+                        break;
+                }
+            } else {
+                visibleEnemiesCount++;
+                MapLocation enemyRobotLocation = robots[j].getLocation();
+                int enemyRobotDistSq = rc.getLocation().distanceSquaredTo(enemyRobotLocation);
+                if (closestVisibleEnemyRobotLocation == null || enemyRobotDistSq < closestVisibleEnemyRobotDistSq) {
+                    closestVisibleEnemyRobotDistSq = enemyRobotDistSq;
+                    closestVisibleEnemyRobotLocation = enemyRobotLocation;
+                }
+                switch (robots[j].getType()) {
+                    case HEADQUARTERS:
                         // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
                         // TODO - stop doing this once fairly confident of symmetry
                         int mostSymmetryPossible = 0;
-                        MapLocation enemyHqLoc = robots[j].getLocation();
                         for (int i = -1; ++i < hqCount; ) {
-                            mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyHqLoc);
+                            mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyRobotLocation);
                         }
                         Comms.updateSymmetry(mostSymmetryPossible);
-                    }
-                    break;
-                case CARRIER:
-                    break;
-                case LAUNCHER:
-                    break;
-                default: // TODO - sense other robots
-                    break;
+                        break;
+                    case CARRIER:
+                        enemyCarriers[enemyCarrierCount++] = robots[j];
+                        break;
+                    case LAUNCHER:
+                        enemyLaunchers[enemyLauncherCount++] = robots[j];
+                        break;
+                    case AMPLIFIER: // TODO - sense these robots
+                        break;
+                    case BOOSTER:
+                        break;
+                    case DESTABILIZER:
+                        break;
+                }
             }
         }
     }
@@ -77,14 +135,13 @@ public class Sensing {
 
             if (closestWellLoc == null || wellDistSq < closestWellDistSq) {
                 updateNearestWell(wellLoc, wellDistSq, wellType);
-            }
-            else if (secondClosestWellLoc == null || wellDistSq < secondClosestWellDistSq) {
+            } else if (secondClosestWellLoc == null || wellDistSq < secondClosestWellDistSq) {
                 updateSecondNearestWell(wellLoc, wellDistSq, wellType);
             }
         }
     }
 
-    static void updateNearestWell (MapLocation loc, int distSq, ResourceType res) {
+    static void updateNearestWell(MapLocation loc, int distSq, ResourceType res) {
         switch (res) {
             case ADAMANTIUM:
                 nearestADWell = loc;
@@ -101,7 +158,7 @@ public class Sensing {
         }
     }
 
-    static void updateSecondNearestWell (MapLocation loc, int distSq, ResourceType res) {
+    static void updateSecondNearestWell(MapLocation loc, int distSq, ResourceType res) {
         switch (res) {
             case ADAMANTIUM:
                 secondNearestADWell = loc;

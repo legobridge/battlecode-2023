@@ -14,10 +14,8 @@ public class HeadquartersStrategy {
      */
 
     // TODO: "Maximize Robots Made in a turn"
-    // TODO: Implement Rush
     // TODO: Make Magic Numbers based on Map Size
     // TODO: Update Magic Numbers
-    // TODO: Incorporate Moving Averages
     // TODO: Come up with something better than for(int i = 0; i++ < 5; )
 
     final static int SMALL_MAP_THRESH = 1000; // threshold deciding if the map is small or not

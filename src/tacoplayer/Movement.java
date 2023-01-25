@@ -2,43 +2,26 @@ package tacoplayer;
 
 import battlecode.common.*;
 import static tacoplayer.RobotPlayer.*;
+import static tacoplayer.Sensing.*;
 
 public class Movement {
-    static boolean moveTowardsEnemies(RobotController rc) throws GameActionException {
-        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
-        if (visibleEnemies.length != 0) {
-            MapLocation enemyLocation = averageLoc(visibleEnemies);
-            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
-            // If you are outside 3/4 the enemy's action radius, move towards it, else move away
-            if (visibleEnemies[0].getLocation().distanceSquaredTo(rc.getLocation()) > rc.getType().actionRadiusSquared * 5/6) {
-                Pathing.moveTowards(rc, enemyLocation);
-                return true;
+    static boolean moveTowardsVisibleEnemies(RobotController rc) throws GameActionException {
+        if (visibleEnemiesCount != 0) {
+//            MapLocation enemyLocation = averageLoc(visibleEnemies);
+            rc.setIndicatorString("Moving towards enemy robot! " + closestVisibleEnemyRobotLocation);
+            // If you are outside a certain fraction of the enemy's action radius, move towards it, else move away
+            if (closestVisibleEnemyRobotDistSq > (5.0 / 6.0) * rc.getType().actionRadiusSquared) {
+                return Pathing.moveTowards(rc, closestVisibleEnemyRobotLocation);
             }
             else {
                 MapLocation ourLoc = rc.getLocation();
-                MapLocation runAwayLocation = new MapLocation(ourLoc.x-enemyLocation.x, ourLoc.y-enemyLocation.y);
-                Pathing.moveTowards(rc, runAwayLocation);
-                return true;
+                MapLocation runAwayLocation = new MapLocation(
+                        ourLoc.x - closestVisibleEnemyRobotLocation.x,
+                        ourLoc.y - closestVisibleEnemyRobotLocation.y);
+                return Pathing.moveTowards(rc, runAwayLocation);
             }
         }
         return false;
-    }
-
-    static void moveTowardsEnemies(RobotController rc, int radius) throws GameActionException {
-        RobotInfo[] visibleEnemies = rc.senseNearbyRobots(-1, theirTeam);
-        if (visibleEnemies.length != 0) {
-            MapLocation enemyLocation = averageLoc(visibleEnemies);
-            rc.setIndicatorString("Moving towards enemy robot! " + enemyLocation);
-            // If you are outside 3/4 the enemy's action radius, move towards it, else move away
-            if (visibleEnemies[0].getLocation().distanceSquaredTo(rc.getLocation()) > radius) {
-                Pathing.moveTowards(rc, enemyLocation);
-            }
-            else {
-                MapLocation ourLoc = rc.getLocation();
-                MapLocation runAwayLocation = new MapLocation(ourLoc.x-enemyLocation.x, ourLoc.y-enemyLocation.y);
-                Pathing.moveTowards(rc, runAwayLocation);
-            }
-        }
     }
 
     static MapLocation averageLoc(RobotInfo[] robots) {
@@ -78,8 +61,7 @@ public class Movement {
     static boolean moveTowardsEnemyHq(RobotController rc) throws GameActionException {
         if (closestEnemyHqLoc != null) {
             rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
-            Pathing.moveTowards(rc, closestEnemyHqLoc);
-            return true;
+            return Pathing.moveTowards(rc, closestEnemyHqLoc);
         }
         return false;
     }
