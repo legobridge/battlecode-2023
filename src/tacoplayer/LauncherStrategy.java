@@ -52,11 +52,11 @@ public class LauncherStrategy {
         // I am the leader!
         else if (leader_id > rc.getID()) {
             rc.setIndicatorString("I am a leader!");
-            if (moveTowardsEnemies(rc)) {
+            if (Movement.moveTowardsEnemies(rc)) {
                 rc.setIndicatorString("moving towards enemy robots");
-            } else if (moveTowardsEnemyIslands(rc)) {
+            } else if (Movement.moveTowardsEnemyIslands(rc)) {
                 rc.setIndicatorString("moving towards enemy island");
-            } else if (moveTowardsEnemyHq(rc)) {
+            } else if (Movement.moveTowardsEnemyHq(rc)) {
                 rc.setIndicatorString("moving towards enemy hq");
             } else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
                 rc.move(rc.getLocation().directionTo(mapCenter));
@@ -79,54 +79,9 @@ public class LauncherStrategy {
             }
         }
 
-        // Attack
-        attackEnemies(rc);
-
-        // Movement
-        // moveTowardsEnemyIslands(rc);
-        // moveTowardsEnemies(rc);
-        // moveTowardsEnemyHq(rc);
-        // Pathing.moveRandomly(rc);
-
         // Update islands - only every 4 rounds, it's expensive and not necessary every round
         if (rc.getRoundNum() % 4 == 0) {
-            Comms.updateIslands(rc);
-            closestEnemyIslandLoc = Comms.getClosestEnemyIsland(rc);
-        }
-    }
-
-    private static void attackEnemies(RobotController rc) throws GameActionException {
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
-        // get lowest health launcher, carrier, amp, destabs, and boosters in this pass
-        RobotInfo carrierTarget = null;
-        int lowestHPCarrier = Integer.MAX_VALUE;
-        RobotInfo ampTarget = null;
-        int lowestHPAmp = Integer.MAX_VALUE;
-        RobotInfo destabTarget = null;
-        int lowestHPDestab = Integer.MAX_VALUE;
-        RobotInfo boosterTarget = null;
-        int lowestHPBooster = Integer.MAX_VALUE;
-        RobotInfo launcherTarget = null;
-        int lowestHPLauncher = Integer.MAX_VALUE;
-        RobotInfo carrierWithAccAnchorTarget = null;
-        int lowestHPCarrierWithAccAnchor = Integer.MAX_VALUE;
-        RobotInfo carrierWithStdAnchorTarget = null;
-        int lowestHPCarrierWithStdAnchor = Integer.MAX_VALUE;
-        for (int i = 0; i++ < enemies.length; ) {
-            int enemyHealth = enemies[i - 1].getHealth();
-            switch (enemies[i - 1].getType()) {
-                case LAUNCHER:
-                    if (enemyHealth < lowestHPLauncher) {
-                        lowestHPLauncher = enemyHealth;
-                        launcherTarget = enemies[i - 1];
-                    }
-                }
-            }
-            if (target != null) {
-                if (rc.canAttack(target.getLocation())) {
-                    rc.attack(target.getLocation());
-                }
-            }
+            Sensing.scanIslands(rc);
         }
     }
 }

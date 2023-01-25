@@ -9,7 +9,6 @@ import java.util.Random;
 
 public strictfp class RobotPlayer {
 
-    static int turnCount = 0;
     static final Random rng = new Random(6147);
 
     static final Direction[] directions = {
@@ -209,7 +208,7 @@ public strictfp class RobotPlayer {
                         for (int i = -1; ++i < hqCount; ) {
                             mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyHqLoc);
                         }
-                        Comms.updateSymmetry(rc, mostSymmetryPossible);
+                        Comms.updateSymmetry(mostSymmetryPossible);
                     }
                     break;
                 default: // TODO - sense other robots
