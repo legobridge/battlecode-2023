@@ -16,11 +16,12 @@ public class Comms {
     final static int ISLAND_LOCS_START_INDEX = 9;
     final static int ISLAND_IDS_START_INDEX = 19;
     final static int SYMMETRY_INDEX = 63;
-    private static final int ALL_SYMMETRIES = 7;
+    final static int ALL_SYMMETRIES = 7;
+
     // The entire comms array at the start of this robot's turn
 //    static int[] sharedArrayLocal = new int[GameConstants.SHARED_ARRAY_LENGTH];
     static int[] islandLocsTeams = new int[NUM_ISLANDS_STORED];
-    static int[] islandIDs = new int[NUM_ISLANDS_STORED];
+    static int[] islandIDsTurns = new int[NUM_ISLANDS_STORED];
 
     // Keep track of number of enemy and neutral islands
     static int numEnemyIslands = 0;
@@ -135,21 +136,31 @@ public class Comms {
         for (int i = -1; ++i < NUM_ISLANDS_STORED; ) {
             // For each island in the shared array, check if we know about it locally
             islandLocsTeams[i] = rc.readSharedArray(i + ISLAND_LOCS_START_INDEX);
-            islandIDs[i] = rc.readSharedArray(i + ISLAND_IDS_START_INDEX);
-            if (islandLocsTeams[i] == 0 || islandIDs[i] == 0) {
+            islandIDsTurns[i] = rc.readSharedArray(i + ISLAND_IDS_START_INDEX);
+            if (islandLocsTeams[i] == 0 || islandIDsTurns[i] == 0) {
                 continue;
             }
+
+            IslandInfo islandIdTurnObj = IslandInfo.unhashIslandIdAndTurnSensed(islandIDsTurns[i]);
+            int islandId = islandIdTurnObj.id;
+            int turnLastSensed = islandIdTurnObj.turnLastSensed;
+
             for (int j = -1; ++j < knownIslands.length; ) {
                 if (knownIslands[j] == null) {
                     // This is a new island, add it to local array
                     int hashedLoc = getNumFromBits(islandLocsTeams[i], 1, 12); // Bits 1-12 are for location
                     Team islandTeam = convertSharedArrayTeamToTeam(islandLocsTeams[i]);
                     MapLocation islandLocation = MapLocationUtil.unhashMapLocation(hashedLoc);
-                    knownIslands[j] = new IslandInfo(islandIDs[i], islandTeam, new MapLocation[]{islandLocation});
+
+                    knownIslands[j] = new IslandInfo(islandId, islandTeam, new MapLocation[]{islandLocation}, turnLastSensed);
                     break;
-                } else if (knownIslands[j].id == islandIDs[i]) {
-                    // We know about this island, let's set its team again, in case it's changed
-                    knownIslands[j].team = convertSharedArrayTeamToTeam(islandLocsTeams[i]);
+                } else if (knownIslands[j].id == islandId) {
+                    if (knownIslands[j].turnLastSensed < turnLastSensed) {
+                        // We know about this island, but not recently.
+                        // Let's reset its values again, in case the team has changed
+                        knownIslands[j].team = convertSharedArrayTeamToTeam(islandLocsTeams[i]);
+                        knownIslands[j].turnLastSensed = turnLastSensed;
+                    }
                     break;
                 }
             }
@@ -268,81 +279,92 @@ public class Comms {
 
             // Iterate through all island IDs
             for (int j = -1; ++j < NUM_ISLANDS_STORED; ) {
-                // Read the ids from the shared array
-                int id = islandIDs[j];
+
+                // Record the first 0 that occurs
+                if (islandIDsTurns[j] == 0) {
+                    if (firstZeroIndex == -1) {
+                        firstZeroIndex = j;
+                    }
+                    continue;
+                }
+
+                Team islandTeam = convertSharedArrayTeamToTeam(islandLocsTeams[j]);
+
+                // Read the id and turn last sensed from the shared array
+                IslandInfo islandIdTurnFromSharedArray = IslandInfo.unhashIslandIdAndTurnSensed(islandIDsTurns[j]);
 
                 // See if island_ids matches either of the ids at this index
-                if (islandInfo.id == id) {
+                if (islandInfo.id == islandIdTurnFromSharedArray.id) {
                     // Mark that we found it
                     found = true;
-
-                    // If we own the island, remove it
-                    // Otherwise update its team
-                    if (islandInfo.team == ourTeam) {
-                        removeIsland(rc, j);
-                    } else {
-                        updateIslandTeam(rc, islandInfo.team, j);
+                    if (islandIdTurnFromSharedArray.turnLastSensed < islandInfo.turnLastSensed) { // We have fresh data, let's upload it
+                        if (islandInfo.team == ourTeam) { // If we own the island now, remove it
+                            removeIsland(rc, j);
+                        } else if (islandInfo.team != islandTeam){ // Otherwise update its team
+                            updateIslandTeam(rc, islandInfo, j);
+                        }
                     }
                     break;
                 }
-
-                // Record the first 0 that occurs
-                if (id == 0 && firstZeroIndex == -1) {
-                    firstZeroIndex = j;
-                }
             }
-
             // If the island was not found in the array, add it if there's space
             if (!found && firstZeroIndex != -1) {
-                addIsland(rc, islandInfo.id, islandInfo.team, islandInfo.locations[0], firstZeroIndex);
+                addIsland(rc, islandInfo, firstZeroIndex);
             }
         }
     }
 
-    private static void addIsland(RobotController rc, int islandId, Team islandTeam, MapLocation islandLoc, int index) throws GameActionException {
-//        System.out.println("ADDING ISLAND: " + islandId);
+    private static void addIsland(RobotController rc, IslandInfo islandInfo, int index) throws GameActionException {
+        System.out.println("ADDING ISLAND: " + islandInfo.id);
 
         // Get the hashed location of an island square
-        int islandLocHashed = MapLocationUtil.hashMapLocation(islandLoc);
-        int islandTeamInt = convertTeamToSharedArrayTeam(islandTeam);
-
+        int islandLocHashed = MapLocationUtil.hashMapLocation(islandInfo.locations[0]);
+        int islandTeamInt = convertTeamToSharedArrayTeam(islandInfo.team);
         int newIslandLocTeam = bitHack(islandLocHashed, islandTeamInt, 12, 2);
 
         // Write location-team value
         islandLocsTeams[index] = newIslandLocTeam;
         tryToWriteToSharedArray(rc, index + ISLAND_LOCS_START_INDEX, newIslandLocTeam);
 
+        // Get the combined island id and turn sensed
+        int islandIdTurn = IslandInfo.hashIslandIdAndTurnSensed(islandInfo.id, islandInfo.turnLastSensed);
+
         // Write island ID
-        islandIDs[index] = islandId;
-        tryToWriteToSharedArray(rc, index + ISLAND_IDS_START_INDEX, islandId);
+        islandIDsTurns[index] = islandIdTurn;
+        tryToWriteToSharedArray(rc, index + ISLAND_IDS_START_INDEX, islandIdTurn);
     }
 
-    private static void updateIslandTeam(RobotController rc, Team islandTeam, int index) throws GameActionException {
-        int islandTeamInt = convertTeamToSharedArrayTeam(islandTeam);
+    private static void updateIslandTeam(RobotController rc, IslandInfo islandInfo, int index) throws GameActionException {
+        int islandTeamInt = convertTeamToSharedArrayTeam(islandInfo.team);
 
         // Get the values from the shared array for this island
         int array_element = islandLocsTeams[index];
         int hashed_loc = getNumFromBits(array_element, 1, 12);
         int oldTeamInt = getNumFromBits(array_element, 13, 14);
 
-        // If the team has changed, update it
-        if (oldTeamInt != islandTeamInt) {
-//            System.out.println("CHANGING ISLAND TEAM: " + oldTeamInt + " TO " + islandTeamInt);
-            int new_element = bitHack(hashed_loc, islandTeamInt, 12, 2);
-            islandLocsTeams[index] = new_element;
-            tryToWriteToSharedArray(rc, index + ISLAND_LOCS_START_INDEX, new_element);
-        }
+        System.out.println("CHANGING ISLAND TEAM: " + oldTeamInt + " TO " + islandTeamInt);
+        int new_element = bitHack(hashed_loc, islandTeamInt, 12, 2);
+
+        islandLocsTeams[index] = new_element;
+        tryToWriteToSharedArray(rc, index + ISLAND_LOCS_START_INDEX, new_element);
+
+        // Get the combined island id and turn sensed
+        int islandIdTurn = IslandInfo.hashIslandIdAndTurnSensed(islandInfo.id, islandInfo.turnLastSensed);
+
+        // Write island ID
+        islandIDsTurns[index] = islandIdTurn;
+        tryToWriteToSharedArray(rc, index + ISLAND_IDS_START_INDEX, islandIdTurn);
     }
 
     private static void removeIsland(RobotController rc, int index) throws GameActionException {
-//        System.out.println("REMOVING ISLAND");
+        System.out.println("REMOVING ISLAND");
 
         // Erase location-team data
         islandLocsTeams[index] = 0;
         tryToWriteToSharedArray(rc, index + ISLAND_LOCS_START_INDEX, 0);
 
         // Erase id data
-        islandIDs[index] = 0;
+        islandIDsTurns[index] = 0;
         tryToWriteToSharedArray(rc, index + ISLAND_IDS_START_INDEX, 0);
 
     }

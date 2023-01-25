@@ -1,19 +1,25 @@
 package tacoplayer;
 
+import battlecode.common.GameConstants;
 import battlecode.common.MapLocation;
 import battlecode.common.Team;
 
 import java.util.Objects;
 
+import static battlecode.common.Team.NEUTRAL;
+
 public class IslandInfo {
     public int id;
     public Team team;
     public MapLocation[] locations;
+    public int turnLastSensed;
+    final static int MAX_ISLAND_ID = GameConstants.MAX_NUMBER_ISLANDS + 1;
 
-    public IslandInfo(int id, Team team, MapLocation[] locations) {
+    public IslandInfo(int id, Team team, MapLocation[] locations, int turnLastSensed) {
         this.id = id;
         this.team = team;
         this.locations = locations;
+        this.turnLastSensed = turnLastSensed;
     }
 
     @Override
@@ -27,5 +33,16 @@ public class IslandInfo {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+
+    public static int hashIslandIdAndTurnSensed(int islandId, int turnSensed) {
+        return turnSensed * MAX_ISLAND_ID + islandId + 1;
+    }
+    public static IslandInfo unhashIslandIdAndTurnSensed(int hashedIslandIdAndTurnSensed) {
+        hashedIslandIdAndTurnSensed--;
+        int islandId = hashedIslandIdAndTurnSensed % MAX_ISLAND_ID;
+        int turnSensed = hashedIslandIdAndTurnSensed / MAX_ISLAND_ID;
+        return new IslandInfo(islandId, NEUTRAL, null, turnSensed);
     }
 }

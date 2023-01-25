@@ -59,12 +59,16 @@ public class Sensing {
         for (int i = -1; ++i < islandIds.length; ) {
             int islandId = islandIds[i];
             Team islandTeam = rc.senseTeamOccupyingIsland(islandId);
+            if (islandTeam == ourTeam) {
+                continue;
+            }
             for (int j = -1; ++j < knownIslands.length; ) {
-                if (knownIslands[j] == null) { // I haven't seen this islan
-                    knownIslands[j] = new IslandInfo(islandId, islandTeam, rc.senseNearbyIslandLocations(islandId));
+                if (knownIslands[j] == null) { // I haven't seen this island
+                    knownIslands[j] = new IslandInfo(islandId, islandTeam, rc.senseNearbyIslandLocations(islandId), rc.getRoundNum());
                     break;
                 } else if (islandId == knownIslands[j].id) { // I've seen this island before
                     knownIslands[j].team = islandTeam; // Set the team again, in case it has changed
+                    knownIslands[j].turnLastSensed = rc.getRoundNum(); // Update the last sensed turn
                     break;
                 }
             }
