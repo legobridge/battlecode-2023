@@ -338,6 +338,8 @@ public class Comms {
         if (!rc.canWriteSharedArray(0, 0)) {
             return;
         }
-        tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
+        if (rc.readSharedArray(SYMMETRY_INDEX) > locallyKnownSymmetry) {
+            tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
+        }
     }
 }
