@@ -85,15 +85,6 @@ public class LauncherStrategy {
         }
     }
 
-    private static boolean moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
-        if (closestEnemyIslandLoc != null) {
-            rc.setIndicatorString("Moving towards enemy island! " + closestEnemyIslandLoc);
-            Pathing.moveTowards(rc, closestEnemyIslandLoc);
-            return true;
-        }
-        return false;
-    }
-
     private static void attackEnemies(RobotController rc) throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
         // get lowest health launcher, carrier, amp, destabs, and boosters in this pass
