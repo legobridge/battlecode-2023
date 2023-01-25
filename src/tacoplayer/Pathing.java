@@ -1,14 +1,10 @@
 package tacoplayer;
 
-import battlecode.common.Direction;
-import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 import java.util.ArrayList;
 
-import static tacoplayer.RobotPlayer.directions;
-import static tacoplayer.RobotPlayer.rng;
+import static tacoplayer.RobotPlayer.*;
 
 public class Pathing {
     // Basic bug nav - Bug 0
@@ -30,10 +26,13 @@ public class Pathing {
         if (!rc.isMovementReady()) {
             return;
         }
+        MapLocation nearestEnemyHQLoc = getNearestEnemyHQLoc(rc);
         MapLocation selfLoc = rc.getLocation();
         Direction dir = rc.getLocation().directionTo(target);
         MapLocation targetLoc = selfLoc.add(dir);
-        if (!ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc) && rc.canMove(dir)) {
+        if (!ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)
+                && rc.canMove(dir)
+                && safeFromHQ(rc, nearestEnemyHQLoc)) {
             moveAndUpdateLastFewLocs(rc, dir);
             currentDirection = null;
         } else {
@@ -64,6 +63,7 @@ public class Pathing {
         if (!rc.isMovementReady()) {
             return;
         }
+        MapLocation nearestEnemyHQLoc = getNearestEnemyHQLoc(rc);
         MapLocation selfLoc = rc.getLocation();
         ArrayList<Direction> backupDirectionsToTry = new ArrayList<>();
         boolean moved = false;
@@ -73,7 +73,7 @@ public class Pathing {
             MapLocation targetLoc = selfLoc.add(dir);
             if (ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)) { // If we've been here recently, avoid it
                 backupDirectionsToTry.add(dir);
-            } else if (rc.canMove(dir)) {
+            } else if (rc.canMove(dir) && safeFromHQ(rc, nearestEnemyHQLoc)) {
                 moved = true;
                 rc.setIndicatorString("I moved to a brand new place, by moving: " + dir);
                 moveAndUpdateLastFewLocs(rc, dir);
@@ -92,5 +92,35 @@ public class Pathing {
     private static void moveAndUpdateLastFewLocs(RobotController rc, Direction dir) throws GameActionException {
         rc.move(dir);
         lastFewLocs[(lastFewLocsIndex++) % MAX_PREV_LOCS_TO_STORE] = rc.getLocation();
+    }
+
+    private static MapLocation getNearestEnemyHQLoc(RobotController rc) throws GameActionException {
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
+        MapLocation nearestHQ = null;
+        MapLocation ourLoc = rc.getLocation();
+        int closestHQDistSq = Integer.MAX_VALUE;
+        for (int i = 0; i < enemies.length; i++) {
+            RobotInfo enemy = enemies[i];
+            if (enemy.getType() == RobotType.HEADQUARTERS) {
+                int distSq = ourLoc.distanceSquaredTo(enemy.getLocation());
+                if (distSq < closestHQDistSq) {
+                    nearestHQ = enemy.getLocation();
+                    closestHQDistSq = distSq;
+                }
+            }
+        }
+        return nearestHQ;
+    }
+
+    private static boolean safeFromHQ(RobotController rc, MapLocation loc) {
+        if (loc == null) {
+            return true;
+        }
+        else if (loc.distanceSquaredTo(rc.getLocation()) < RobotType.HEADQUARTERS.actionRadiusSquared+3) {
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 }

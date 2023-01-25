@@ -8,16 +8,28 @@ import static tacoplayer.RobotPlayer.*;
 public class CarrierStrategy {
 
     static boolean anchorMode = false;
+    static MapLocation closestWellLoc;
     // TODO - Run away from enemy launchers!
 
     /**
      * Run a single turn for a Carrier.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
+
     static void runCarrier(RobotController rc) throws GameActionException {
 
         // Update alive counter
         Comms.updateRobotCount(rc);
+
+        // Update well priority
+        if (closestWellLoc == null) {
+            if (rc.getRoundNum() % 2 == 0) {
+                closestWellLoc = nearestADWell;
+            }
+            else {
+                closestWellLoc = nearestMNWell;
+            }
+        }
 
         // Collect from well if close and inventory not full
         if (closestWellLoc != null && rc.canCollectResource(closestWellLoc, -1)) {
@@ -25,6 +37,7 @@ public class CarrierStrategy {
         }
 
         //Transfer resource to headquarters
+        // TODO - This is inefficient is robot is adjacent to both hq and resource at once
         depositResource(rc, ResourceType.ADAMANTIUM);
         depositResource(rc, ResourceType.MANA);
         depositResource(rc, ResourceType.ELIXIR);
@@ -43,8 +56,8 @@ public class CarrierStrategy {
         // Move away from enemies
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
         if (enemies.length > 0) {
-            moveAwayFromRobots(rc, enemies);
-            moveAwayFromRobots(rc, enemies);
+            Movement.moveTowardsLocation(rc, closestHqLoc);
+            Movement.moveTowardsLocation(rc, closestHqLoc);
         }
 
         int total = getTotalResources(rc);
@@ -83,6 +96,7 @@ public class CarrierStrategy {
             }
 
             // Full resources -> go to HQ
+            // TODO - Use the formula
             if (total == GameConstants.CARRIER_CAPACITY) {
                 Pathing.moveTowards(rc, closestHqLoc);
                 Pathing.moveTowards(rc, closestHqLoc);

@@ -36,21 +36,84 @@ public class Sensing {
         }
     }
 
-    static void scanWells(RobotController rc) throws GameActionException {
+    static void scanWells(RobotController rc) {
         WellInfo[] wells = rc.senseNearbyWells();
         MapLocation selfLoc = rc.getLocation();
-        int closestWellDistSq = MAX_MAP_DIST_SQ;
 
         for (WellInfo well : wells) {
             MapLocation wellLoc = well.getMapLocation();
+            ResourceType wellType = well.getResourceType();
             if (!knownWellLocs.contains(wellLoc)) {
                 knownWellLocs.add(wellLoc);
             }
             int wellDistSq = selfLoc.distanceSquaredTo(wellLoc);
-            if (closestWellLoc == null || wellDistSq < closestWellDistSq) {
-                closestWellLoc = wellLoc;
-                closestWellDistSq = wellDistSq;
+
+            MapLocation closestWellLoc = nearestADWell;
+            MapLocation secondClosestWellLoc = secondNearestADWell;
+            int closestWellDistSq = nearestADWellDistSq;
+            int secondClosestWellDistSq = secondNearestADWellDistSq;
+
+            switch (wellType) {
+                case ADAMANTIUM:
+                    closestWellLoc = nearestADWell;
+                    closestWellDistSq = nearestADWellDistSq;
+                    secondClosestWellLoc = secondNearestADWell;
+                    secondClosestWellDistSq = secondNearestADWellDistSq;
+                    break;
+                case MANA:
+                    closestWellLoc = nearestMNWell;
+                    closestWellDistSq = nearestMNWellDistSq;
+                    secondClosestWellLoc = secondNearestMNWell;
+                    secondClosestWellDistSq = secondNearestMNWellDistSq;
+                    break;
+                case ELIXIR:
+                    closestWellLoc = nearestEXWell;
+                    closestWellDistSq = nearestEXWellDistSq;
+                    secondClosestWellLoc = secondNearestEXWell;
+                    secondClosestWellDistSq = secondNearestEXWellDistSq;
+                    break;
             }
+
+            if (closestWellLoc == null || wellDistSq < closestWellDistSq) {
+                updateNearestWell(wellLoc, wellDistSq, wellType);
+            }
+            else if (secondClosestWellLoc == null || wellDistSq < secondClosestWellDistSq) {
+                updateSecondNearestWell(wellLoc, wellDistSq, wellType);
+            }
+        }
+    }
+
+    static void updateNearestWell (MapLocation loc, int distSq, ResourceType res) {
+        switch (res) {
+            case ADAMANTIUM:
+                nearestADWell = loc;
+                nearestADWellDistSq = distSq;
+                break;
+            case MANA:
+                nearestMNWell = loc;
+                nearestMNWellDistSq = distSq;
+                break;
+            case ELIXIR:
+                nearestEXWell = loc;
+                nearestEXWellDistSq = distSq;
+                break;
+        }
+    }
+
+    static void updateSecondNearestWell (MapLocation loc, int distSq, ResourceType res) {
+        switch (res) {
+            case ADAMANTIUM:
+                secondNearestADWell = loc;
+                secondNearestADWellDistSq = distSq;
+                break;
+            case MANA:
+                secondNearestMNWell = loc;
+                secondNearestMNWellDistSq = distSq;
+                break;
+            case ELIXIR:
+                secondNearestEXWell = loc;
+                secondNearestEXWellDistSq = distSq;
+                break;
         }
     }
 
