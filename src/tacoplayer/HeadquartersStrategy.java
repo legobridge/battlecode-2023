@@ -22,7 +22,8 @@ public class HeadquartersStrategy {
     final static int MAGIC_ANCHOR_NUM_TURNS_TURTLE = 100; // turns to wait before building another anchor in turtle mode
     final static int MAGIC_NUM_TURNS_RUSH = 500; // turns to wait before building an anchor in rush mode
     final static int MAGIC_ANCHOR_NUM_TURNS_RUSH = 200; // turns to wait before building another anchor in rush mode
-    final static int MAGIC_AMP_NUM_TURNS = 500; // turns to wait before building amps
+    final static int MAGIC_AMP_NUM_TURNS_RUSH = 500; // turns to wait before building amps in rush mode
+    final static int MAGIC_AMP_NUM_TURNS_TURTLE = 300; // turn to wait before building amps in turtle mode
     final static int MAGIC_AMP_EVERY_NUM_TURNS_RUSH = 200; // turns to wait before building another set of amps in rush mode
     static int MAGIC_AMP_EVERY_NUM_TURNS_TURTLE; // turns to wait before building another set of amps in turtle mode
     final static int AVERAGE_PERIOD = 30; // turns stored to calc moving average of resources
@@ -36,8 +37,10 @@ public class HeadquartersStrategy {
     final static int MIN_LAUNCHERS_BUILT = 100; // minimum launchers built in rush mode
     static boolean RUSH_MODE = false; // flag for whether to rush or not
     static ResourceType resourceNeeded = ResourceType.MANA; // resource type needed
-    static int ad;
-    static int mana;
+    static boolean isWithinEnemyHQRange = false; // are we in the action radius of an enemyHQ?
+    static MapLocation nearestEnemyHQLoc; // nearest enemy HQ
+
+    static MapLocation myLoc; // my location
 
     static void runHeadquarters(RobotController rc) throws GameActionException {
 
@@ -47,10 +50,24 @@ public class HeadquartersStrategy {
             Comms.resetCounts(rc);
         }
 
-        ad = rc.getResourceAmount(ResourceType.ADAMANTIUM);
+        int ad = rc.getResourceAmount(ResourceType.ADAMANTIUM);
         adQueue[turnCount % AVERAGE_PERIOD] = ad - adQueue[(turnCount - 1) % AVERAGE_PERIOD];
-        mana = rc.getResourceAmount(ResourceType.MANA);
+        int mana = rc.getResourceAmount(ResourceType.MANA);
         mnQueue[turnCount % AVERAGE_PERIOD] = mana - mnQueue[(turnCount - 1) % AVERAGE_PERIOD];
+
+        if (rc.getRoundNum() == 1) {
+            // TODO: Use closestEnemyHQLoc once it is fixed
+            myLoc = rc.getLocation();
+            RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam);
+            for (int i = 0; i++ < enemies.length; ) {
+                if (enemies[i - 1].getType() == RobotType.HEADQUARTERS) {
+                    if (myLoc.isWithinDistanceSquared(enemies[i - 1].getLocation(), 2*RobotType.HEADQUARTERS.actionRadiusSquared - 1)) {
+                        isWithinEnemyHQRange = true;
+                        nearestEnemyHQLoc = enemies[i - 1].getLocation();
+                    }
+                }
+            }
+        }
 
         if (mapSize < SMALL_MAP_THRESH) {
             // RUSH
@@ -65,7 +82,7 @@ public class HeadquartersStrategy {
             }
             // try make amps
             /** MAGIC NUMBERS USED **/
-            else if (turnCount >= MAGIC_AMP_NUM_TURNS
+            else if (turnCount >= MAGIC_AMP_NUM_TURNS_RUSH
                     && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_RUSH == 0)) {
                 rc.setIndicatorString("Trying to build am amplifier");
                 if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
@@ -118,7 +135,7 @@ public class HeadquartersStrategy {
             }
             // try make amps
             /** MAGIC NUMBERS USED **/
-            else if (turnCount >= MAGIC_AMP_NUM_TURNS
+            else if (turnCount >= MAGIC_AMP_NUM_TURNS_TURTLE
                     && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_TURTLE == 0)) {
                 rc.setIndicatorString("Trying to build am amplifier");
                 if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
