@@ -1,6 +1,7 @@
 package tacoplayer;
 
 import battlecode.common.*;
+import kushalplayer.MapHashUtil;
 
 import static battlecode.common.Team.NEUTRAL;
 import static tacoplayer.RobotPlayer.*;
@@ -15,6 +16,8 @@ public class Comms {
     final static int NUM_ISLANDS_STORED = 15;
     final static int ISLAND_LOCS_START_INDEX = 9;
     final static int ISLAND_IDS_START_INDEX = ISLAND_LOCS_START_INDEX + NUM_ISLANDS_STORED;
+    final static int WELL_ATTACK_START_INDEX = 40;
+    final static int NUM_WELL_ATTACKS_STORED = 4;
     final static int SYMMETRY_INDEX = 63;
     final static int ALL_SYMMETRIES = 7;
 
@@ -341,5 +344,70 @@ public class Comms {
         if (rc.readSharedArray(SYMMETRY_INDEX) > locallyKnownSymmetry) {
             tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
         }
+    }
+
+    public static void updateWellAttackInfo (RobotController rc, MapLocation wellLoc) throws GameActionException {
+        RobotType type = rc.getType();
+        if (type != RobotType.CARRIER) {
+            return;
+        }
+        int ourNumEnemies = Sensing.enemyLauncherCount + Sensing.enemyDestabCount + Sensing.enemyCarrierCount;
+        if (ourNumEnemies > 15) ourNumEnemies = 15; // Only get 4 bits
+        if (wellLoc.distanceSquaredTo(rc.getLocation()) <= type.visionRadiusSquared) {
+            // Find first 0 and write to it, update our well loc if needed
+            int ourHashedLoc = MapLocationUtil.hashMapLocation(wellLoc);
+            int firstZero = 0;
+            for (int i = 0; i < NUM_WELL_ATTACKS_STORED; i++) {
+                int index = i + WELL_ATTACK_START_INDEX;
+                int element = rc.readSharedArray(index);
+                int hashedLoc = getNumFromBits(element, 1, 12);
+                int numEnemies = getNumFromBits(element, 13, 16);
+
+                // If element is 0, record it
+                if (element == 0 && firstZero == 0) {
+                    firstZero = index;
+                }
+
+                // If we find our well's location, update it
+                if (ourHashedLoc == hashedLoc) {
+                    // There are no enemies, set it to 0, we're safe
+                    // Else update the num of enemies
+                    if (ourNumEnemies == 0) {
+                        tryToWriteToSharedArray(rc, index, 0);
+                    }
+                    else {
+                        int writeNum = bitHack(ourHashedLoc, ourNumEnemies, 12, 4);
+                        tryToWriteToSharedArray(rc, index, writeNum);
+                    }
+                    return;
+                }
+            }
+            // Write it in the first 0
+            if (firstZero != 0  && Sensing.ourLauncherCount < ourNumEnemies && ourNumEnemies > 0) {
+                System.out.println("I see " + String.valueOf(ourNumEnemies) + " enemies");
+                int writeNum = bitHack(ourHashedLoc, ourNumEnemies, 12, 4);
+                tryToWriteToSharedArray(rc, firstZero, writeNum);
+            }
+        }
+    }
+
+    public static MapLocation getNearestAttackWell(RobotController rc) throws GameActionException {
+        MapLocation ourLoc = rc.getLocation();
+        MapLocation closestLoc = null;
+        int distSqToClosestLoc = Integer.MAX_VALUE;
+        for (int i = 0; i < NUM_WELL_ATTACKS_STORED; i++) {
+            int index = i + WELL_ATTACK_START_INDEX;
+            int element = rc.readSharedArray(index);
+            if (element != 0) {
+                int hashedLoc = getNumFromBits(element, 1, 12);
+                MapLocation attackLoc = MapLocationUtil.unhashMapLocation(hashedLoc);
+                int distSq = attackLoc.distanceSquaredTo(ourLoc);
+                if (distSq < distSqToClosestLoc) {
+                    closestLoc = attackLoc;
+                    distSqToClosestLoc = distSq;
+                }
+            }
+        }
+        return closestLoc;
     }
 }

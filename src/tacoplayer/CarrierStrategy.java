@@ -29,6 +29,10 @@ public class CarrierStrategy {
                 closestWellLoc = nearestMNWell;
             }
         }
+//        else {
+//            // Raise the alarm
+//            Comms.updateWellAttackInfo(rc, closestWellLoc);
+//        }
 
         // Collect from well if close and inventory not full
         if (closestWellLoc != null && rc.canCollectResource(closestWellLoc, -1)) {
