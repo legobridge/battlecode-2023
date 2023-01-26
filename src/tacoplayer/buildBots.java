@@ -84,6 +84,18 @@ public class buildBots {
                         return true;
                     }
                 }
+                else if (closestEnemyIslandLoc != null) {
+                    Direction closestEnemyIslandDir = myLoc.directionTo(closestEnemyIslandLoc);
+                    if (buildFarthest(rc, robotTypeToBuild, closestEnemyIslandDir)) {
+                        return true;
+                    }
+                }
+                else if (closestEnemyHqLoc != null) {
+                    Direction closestEnemyHQDir = myLoc.directionTo(closestEnemyHqLoc);
+                    if (buildFarthest(rc, robotTypeToBuild, closestEnemyHQDir)) {
+                        return true;
+                    }
+                }
                 else if (buildFarthest(rc, robotTypeToBuild, centerDir)) {
                     return true;
                 }
