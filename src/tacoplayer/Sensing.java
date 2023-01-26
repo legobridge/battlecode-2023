@@ -19,9 +19,11 @@ public class Sensing {
     static int visibleEnemiesCount;
     static int closestVisibleEnemyRobotDistSq;
     static MapLocation closestVisibleEnemyRobotLocation;
+    static int enemyHqCount;
     static int enemyCarrierCount;
     static int enemyLauncherCount;
     static int enemyDestabCount;
+    static RobotInfo[] enemyHqs = new RobotInfo[4];
     static RobotInfo[] enemyCarriers = new RobotInfo[MAX_SENSED_ROBOTS];
     static RobotInfo[] enemyLaunchers = new RobotInfo[MAX_SENSED_ROBOTS];
     static RobotInfo[] enemyDestab = new RobotInfo[MAX_SENSED_ROBOTS];
@@ -38,6 +40,7 @@ public class Sensing {
         visibleEnemiesCount = 0;
         closestVisibleEnemyRobotDistSq = Integer.MAX_VALUE;
         closestVisibleEnemyRobotLocation = null;
+        enemyHqCount = 0;
         enemyCarrierCount = 0;
         enemyLauncherCount = 0;
         enemyDestabCount = 0;
@@ -70,6 +73,9 @@ public class Sensing {
                 }
                 switch (robots[j].getType()) {
                     case HEADQUARTERS:
+                        // Don't count headquarters as a visible enemy
+                        visibleEnemiesCount--;
+                        enemyHqs[enemyHqCount++] = robots[j];
                         // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
                         // TODO - stop doing this once fairly confident of symmetry
                         int mostSymmetryPossible = 0;
