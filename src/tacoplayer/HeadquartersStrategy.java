@@ -13,7 +13,6 @@ public class HeadquartersStrategy {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
 
-    // TODO: "Maximize Robots Made in a turn"
     // TODO: Make Magic Numbers based on Map Size
     // TODO: Update Magic Numbers
     // TODO: Come up with something better than for(int i = 0; i++ < 5; )
@@ -24,7 +23,8 @@ public class HeadquartersStrategy {
     final static int MAGIC_NUM_TURNS_RUSH = 500; // turns to wait before building an anchor in rush mode
     final static int MAGIC_ANCHOR_NUM_TURNS_RUSH = 200; // turns to wait before building another anchor in rush mode
     final static int MAGIC_AMP_NUM_TURNS = 500; // turns to wait before building amps
-    final static int MAGIC_AMP_EVERY_NUM_TURNS = 100; // turns to wait before building another set of amps
+    final static int MAGIC_AMP_EVERY_NUM_TURNS_RUSH = 200; // turns to wait before building another set of amps in rush mode
+    static int MAGIC_AMP_EVERY_NUM_TURNS_TURTLE; // turns to wait before building another set of amps in turtle mode
     final static int AVERAGE_PERIOD = 30; // turns stored to calc moving average of resources
     static int[] adQueue = new int[AVERAGE_PERIOD]; // array to store ad production
     static int[] mnQueue = new int[AVERAGE_PERIOD]; // array to store mana production
@@ -35,6 +35,9 @@ public class HeadquartersStrategy {
     static int launchersBuilt = 0;
     final static int MIN_LAUNCHERS_BUILT = 100; // minimum launchers built in rush mode
     static boolean RUSH_MODE = false; // flag for whether to rush or not
+    static ResourceType resourceNeeded = ResourceType.MANA; // resource type needed
+    static int ad;
+    static int mana;
 
     static void runHeadquarters(RobotController rc) throws GameActionException {
 
@@ -44,9 +47,9 @@ public class HeadquartersStrategy {
             Comms.resetCounts(rc);
         }
 
-        int ad = rc.getResourceAmount(ResourceType.ADAMANTIUM);
+        ad = rc.getResourceAmount(ResourceType.ADAMANTIUM);
         adQueue[turnCount % AVERAGE_PERIOD] = ad - adQueue[(turnCount - 1) % AVERAGE_PERIOD];
-        int mana = rc.getResourceAmount(ResourceType.MANA);
+        mana = rc.getResourceAmount(ResourceType.MANA);
         mnQueue[turnCount % AVERAGE_PERIOD] = mana - mnQueue[(turnCount - 1) % AVERAGE_PERIOD];
 
         if (mapSize < SMALL_MAP_THRESH) {
@@ -57,13 +60,13 @@ public class HeadquartersStrategy {
             }
             lastBuiltAnchor++;
             if (turnCount == 1) {
-                // initially build 3 launchers and 2 carriers
+                // initially build 4 launchers and 1 carriers
                 initialBuildOrder(rc);
             }
             // try make amps
             /** MAGIC NUMBERS USED **/
             else if (turnCount >= MAGIC_AMP_NUM_TURNS
-                    && Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount) {
+                    && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_RUSH == 0)) {
                 rc.setIndicatorString("Trying to build am amplifier");
                 if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
                     rc.setIndicatorString("Building an amplifier");
@@ -100,16 +103,23 @@ public class HeadquartersStrategy {
             // TURTLE
             if (rc.getRoundNum() == 1) {
                 System.out.print("TURTLE UP");
+                if (mapSize <= 2500) {
+                    MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 200;
+                } else if (mapSize <= 3000) {
+                    MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 150;
+                } else {
+                    MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 100;
+                }
             }
             lastBuiltAnchor++;
             if (turnCount == 1) {
-                // make 3 launchers and 2 carriers
+                // make 4 launchers and 1 carriers
                 initialBuildOrder(rc);
             }
             // try make amps
             /** MAGIC NUMBERS USED **/
             else if (turnCount >= MAGIC_AMP_NUM_TURNS
-                    && turnCount % MAGIC_AMP_EVERY_NUM_TURNS == 0) {
+                    && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_TURTLE == 0)) {
                 rc.setIndicatorString("Trying to build am amplifier");
                 if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
                     rc.setIndicatorString("Building an amplifier");
@@ -148,54 +158,5 @@ public class HeadquartersStrategy {
                 }
             }
         }
-    }
-
-    static void buildBotsWithMovingAverage(RobotController rc) throws GameActionException {
-        float adMovingAverageDividedCarrierCost = adGetMovingAverage() / RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM);
-        float mnMovingAverageDividedLauncherCost = mnGetMovingAverage() / RobotType.LAUNCHER.getBuildCost(ResourceType.MANA);
-        float ratioAdMn = adMovingAverageDividedCarrierCost / mnMovingAverageDividedLauncherCost;
-        if (ratioAdMn > 1) {
-            int carriersToBuild = Math.round((float) ACTIONS_PER_TURN / ratioAdMn);
-            int launchersToBuild = ACTIONS_PER_TURN - carriersToBuild;
-            int remainingActions = ACTIONS_PER_TURN;
-            for (int i = 0; i++ < launchersToBuild; ) {
-                if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
-                    rc.setIndicatorString("Building a launcher");
-                    remainingActions--;
-                }
-                else {
-                    rc.setIndicatorString("Not enough resources to build a launcher");
-                }
-            }
-            for (int i = 0; i++ < carriersToBuild; ) {
-                if (tryToBuildRobot(rc, RobotType.CARRIER)) {
-                    rc.setIndicatorString("Building a carrier");
-                    remainingActions--;
-                }
-                else {
-                    rc.setIndicatorString("Not enough resources to build a carrier");
-                }
-            }
-            buildBots(rc, RobotType.LAUNCHER, remainingActions);
-        }
-        else {
-            buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
-        }
-    }
-
-    static float adGetMovingAverage() {
-        int totalAd = 0;
-        for (int i = 0; i++ < adQueue.length; ) {
-            totalAd += adQueue[i - 1];
-        }
-        return (float) totalAd / adQueue.length;
-    }
-
-    static float mnGetMovingAverage() {
-        int totalMn = 0;
-        for (int i = 0; i++ < mnQueue.length; ) {
-            totalMn += mnQueue[i - 1];
-        }
-        return (float) totalMn / mnQueue.length;
     }
 }
