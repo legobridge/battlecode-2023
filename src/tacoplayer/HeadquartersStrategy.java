@@ -29,6 +29,7 @@ public class HeadquartersStrategy {
     final static int AVERAGE_PERIOD = 30; // turns stored to calc moving average of resources
     static int[] adQueue = new int[AVERAGE_PERIOD]; // array to store ad production
     static int[] mnQueue = new int[AVERAGE_PERIOD]; // array to store mana production
+    final static double AD_CRITICAL_LOW_THRESH = 0.3;
     static int lastBuiltAnchor = 0; // turn counts passed since building the last anchor
     final static int ACTIONS_PER_TURN = 5; // total 10 cooldowns / 2 per action = 5
     static int carriersBuilt = 0;
@@ -39,7 +40,6 @@ public class HeadquartersStrategy {
     static ResourceType resourceNeeded = ResourceType.MANA; // resource type needed
     static boolean isWithinEnemyHQRange = false; // are we in the action radius of an enemyHQ?
     static MapLocation nearestEnemyHQLoc; // nearest enemy HQ
-
     static MapLocation myLoc; // my location
 
     static void runHeadquarters(RobotController rc) throws GameActionException {

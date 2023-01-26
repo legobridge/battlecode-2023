@@ -186,7 +186,7 @@ public class buildOrderTypes {
             buildBots(rc, RobotType.LAUNCHER, remainingActions);
         }
         else {
-            if (ratioAdMn < 0.3) {
+            if (ratioAdMn < AD_CRITICAL_LOW_THRESH) {
                 resourceNeeded = ResourceType.ADAMANTIUM;
             }
             buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
