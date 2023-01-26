@@ -7,8 +7,8 @@ import static tacoplayer.buildBots.*;
 
 public class buildOrderTypes {
     static void initialBuildOrder(RobotController rc) throws GameActionException {
-        // build 3 launchers and 2 carriers
-        for (int i = 0; i++ < 3; ) {
+        // build 4 launchers and 1 carriers
+        for (int i = 0; i++ < 4; ) {
             if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                 rc.setIndicatorString("Building a launcher");
                 if (RUSH_MODE) {
@@ -16,7 +16,7 @@ public class buildOrderTypes {
                 }
             }
         }
-        for (int i = 0; i++ < 2; ) {
+        for (int i = 0; i++ < 1; ) {
             if (tryToBuildRobot(rc, RobotType.CARRIER)) {
                 rc.setIndicatorString("Building a carrier");
                 if (RUSH_MODE) {
@@ -141,18 +141,7 @@ public class buildOrderTypes {
                     break;
 
                 case LAUNCHER:
-                    for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
-                        if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
-                            rc.setIndicatorString("Building a launcher");
-                        } else if (tryToBuildRobot(rc, RobotType.CARRIER)) {
-                            rc.setIndicatorString("Building a carrier");
-                        } else {
-                            rc.setIndicatorString("Waiting for resources");
-                        }
-                    }
-                    break;
-
-                default:
+                default :
                     for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
                         if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                             rc.setIndicatorString("Building a launcher");
@@ -165,5 +154,57 @@ public class buildOrderTypes {
                     break;
             }
         }
+    }
+
+    static void buildBotsWithMovingAverage(RobotController rc) throws GameActionException {
+        float adMovingAverageDividedCarrierCost = adGetMovingAverage() / RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM);
+        float mnMovingAverageDividedLauncherCost = mnGetMovingAverage() / RobotType.LAUNCHER.getBuildCost(ResourceType.MANA);
+        float ratioAdMn = adMovingAverageDividedCarrierCost / mnMovingAverageDividedLauncherCost;
+        if (ratioAdMn > 1) {
+            resourceNeeded = ResourceType.MANA;
+            int carriersToBuild = Math.round((float) ACTIONS_PER_TURN / ratioAdMn);
+            int launchersToBuild = ACTIONS_PER_TURN - carriersToBuild;
+            int remainingActions = ACTIONS_PER_TURN;
+            for (int i = 0; i++ < launchersToBuild; ) {
+                if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                    rc.setIndicatorString("Building a launcher");
+                    remainingActions--;
+                }
+                else {
+                    rc.setIndicatorString("Not enough resources to build a launcher");
+                }
+            }
+            for (int i = 0; i++ < carriersToBuild; ) {
+                if (tryToBuildRobot(rc, RobotType.CARRIER)) {
+                    rc.setIndicatorString("Building a carrier");
+                    remainingActions--;
+                }
+                else {
+                    rc.setIndicatorString("Not enough resources to build a carrier");
+                }
+            }
+            buildBots(rc, RobotType.LAUNCHER, remainingActions);
+        }
+        else {
+            if (ratioAdMn < AD_CRITICAL_LOW_THRESH) {
+                resourceNeeded = ResourceType.ADAMANTIUM;
+            }
+            buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
+        }
+    }
+    static float adGetMovingAverage() {
+        int totalAd = 0;
+        for (int i = 0; i++ < adQueue.length; ) {
+            totalAd += adQueue[i - 1];
+        }
+        return (float) totalAd / adQueue.length;
+    }
+
+    static float mnGetMovingAverage() {
+        int totalMn = 0;
+        for (int i = 0; i++ < mnQueue.length; ) {
+            totalMn += mnQueue[i - 1];
+        }
+        return (float) totalMn / mnQueue.length;
     }
 }
