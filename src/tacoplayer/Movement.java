@@ -14,11 +14,7 @@ public class Movement {
                 return Pathing.moveTowards(rc, closestVisibleEnemyRobotLocation);
             }
             else {
-                MapLocation ourLoc = rc.getLocation();
-                MapLocation runAwayLocation = new MapLocation(
-                        ourLoc.x - closestVisibleEnemyRobotLocation.x,
-                        ourLoc.y - closestVisibleEnemyRobotLocation.y);
-                return Pathing.moveTowards(rc, runAwayLocation);
+                return moveAwayFromLocation(rc, closestVisibleEnemyRobotLocation);
             }
         }
         return false;
@@ -41,21 +37,21 @@ public class Movement {
         Pathing.moveTowards(rc, target);
     }
 
-    static void moveAwayFromRobots(RobotController rc, RobotInfo[] robots) throws GameActionException {
+    static boolean moveAwayFromRobots(RobotController rc, RobotInfo[] robots) throws GameActionException {
         MapLocation target = averageLoc(robots);
-        moveAwayFromLocation(rc, target);
+        return moveAwayFromLocation(rc, target);
     }
 
-    static void moveTowardsLocation(RobotController rc, MapLocation loc) throws GameActionException {
-        Pathing.moveTowards(rc, loc);
+    static boolean moveTowardsLocation(RobotController rc, MapLocation loc) throws GameActionException {
+        return Pathing.moveTowards(rc, loc);
     }
 
-    static void moveAwayFromLocation(RobotController rc, MapLocation loc) throws GameActionException {
+    static boolean moveAwayFromLocation(RobotController rc, MapLocation loc) throws GameActionException {
         MapLocation robotLoc = rc.getLocation();
-        int dx = robotLoc.x - loc.x;
-        int dy = robotLoc.y - loc.y;
-        MapLocation awayLoc = new MapLocation(robotLoc.x + dx, robotLoc.y + dy);
-        Pathing.moveTowards(rc, awayLoc);
+        int x = robotLoc.x + robotLoc.x - loc.x;
+        int y = robotLoc.y + robotLoc.y - loc.y;
+        MapLocation awayLoc = new MapLocation(x, y);
+        return Pathing.moveTowards(rc, awayLoc);
     }
 
     static boolean moveTowardsEnemyHq(RobotController rc) throws GameActionException {
