@@ -21,6 +21,7 @@ public class LauncherStrategy {
         // Attack
         Combat.attack(rc);
         Combat.retreat(rc);
+        Combat.runaway(rc);
 
         // Move
         if (!retreatMode) {
@@ -39,7 +40,14 @@ public class LauncherStrategy {
                 leader = ourLaunchers[i];
             }
         }
-        if (ourLauncherCount < LAUNCHER_BATTALION_SIZE) { // Not enough launchers nearby
+        if (rc.getHealth() < (int) ((double) rc.getType().getMaxHealth() * MAGIC_NUM_HEAL_PERCENT)
+                && !attackMode
+                && closestFriendlyIslandLoc != null) {
+            // Go heal if below a certain percentage of health
+            rc.setIndicatorString("Moving towards island to heal");
+            moveTowardsLocation(rc, closestFriendlyIslandLoc);
+        }
+        else if (ourLauncherCount < LAUNCHER_BATTALION_SIZE) { // Not enough launchers nearby
             if (closestHqLoc != null) {
                 rc.setIndicatorString("Moving towards own HQ");
                 moveTowardsLocation(rc, closestHqLoc);

@@ -1,18 +1,22 @@
 package tacoplayer;
 
 import battlecode.common.*;
+import scala.runtime.RichBoolean;
+
 import static tacoplayer.RobotPlayer.*;
+import static tacoplayer.Sensing.*;
 
 import java.awt.*;
 
 public class Combat {
     static int MAGIC_DIVE_HEALTH = 40;
-    static int MAGIC_RETREAT_HEALTH = 20;
+    static int MAGIC_RETREAT_HEALTH = 30;
 
     /** attack mode */
     static void attack(RobotController rc) throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam); // TODO - use universal sensing
         if (enemies.length == 0) {
+            attackMode = false;
             return;
         }
 
@@ -70,13 +74,18 @@ public class Combat {
         }
         // If only HQs were found, exit
         if (numEnemies == 0) {
+            attackMode = false;
             return;
+        }
+
+        if (numLaunchers > ourLauncherCount) {
+            runawayMode = true;
         }
 
         // If retreat mode, attack nearest enemy if in range and keep haulin ass
         // else if enemy is low on health and within movement range, dive and attack it
         // else kite
-        if (retreatMode) {
+        if (retreatMode || runawayMode) {
             // Prioritize attack launchers
             rc.setIndicatorString("RETREAT");
             if (lowestLauncherLoc != null) {
@@ -85,6 +94,7 @@ public class Combat {
             else {
                 tryAttack(rc, closestEnemyLoc);
             }
+            return;
         }
         if ((lowestHealth <= MAGIC_DIVE_HEALTH || numLaunchers == 0) && Pathing.safeFromHQ(rc, closestEnemyHqLoc)) {
             // Prioritize attack launchers
@@ -133,6 +143,21 @@ public class Combat {
         }
     }
 
+    /** We won't win this one. Regroup and re-arm */
+    static void runaway(RobotController rc) throws GameActionException {
+        if (!runawayMode) {
+            return;
+        }
+        // If low health begin retreat
+        if (closestFriendlyIslandLoc != null) {
+            Movement.moveTowardsLocation(rc, closestFriendlyIslandLoc);
+        }
+        else {
+            Movement.moveTowardsLocation(rc, closestHqLoc);
+        }
+        runawayMode = false;
+    }
+
     /** strategically move in and out of enemy range to prevent taking damage */
     static boolean attackKite(RobotController rc, RobotType enemyType,
                            MapLocation closestEnemyLoc, int distSqToEnemy)
@@ -167,6 +192,7 @@ public class Combat {
     static boolean tryAttack(RobotController rc, MapLocation attackLoc) throws GameActionException {
         if (rc.canAttack(attackLoc)) {
             rc.attack(attackLoc);
+            attackMode = true;
             return true;
         }
         return false;
