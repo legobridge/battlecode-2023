@@ -19,6 +19,7 @@ public class Sensing {
     static int visibleEnemiesCount;
     static int closestVisibleEnemyRobotDistSq;
     static MapLocation closestVisibleEnemyRobotLocation;
+    static RobotInfo closestVisibleRobot;
     static int enemyHqCount;
     static int enemyCarrierCount;
     static int enemyLauncherCount;
@@ -70,6 +71,7 @@ public class Sensing {
                 if (closestVisibleEnemyRobotLocation == null || enemyRobotDistSq < closestVisibleEnemyRobotDistSq) {
                     closestVisibleEnemyRobotDistSq = enemyRobotDistSq;
                     closestVisibleEnemyRobotLocation = enemyRobotLocation;
+                    closestVisibleRobot = robots[j];
                 }
                 switch (robots[j].getType()) {
                     case HEADQUARTERS:
