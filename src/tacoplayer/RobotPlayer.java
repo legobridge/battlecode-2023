@@ -5,6 +5,8 @@ import battlecode.common.*;
 import java.util.ArrayList;
 import java.util.Random;
 
+import static tacoplayer.BuildOrderTypes.initialBuildOrder;
+
 public strictfp class RobotPlayer {
 
     static final Random rng = new Random(6147);
@@ -102,7 +104,7 @@ public strictfp class RobotPlayer {
             Sensing.scanObstacles(rc); // TODO - clouds, currents, etc.
             Sensing.scanRobots(rc);
             Sensing.scanIslands(rc);
-            Sensing.scanWells(rc); // TODO - pick well based on what we need. Also push to shared array.
+            Sensing.scanWells(rc);
             Comms.updateEnemyHqLocs(rc);
 
             if (rc.getType() != RobotType.HEADQUARTERS) {

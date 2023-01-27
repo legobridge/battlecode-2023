@@ -3,9 +3,9 @@ package tacoplayer;
 import battlecode.common.*;
 
 import static tacoplayer.HeadquartersStrategy.*;
-import static tacoplayer.buildBots.*;
+import static tacoplayer.BuildBots.*;
 
-public class buildOrderTypes {
+public class BuildOrderTypes {
     static void initialBuildOrder(RobotController rc) throws GameActionException {
         // build 4 launchers and 1 carriers
         for (int i = 0; i++ < 4; ) {
