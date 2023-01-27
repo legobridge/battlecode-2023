@@ -3,23 +3,13 @@ package tacoplayer;
 import battlecode.common.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
+
+import static tacoplayer.BuildOrderTypes.initialBuildOrder;
 
 public strictfp class RobotPlayer {
 
     static final Random rng = new Random(6147);
-
-    static final Direction[] directions = {
-            Direction.NORTH,
-            Direction.NORTHEAST,
-            Direction.EAST,
-            Direction.SOUTHEAST,
-            Direction.SOUTH,
-            Direction.SOUTHWEST,
-            Direction.WEST,
-            Direction.NORTHWEST,
-    };
 
     // Calculated as (60 * sqrt(2)) ^ 2
     static final int MAX_MAP_DIST_SQ = 7200;
@@ -37,19 +27,12 @@ public strictfp class RobotPlayer {
 
     static int[][] map;
 
-    // TODO - Convert all ArrayLists to arrays later for bytecode optimization
-    // TODO - "Closest" is just straight line distance, improve upon that
-    // TODO - Stop getting confused by other robots
     static MapLocation closestHqLoc;
     static MapLocation closestEnemyHqLoc;
     static MapLocation[] ourHqLocs = new MapLocation[4];
     static MapLocation[] enemyHqLocs = new MapLocation[12];
 
     static ArrayList<MapLocation> knownWellLocs = new ArrayList<>();
-    static IslandInfo[] knownIslands = new IslandInfo[GameConstants.MAX_NUMBER_ISLANDS];
-    static MapLocation closestFriendlyIslandLoc;
-    static MapLocation closestNeutralIslandLoc;
-    static MapLocation closestEnemyIslandLoc;
 
     static MapLocation nearestADWell;
     static MapLocation nearestMNWell;
@@ -67,10 +50,11 @@ public strictfp class RobotPlayer {
     static int thisRoundHealth;
     static boolean retreatMode = false;
 
-    // Lists to hold values that couldn't be written to shared array
-    // but should be once the bot is in range to write
-    static List<Integer> write_indexes = new ArrayList<>();
-    static List<Integer> fwrite_values = new ArrayList<>();
+
+    static double sumReadBc = 0;
+    static double sumSensingBc = 0;
+    static double sumTurnBc = 0;
+    static double sumWriteBc = 0;
 
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
@@ -91,9 +75,7 @@ public strictfp class RobotPlayer {
         if (rc.getType() == RobotType.HEADQUARTERS) {
             Comms.putHqLocationOnline(rc);
         }
-        else {
-            Comms.readOurHqLocs(rc);
-        }
+        Comms.readOurHqLocs(rc);
 
         // Initialize symmetry with 111 (all symmetries)
         if (Comms.isFirstHQ(rc)) {
@@ -113,26 +95,23 @@ public strictfp class RobotPlayer {
         int startRoundNum = rc.getRoundNum(); // The round number at the start of the robot's turn
         turnCount += 1;  // We have now been alive for one more turn!
         try {
-
+            int bc1 = Clock.getBytecodesLeft();
             // Read from comms array
             Comms.readAndStoreFromSharedArray(rc);
 
+            int bc2 = Clock.getBytecodesLeft();
             // Scan surroundings
             Sensing.scanObstacles(rc); // TODO - clouds, currents, etc.
             Sensing.scanRobots(rc);
             Sensing.scanIslands(rc);
-            Sensing.scanWells(rc); // TODO - pick well based on what we need. Also push to shared array.
-
+            Sensing.scanWells(rc);
             Comms.updateEnemyHqLocs(rc);
 
             if (rc.getType() != RobotType.HEADQUARTERS) {
                 closestHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, ourHqLocs);
             }
 
-            // The same run() function is called for every robot on your team, even if they are
-            // different types. Here, we separate the control depending on the RobotType, so we can
-            // use different strategies on different robots. If you wish, you are free to rewrite
-            // this into a different control structure!
+            int bc3 = Clock.getBytecodesLeft();
             switch (rc.getType()) {
                 case HEADQUARTERS:
                     HeadquartersStrategy.runHeadquarters(rc);
@@ -153,11 +132,21 @@ public strictfp class RobotPlayer {
                     // TODO
                     break;
             }
-
+            int bc4 = Clock.getBytecodesLeft();
             // Put information in shared array at the end of each round
             Comms.putSymmetryOnline(rc);
             Comms.putIslandsOnline(rc);
-
+            int bc5 = Clock.getBytecodesLeft();
+//            sumReadBc += bc1 - bc2;
+//            sumSensingBc += bc2 - bc3;
+//            sumTurnBc += bc3 - bc4;
+//            sumWriteBc += bc4 - bc5;
+//            if (turnCount > 200 && turnCount % 100 == 0) {
+//                System.out.println("Read: " + sumReadBc / turnCount);
+//                System.out.println("Sensing: " + sumSensingBc / turnCount);
+//                System.out.println("Turn: " + sumTurnBc / turnCount);
+//                System.out.println("Write: " + sumWriteBc / turnCount);
+//            }
         } catch (GameActionException e) {
             System.out.println(rc.getType() + " GameActionException");
             e.printStackTrace();

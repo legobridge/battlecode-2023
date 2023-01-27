@@ -2,8 +2,7 @@ package tacoplayer;
 
 import battlecode.common.*;
 import static tacoplayer.RobotPlayer.*;
-
-import java.awt.*;
+import static tacoplayer.Sensing.*;
 
 public class Combat {
     static int MAGIC_DIVE_HEALTH = 40;
@@ -122,7 +121,6 @@ public class Combat {
         // else move to nearest friendly HQ if you haven't reached one since retreat mode was activated
         // If you have reached one, wander until you find a friendly island
         if (!isHealing()) {
-//            MapLocation islandLoc = Comms.getClosestFriendlyIsland(rc);
 //            if (islandLoc == null) {
 //                //TODO - add move randomly to movement class
 //            }
