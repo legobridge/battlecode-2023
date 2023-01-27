@@ -75,8 +75,7 @@ public class CarrierStrategy {
 
         // If you are at the well and there are more than 6 robots,
         // Switch which well you go to
-//        if (ourCarrierCount > 12 && !extracting && wellAssignment != null
-        if (Movement.moveToExtract(rc, wellAssignment)
+        if (ourCarrierCount > 12 && !extracting && wellAssignment != null
                 && rc.getLocation().distanceSquaredTo(wellAssignment) <= 9) {
             // If we are currently trying to collect the first resource goal from the nearest well,
             // Try collecting the secondary resource goal from its nearest well
@@ -112,20 +111,20 @@ public class CarrierStrategy {
 
         // Collect from well if close and inventory not full
         if (wellAssignment != null && rc.canCollectResource(wellAssignment, -1)) {
+            Direction toWell = rc.getLocation().directionTo(wellAssignment);
+            if (rc.canMove(toWell)) {
+                rc.move(toWell);
+            }
             rc.collectResource(wellAssignment, -1);
+            extracting = true;
         }
 
-        // If extracting and there are many carriers, upgrade the well
-//        if (wellAssignment != null && rc.canSenseLocation(wellAssignment)) {
-//            WellInfo well = rc.senseWell(wellAssignment);
-//            if (ourCarrierCount > 6 && extracting && !well.isUpgraded() && rc.getResourceAmount(ResourceType.MANA) > 0
-//                    && well.getResourceType() == ResourceType.MANA) {
-//                if (rc.canTransferResource(wellAssignment, ResourceType.MANA, rc.getResourceAmount(ResourceType.MANA))) {
-//                    rc.transferResource(wellAssignment, ResourceType.MANA, rc.getResourceAmount(ResourceType.MANA));
-//                    System.out.println("UPGRADING WELL");
-//                }
-//            }
-//        }
+        // If close to the desired well, try to move in for extraction
+        if (wellAssignment != null
+                && rc.getLocation().distanceSquaredTo(wellAssignment) <= 9
+                && !extracting && !atCarrierCapacity) {
+            Movement.moveToExtract(rc, wellAssignment);
+        }
 
         //Transfer resource to headquarters
         // TODO - This is inefficient is robot is adjacent to both hq and resource at once
