@@ -48,6 +48,12 @@ public strictfp class RobotPlayer {
     static int thisRoundHealth;
     static boolean retreatMode = false;
 
+
+    static double avgRead = 0;
+    static double avgSensing = 0;
+    static double avgTurn = 0;
+    static double avgWrite = 0;
+
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
 
@@ -89,10 +95,11 @@ public strictfp class RobotPlayer {
         int startRoundNum = rc.getRoundNum(); // The round number at the start of the robot's turn
         turnCount += 1;  // We have now been alive for one more turn!
         try {
-
+            int bc1 = Clock.getBytecodesLeft();
             // Read from comms array
             Comms.readAndStoreFromSharedArray(rc);
 
+            int bc2 = Clock.getBytecodesLeft();
             // Scan surroundings
             Sensing.scanObstacles(rc); // TODO - clouds, currents, etc.
             Sensing.scanRobots(rc);
@@ -100,15 +107,11 @@ public strictfp class RobotPlayer {
             Sensing.scanWells(rc); // TODO - pick well based on what we need. Also push to shared array.
 
             Comms.updateEnemyHqLocs(rc);
-
             if (rc.getType() != RobotType.HEADQUARTERS) {
                 closestHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, ourHqLocs);
             }
 
-            // The same run() function is called for every robot on your team, even if they are
-            // different types. Here, we separate the control depending on the RobotType, so we can
-            // use different strategies on different robots. If you wish, you are free to rewrite
-            // this into a different control structure!
+            int bc3 = Clock.getBytecodesLeft();
             switch (rc.getType()) {
                 case HEADQUARTERS:
                     HeadquartersStrategy.runHeadquarters(rc);
@@ -129,11 +132,21 @@ public strictfp class RobotPlayer {
                     // TODO
                     break;
             }
-
+            int bc4 = Clock.getBytecodesLeft();
             // Put information in shared array at the end of each round
             Comms.putSymmetryOnline(rc);
             Comms.putIslandsOnline(rc);
-
+            int bc5 = Clock.getBytecodesLeft();
+//            avgRead += bc1 - bc2;
+//            avgSensing += bc2 - bc3;
+//            avgTurn += bc3 - bc4;
+//            avgWrite += bc4 - bc5;
+//            if (turnCount > 200 && turnCount % 100 == 0) {
+//                System.out.println("Read: " + avgRead / turnCount);
+//                System.out.println("Sensing: " + avgSensing / turnCount);
+//                System.out.println("Turn: " + avgTurn / turnCount);
+//                System.out.println("Write: " + avgWrite / turnCount);
+//            }
         } catch (GameActionException e) {
             System.out.println(rc.getType() + " GameActionException");
             e.printStackTrace();

@@ -8,13 +8,13 @@ public class Movement {
     static boolean moveTowardsVisibleEnemies(RobotController rc) throws GameActionException {
         if (visibleEnemiesCount != 0) {
 //            MapLocation enemyLocation = averageLoc(visibleEnemies);
-            rc.setIndicatorString("Moving towards enemy robot! " + closestVisibleEnemyRobotLocation);
+            rc.setIndicatorString("Moving towards enemy robot! " + closestVisibleEnemyRobot.location);
             // If you are outside a certain fraction of the enemy's action radius, move towards it, else move away
             if (closestVisibleEnemyRobotDistSq > (5.0 / 6.0) * rc.getType().actionRadiusSquared) {
-                return Pathing.moveTowards(rc, closestVisibleEnemyRobotLocation);
+                return Pathing.moveTowards(rc, closestVisibleEnemyRobot.location);
             }
             else {
-                return moveAwayFromLocation(rc, closestVisibleEnemyRobotLocation);
+                return moveAwayFromLocation(rc, closestVisibleEnemyRobot.location);
             }
         }
         return false;

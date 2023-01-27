@@ -26,7 +26,7 @@ public class Sensing {
 
     static int visibleEnemiesCount;
     static int closestVisibleEnemyRobotDistSq; // TODO - store robotinfo
-    static MapLocation closestVisibleEnemyRobotLocation;
+    static RobotInfo closestVisibleEnemyRobot;
 
     static int closestFriendlyIslandDistSq;
     static int closestNeutralIslandDistSq;
@@ -50,22 +50,23 @@ public class Sensing {
 
         visibleEnemiesCount = 0;
         closestVisibleEnemyRobotDistSq = Integer.MAX_VALUE;
-        closestVisibleEnemyRobotLocation = null;
+        closestVisibleEnemyRobot = null;
         enemyHqCount = 0;
         enemyCarrierCount = 0;
         enemyLauncherCount = 0;
         enemyDestabCount = 0;
         RobotInfo[] robots = rc.senseNearbyRobots();
         for (int j = -1; ++j < robots.length; ) {
-            if (robots[j].team == ourTeam) {
-                switch (robots[j].getType()) {
+            RobotInfo robot = robots[j];
+            if (robot.team == ourTeam) {
+                switch (robot.getType()) {
                     case HEADQUARTERS:
                         break;
                     case CARRIER:
-                        ourCarriers[ourCarrierCount++] = robots[j];
+                        ourCarriers[ourCarrierCount++] = robot;
                         break;
                     case LAUNCHER:
-                        ourLaunchers[ourLauncherCount++] = robots[j];
+                        ourLaunchers[ourLauncherCount++] = robot;
                         break;
                     case AMPLIFIER: // TODO - sense these robots
                         break;
@@ -75,21 +76,21 @@ public class Sensing {
                         break;
                 }
             } else {
-                MapLocation enemyRobotLocation = robots[j].getLocation();
-                switch (robots[j].getType()) {
+                MapLocation enemyRobotLocation = robot.getLocation();
+                switch (robot.getType()) {
                     case HEADQUARTERS:
                         break;
                     default:
                         visibleEnemiesCount++;
                         int enemyRobotDistSq = rc.getLocation().distanceSquaredTo(enemyRobotLocation);
-                        if (closestVisibleEnemyRobotLocation == null || enemyRobotDistSq < closestVisibleEnemyRobotDistSq) {
+                        if (closestVisibleEnemyRobot == null || enemyRobotDistSq < closestVisibleEnemyRobotDistSq) {
                             closestVisibleEnemyRobotDistSq = enemyRobotDistSq;
-                            closestVisibleEnemyRobotLocation = enemyRobotLocation;
+                            closestVisibleEnemyRobot = robot;
                         }
                 }
-                switch (robots[j].getType()) {
+                switch (robot.getType()) {
                     case HEADQUARTERS:
-                        enemyHqs[enemyHqCount++] = robots[j];
+                        enemyHqs[enemyHqCount++] = robot;
                         // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
                         // TODO - stop doing this once fairly confident of symmetry
                         int mostSymmetryPossible = 0;
@@ -99,10 +100,10 @@ public class Sensing {
                         Comms.updateSymmetry(mostSymmetryPossible);
                         break;
                     case CARRIER:
-                        enemyCarriers[enemyCarrierCount++] = robots[j];
+                        enemyCarriers[enemyCarrierCount++] = robot;
                         break;
                     case LAUNCHER:
-                        enemyLaunchers[enemyLauncherCount++] = robots[j];
+                        enemyLaunchers[enemyLauncherCount++] = robot;
                         break;
                     case AMPLIFIER: // TODO - sense these robots
                         break;

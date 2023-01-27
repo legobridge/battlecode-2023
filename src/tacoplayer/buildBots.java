@@ -5,6 +5,7 @@ import battlecode.common.*;
 
 import static tacoplayer.HeadquartersStrategy.*;
 import static tacoplayer.RobotPlayer.*;
+import static tacoplayer.Sensing.*;
 
 public class buildBots {
 
@@ -78,14 +79,14 @@ public class buildBots {
                 if (rc.getResourceAmount(ResourceType.MANA) < robotTypeToBuild.getBuildCost(ResourceType.MANA)) {
                     return false;
                 }
-                if (Sensing.closestVisibleEnemyRobotLocation != null) {
-                    Direction closestEnemyDir = myLoc.directionTo(Sensing.closestVisibleEnemyRobotLocation);
+                if (closestVisibleEnemyRobot != null) {
+                    Direction closestEnemyDir = myLoc.directionTo(closestVisibleEnemyRobot.location);
                     if (buildFarthest(rc, robotTypeToBuild, closestEnemyDir)) {
                         return true;
                     }
                 }
-                else if (Sensing.closestEnemyIslandLoc != null) {
-                    Direction closestEnemyIslandDir = myLoc.directionTo(Sensing.closestEnemyIslandLoc);
+                else if (closestEnemyIslandLoc != null) {
+                    Direction closestEnemyIslandDir = myLoc.directionTo(closestEnemyIslandLoc);
                     if (buildFarthest(rc, robotTypeToBuild, closestEnemyIslandDir)) {
                         return true;
                     }
@@ -117,7 +118,7 @@ public class buildBots {
                 }
                 if (rc.getNumAnchors(Anchor.STANDARD) > 0 || rc.getNumAnchors(Anchor.ACCELERATING) > 0) {
                     // hq has an anchor
-                    Direction nearestNeutralIslandDir = myLoc.directionTo(Sensing.closestNeutralIslandLoc);
+                    Direction nearestNeutralIslandDir = myLoc.directionTo(closestNeutralIslandLoc);
                     if (nearestNeutralIslandDir != null) {
                         if (buildFarthest(rc, robotTypeToBuild, nearestNeutralIslandDir)) {
                             return true;
