@@ -2,7 +2,6 @@ package tacoplayer;
 
 import battlecode.common.*;
 
-import static battlecode.common.Team.NEUTRAL;
 import static tacoplayer.RobotPlayer.*;
 
 public class Sensing {
@@ -16,9 +15,6 @@ public class Sensing {
     static RobotInfo[] ourLaunchers = new RobotInfo[MAX_SENSED_ROBOTS];
     static RobotInfo[] ourDestab = new RobotInfo[MAX_SENSED_ROBOTS];
 
-    static int visibleEnemiesCount;
-    static int closestVisibleEnemyRobotDistSq;
-    static MapLocation closestVisibleEnemyRobotLocation;
     static int enemyHqCount;
     static int enemyCarrierCount;
     static int enemyLauncherCount;
@@ -27,6 +23,21 @@ public class Sensing {
     static RobotInfo[] enemyCarriers = new RobotInfo[MAX_SENSED_ROBOTS];
     static RobotInfo[] enemyLaunchers = new RobotInfo[MAX_SENSED_ROBOTS];
     static RobotInfo[] enemyDestab = new RobotInfo[MAX_SENSED_ROBOTS];
+
+    static int visibleEnemiesCount;
+    static int closestVisibleEnemyRobotDistSq; // TODO - store robotinfo
+    static MapLocation closestVisibleEnemyRobotLocation;
+
+    static int closestFriendlyIslandDistSq;
+    static int closestNeutralIslandDistSq;
+    static int closestEnemyIslandDistSq;
+    static MapLocation closestFriendlyIslandLoc;
+    static MapLocation closestNeutralIslandLoc;
+    static MapLocation closestEnemyIslandLoc;
+
+    static int knownIslandCount = 0;
+    static int[] knownIslandIds = new int[GameConstants.MAX_NUMBER_ISLANDS];
+    static IslandInfo[] knownIslands = new IslandInfo[GameConstants.MAX_NUMBER_ISLANDS + 1]; // Island with ID i is stored at i-th index
 
     static void scanObstacles(RobotController rc) {
         // TODO - scan for clouds and currents and add to local memory
@@ -64,17 +75,20 @@ public class Sensing {
                         break;
                 }
             } else {
-                visibleEnemiesCount++;
                 MapLocation enemyRobotLocation = robots[j].getLocation();
-                int enemyRobotDistSq = rc.getLocation().distanceSquaredTo(enemyRobotLocation);
-                if (closestVisibleEnemyRobotLocation == null || enemyRobotDistSq < closestVisibleEnemyRobotDistSq) {
-                    closestVisibleEnemyRobotDistSq = enemyRobotDistSq;
-                    closestVisibleEnemyRobotLocation = enemyRobotLocation;
+                switch (robots[j].getType()) {
+                    case HEADQUARTERS:
+                        break;
+                    default:
+                        visibleEnemiesCount++;
+                        int enemyRobotDistSq = rc.getLocation().distanceSquaredTo(enemyRobotLocation);
+                        if (closestVisibleEnemyRobotLocation == null || enemyRobotDistSq < closestVisibleEnemyRobotDistSq) {
+                            closestVisibleEnemyRobotDistSq = enemyRobotDistSq;
+                            closestVisibleEnemyRobotLocation = enemyRobotLocation;
+                        }
                 }
                 switch (robots[j].getType()) {
                     case HEADQUARTERS:
-                        // Don't count headquarters as a visible enemy
-                        visibleEnemiesCount--;
                         enemyHqs[enemyHqCount++] = robots[j];
                         // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
                         // TODO - stop doing this once fairly confident of symmetry
@@ -186,19 +200,45 @@ public class Sensing {
         for (int i = -1; ++i < islandIds.length; ) {
             int islandId = islandIds[i];
             Team islandTeam = rc.senseTeamOccupyingIsland(islandId);
-            for (int j = -1; ++j < knownIslands.length; ) {
-                if (knownIslands[j] == null) { // I haven't seen this island
-                    knownIslands[j] = new IslandInfo(islandId, rc.getRoundNum(), islandTeam, rc.senseNearbyIslandLocations(islandId));
-                    break;
-                } else if (islandId == knownIslands[j].id) { // I've seen this island before
-                    knownIslands[j].team = islandTeam; // Set the team again, in case it has changed
-                    knownIslands[j].turnLastSensed = rc.getRoundNum(); // Update the last sensed turn
-                    break;
+            if (knownIslands[islandId] == null) { // I haven't seen this island
+                knownIslandIds[knownIslandCount++] = islandId;
+                knownIslands[islandId] = new IslandInfo(islandId, rc.getRoundNum(),
+                        islandTeam, rc.senseNearbyIslandLocations(islandId));
+            } else { // I've seen this island before
+                knownIslands[islandId].team = islandTeam; // Set the team again, in case it has changed
+                knownIslands[islandId].turnLastSensed = rc.getRoundNum(); // Update the last sensed turn
+            }
+        }
+        computeClosestIslands(rc);
+    }
+
+    private static void computeClosestIslands(RobotController rc) {
+        closestFriendlyIslandDistSq = MAX_MAP_DIST_SQ;
+        closestNeutralIslandDistSq = MAX_MAP_DIST_SQ;
+        closestEnemyIslandDistSq = MAX_MAP_DIST_SQ;
+
+        for (int i = -1; ++i < knownIslandCount;) {
+            IslandInfo knownIslandInfo = knownIslands[knownIslandIds[i]];
+            MapLocation knownIslandLoc = knownIslandInfo.locations[0];
+            int thisDistSq = rc.getLocation().distanceSquaredTo(knownIslandLoc);
+            if (knownIslandInfo.team == ourTeam) {
+                if (thisDistSq < closestFriendlyIslandDistSq) {
+                    closestFriendlyIslandLoc = knownIslandLoc;
+                    closestFriendlyIslandDistSq = thisDistSq;
+                }
+            }
+            else if (knownIslandInfo.team == Team.NEUTRAL) {
+                if (thisDistSq < closestNeutralIslandDistSq) {
+                    closestNeutralIslandLoc = knownIslandLoc;
+                    closestNeutralIslandDistSq = thisDistSq;
+                }
+            }
+            else {
+                if (thisDistSq < closestEnemyIslandDistSq) {
+                    closestEnemyIslandLoc = knownIslandLoc;
+                    closestEnemyIslandDistSq = thisDistSq;
                 }
             }
         }
-        closestFriendlyIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, ourTeam);
-        closestNeutralIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, NEUTRAL);
-        closestEnemyIslandLoc = MapLocationUtil.getClosestIslandMapLocEuclidean(rc, knownIslands, theirTeam);
     }
 }

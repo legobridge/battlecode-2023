@@ -2,8 +2,7 @@ package tacoplayer;
 
 import battlecode.common.*;
 import static tacoplayer.RobotPlayer.*;
-
-import java.awt.*;
+import static tacoplayer.Sensing.*;
 
 public class Combat {
     static int MAGIC_DIVE_HEALTH = 40;

@@ -3,23 +3,11 @@ package tacoplayer;
 import battlecode.common.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public strictfp class RobotPlayer {
 
     static final Random rng = new Random(6147);
-
-    static final Direction[] directions = {
-            Direction.NORTH,
-            Direction.NORTHEAST,
-            Direction.EAST,
-            Direction.SOUTHEAST,
-            Direction.SOUTH,
-            Direction.SOUTHWEST,
-            Direction.WEST,
-            Direction.NORTHWEST,
-    };
 
     // Calculated as (60 * sqrt(2)) ^ 2
     static final int MAX_MAP_DIST_SQ = 7200;
@@ -37,19 +25,12 @@ public strictfp class RobotPlayer {
 
     static int[][] map;
 
-    // TODO - Convert all ArrayLists to arrays later for bytecode optimization
-    // TODO - "Closest" is just straight line distance, improve upon that
-    // TODO - Stop getting confused by other robots
     static MapLocation closestHqLoc;
     static MapLocation closestEnemyHqLoc;
     static MapLocation[] ourHqLocs = new MapLocation[4];
     static MapLocation[] enemyHqLocs = new MapLocation[12];
 
     static ArrayList<MapLocation> knownWellLocs = new ArrayList<>();
-    static IslandInfo[] knownIslands = new IslandInfo[GameConstants.MAX_NUMBER_ISLANDS];
-    static MapLocation closestFriendlyIslandLoc;
-    static MapLocation closestNeutralIslandLoc;
-    static MapLocation closestEnemyIslandLoc;
 
     static MapLocation nearestADWell;
     static MapLocation nearestMNWell;
@@ -66,11 +47,6 @@ public strictfp class RobotPlayer {
     static int lastRoundHealth;
     static int thisRoundHealth;
     static boolean retreatMode = false;
-
-    // Lists to hold values that couldn't be written to shared array
-    // but should be once the bot is in range to write
-    static List<Integer> write_indexes = new ArrayList<>();
-    static List<Integer> fwrite_values = new ArrayList<>();
 
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {

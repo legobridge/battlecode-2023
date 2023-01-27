@@ -10,7 +10,6 @@ public class LauncherStrategy {
 
     static int LAUNCHER_BATTALION_SIZE = 3;
 
-    // TODO - move first attack later or attack first and move later?
     static void runLauncher(RobotController rc) throws GameActionException {
         // Update alive counter
         Comms.updateRobotCount(rc);

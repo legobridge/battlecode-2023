@@ -7,6 +7,16 @@ import java.util.ArrayList;
 import static tacoplayer.RobotPlayer.*;
 
 public class Pathing {
+    static final Direction[] directions = {
+            Direction.NORTH,
+            Direction.NORTHEAST,
+            Direction.EAST,
+            Direction.SOUTHEAST,
+            Direction.SOUTH,
+            Direction.SOUTHWEST,
+            Direction.WEST,
+            Direction.NORTHWEST,
+    };
     // Basic bug nav - Bug 0
 
     static Direction currentDirection = null;

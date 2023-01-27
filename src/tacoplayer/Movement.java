@@ -55,11 +55,8 @@ public class Movement {
     }
 
     static boolean moveTowardsEnemyHq(RobotController rc) throws GameActionException {
-        if (closestEnemyHqLoc != null) {
-            rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
-            return Pathing.moveTowards(rc, closestEnemyHqLoc);
-        }
-        return false;
+        rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
+        return Pathing.moveTowards(rc, closestEnemyHqLoc);
     }
 
     static boolean moveTowardsEnemyIslands(RobotController rc) throws GameActionException {

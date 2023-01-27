@@ -84,8 +84,8 @@ public class buildBots {
                         return true;
                     }
                 }
-                else if (closestEnemyIslandLoc != null) {
-                    Direction closestEnemyIslandDir = myLoc.directionTo(closestEnemyIslandLoc);
+                else if (Sensing.closestEnemyIslandLoc != null) {
+                    Direction closestEnemyIslandDir = myLoc.directionTo(Sensing.closestEnemyIslandLoc);
                     if (buildFarthest(rc, robotTypeToBuild, closestEnemyIslandDir)) {
                         return true;
                     }
@@ -117,7 +117,7 @@ public class buildBots {
                 }
                 if (rc.getNumAnchors(Anchor.STANDARD) > 0 || rc.getNumAnchors(Anchor.ACCELERATING) > 0) {
                     // hq has an anchor
-                    Direction nearestNeutralIslandDir = myLoc.directionTo(closestNeutralIslandLoc);
+                    Direction nearestNeutralIslandDir = myLoc.directionTo(Sensing.closestNeutralIslandLoc);
                     if (nearestNeutralIslandDir != null) {
                         if (buildFarthest(rc, robotTypeToBuild, nearestNeutralIslandDir)) {
                             return true;
