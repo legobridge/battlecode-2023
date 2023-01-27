@@ -192,47 +192,6 @@ public class Comms {
         }
     }
 
-    static int getNumFriendlyIslands(RobotController rc) {
-        // Count neutral and enemy islands
-        countIslands(rc);
-        return numFriendlyIslands;
-    }
-
-    static int getNumNeutralIslands(RobotController rc) {
-        // Count neutral and enemy islands
-        countIslands(rc);
-        return numNeutralIslands;
-    }
-
-    static int getNumEnemyIslands(RobotController rc) {
-        // Count neutral and enemy islands
-        countIslands(rc);
-        return numEnemyIslands;
-    }
-
-    private static void countIslands(RobotController rc) {
-        if (roundUpdated == rc.getRoundNum()) {
-            return;
-        }
-        roundUpdated = rc.getRoundNum();
-        numFriendlyIslands = 0;
-        numNeutralIslands = 0;
-        numEnemyIslands = 0;
-        for (int i = -1; ++i < knownIslandCount; ) {
-            if (knownIslands[knownIslandIds[i]] == null) {
-                continue;
-            }
-            if (knownIslands[knownIslandIds[i]].team == ourTeam) {
-                numFriendlyIslands++;
-            } else
-            if (knownIslands[knownIslandIds[i]].team == theirTeam) {
-                numEnemyIslands++;
-            } else if (knownIslands[knownIslandIds[i]].team == NEUTRAL) {
-                numNeutralIslands++;
-            }
-        }
-    }
-
     static void putIslandsOnline(RobotController rc) throws GameActionException {
         // Check if we are in wi-fi range
         if (!rc.canWriteSharedArray(0, 0)) {
