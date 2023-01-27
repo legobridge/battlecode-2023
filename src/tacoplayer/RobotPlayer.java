@@ -66,6 +66,8 @@ public strictfp class RobotPlayer {
     static int lastRoundHealth;
     static int thisRoundHealth;
     static boolean retreatMode = false;
+    static boolean attackMode = false;
+    static boolean runawayMode = false;
 
     // Lists to hold values that couldn't be written to shared array
     // but should be once the bot is in range to write
