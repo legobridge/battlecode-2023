@@ -29,7 +29,7 @@ public class LauncherStrategy {
 //        if (!attackMode && ourCarrierCount == 0) {
 //            MapLocation wellAttackLoc = Comms.getNearestAttackWell(rc);
 //            if (wellAttackLoc != null) {
-//                System.out.println("DEFEND WELL " + String.valueOf(wellAttackLoc.x) + ", " + String.valueOf(wellAttackLoc.y));
+//                //System.out.println("DEFEND WELL " + String.valueOf(wellAttackLoc.x) + ", " + String.valueOf(wellAttackLoc.y));
 //                moveTowardsLocation(rc, wellAttackLoc);
 //            }
 //        }

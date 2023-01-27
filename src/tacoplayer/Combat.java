@@ -11,7 +11,6 @@ import java.awt.*;
 public class Combat {
     static int MAGIC_DIVE_HEALTH = 40;
     static int MAGIC_RETREAT_HEALTH = 30;
-    static int runawayLaunchers = 0;
 
     /** attack mode */
     static void attack(RobotController rc) throws GameActionException {
@@ -29,7 +28,6 @@ public class Combat {
         int closestEnemyDistSq = Integer.MAX_VALUE;
         int lowestLauncherDistSq = Integer.MAX_VALUE;
         int lowestHealth = Integer.MAX_VALUE;
-        int numLaunchers = 0;
         int numEnemies = 0;
 
         // Go through nearby enemies
@@ -45,11 +43,6 @@ public class Combat {
             // Update enemy count
             if (!isHQ) {
                 numEnemies++;
-            }
-
-            // Update the launcher count
-            if (enemyType == RobotType.LAUNCHER) {
-                numLaunchers++;
             }
 
             // Update closest enemy
@@ -79,12 +72,10 @@ public class Combat {
             return;
         }
 
-        if (numLaunchers > ourLauncherCount) {
+        if (enemyLauncherCount > ourLauncherCount) {
             runawayMode = true;
-            runawayLaunchers = ourLauncherCount;
         } else {
             runawayMode = false;
-            runawayLaunchers = 0;
         }
 
         // If retreat mode, attack nearest enemy if in range and keep haulin ass
@@ -101,7 +92,7 @@ public class Combat {
             }
             return;
         }
-        if ((lowestHealth <= MAGIC_DIVE_HEALTH || numLaunchers == 0) && Pathing.safeFromHQ(rc, closestEnemyHqLoc)) {
+        if ((lowestHealth <= MAGIC_DIVE_HEALTH || enemyLauncherCount == 0) && Pathing.safeFromHQ(rc, closestEnemyHqLoc)) {
             // Prioritize attack launchers
             rc.setIndicatorString("DIVE");
             attackDive(rc, lowestHealthLoc);
@@ -137,13 +128,6 @@ public class Combat {
         // else move to nearest friendly HQ if you haven't reached one since retreat mode was activated
         // If you have reached one, wander until you find a friendly island
         if (!isHealing()) {
-//            MapLocation islandLoc = Comms.getClosestFriendlyIsland(rc);
-//            if (islandLoc == null) {
-//                //TODO - add move randomly to movement class
-//            }
-//            else {
-//                Movement.moveTowardsLocation(rc, islandLoc);
-//            }
             Movement.moveTowardsLocation(rc, closestFriendlyIslandLoc);
         }
     }
