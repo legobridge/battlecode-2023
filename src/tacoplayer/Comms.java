@@ -165,6 +165,11 @@ public class Comms {
         tryToWriteToSharedArray(rc, index, num_robots + 1);
     }
 
+    static int getCurrentRobotCount(RobotController rc, RobotType robotType) throws GameActionException {
+        int index = ROBOT_COUNT_START_INDEX + robotType.ordinal();
+        return getNumFromBits(rc.readSharedArray(index), 1, 8);
+    }
+
     static int getPrevRobotCount(RobotController rc, RobotType robotType) throws GameActionException {
         int index = ROBOT_COUNT_START_INDEX + robotType.ordinal();
         return getNumFromBits(rc.readSharedArray(index), 9, 16);

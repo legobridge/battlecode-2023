@@ -11,6 +11,7 @@ import java.awt.*;
 public class Combat {
     static int MAGIC_DIVE_HEALTH = 40;
     static int MAGIC_RETREAT_HEALTH = 30;
+    static int runawayLaunchers = 0;
 
     /** attack mode */
     static void attack(RobotController rc) throws GameActionException {
@@ -80,6 +81,10 @@ public class Combat {
 
         if (numLaunchers > ourLauncherCount) {
             runawayMode = true;
+            runawayLaunchers = ourLauncherCount;
+        } else {
+            runawayMode = false;
+            runawayLaunchers = 0;
         }
 
         // If retreat mode, attack nearest enemy if in range and keep haulin ass
@@ -148,8 +153,12 @@ public class Combat {
         if (!runawayMode) {
             return;
         }
-        // If low health begin retreat
-        if (closestFriendlyIslandLoc != null) {
+        System.out.println("runaway");
+        Direction enemyDir = rc.getLocation().directionTo(enemyLaunchers[0].getLocation()).opposite();
+        if (Movement.moveDirectlyTowards(rc, enemyDir)) {
+            rc.setIndicatorString("Avoiding a fight");
+        }
+        else if (closestFriendlyIslandLoc != null) {
             Movement.moveTowardsLocation(rc, closestFriendlyIslandLoc);
         }
         else {

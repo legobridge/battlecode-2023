@@ -49,7 +49,8 @@ public class CarrierStrategy {
 
         // Update well priority
         if (firstResourceGoal == null) {
-            if (rc.getRoundNum() % 2 == 0) {
+            int round = rc.getRoundNum();
+            if (rc.getRoundNum() % 2 == 0 && (round <= 2 || round > 30)) {
                 wellAssignment = nearestADWell;
                 firstResourceGoal = ResourceType.ADAMANTIUM;
                 secondResourceGoal = ResourceType.MANA;
@@ -74,8 +75,9 @@ public class CarrierStrategy {
 
         // If you are at the well and there are more than 6 robots,
         // Switch which well you go to
-        if (ourCarrierCount > 12 && !extracting && wellAssignment != null
-                && rc.getLocation().distanceSquaredTo(wellAssignment) < 4) {
+//        if (ourCarrierCount > 12 && !extracting && wellAssignment != null
+        if (Movement.moveToExtract(rc, wellAssignment)
+                && rc.getLocation().distanceSquaredTo(wellAssignment) <= 9) {
             // If we are currently trying to collect the first resource goal from the nearest well,
             // Try collecting the secondary resource goal from its nearest well
             if (currentResourceAssignment == firstResourceGoal
@@ -112,6 +114,18 @@ public class CarrierStrategy {
         if (wellAssignment != null && rc.canCollectResource(wellAssignment, -1)) {
             rc.collectResource(wellAssignment, -1);
         }
+
+        // If extracting and there are many carriers, upgrade the well
+//        if (wellAssignment != null && rc.canSenseLocation(wellAssignment)) {
+//            WellInfo well = rc.senseWell(wellAssignment);
+//            if (ourCarrierCount > 6 && extracting && !well.isUpgraded() && rc.getResourceAmount(ResourceType.MANA) > 0
+//                    && well.getResourceType() == ResourceType.MANA) {
+//                if (rc.canTransferResource(wellAssignment, ResourceType.MANA, rc.getResourceAmount(ResourceType.MANA))) {
+//                    rc.transferResource(wellAssignment, ResourceType.MANA, rc.getResourceAmount(ResourceType.MANA));
+//                    System.out.println("UPGRADING WELL");
+//                }
+//            }
+//        }
 
         //Transfer resource to headquarters
         // TODO - This is inefficient is robot is adjacent to both hq and resource at once
@@ -165,7 +179,10 @@ public class CarrierStrategy {
                         Pathing.moveTowards(rc, wellAssignment);
                         Pathing.moveTowards(rc, wellAssignment);
                     }
-                } else {
+//                } else if (rc.getRoundNum() < 15) {
+//                    Movement.moveTowardsCenter(rc);
+                }else {
+//                    Movement.moveTowardsCenter(rc);
                     Pathing.moveRandomly(rc);
                     Pathing.moveRandomly(rc);
                 }

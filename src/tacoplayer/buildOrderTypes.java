@@ -8,7 +8,7 @@ import static tacoplayer.buildBots.*;
 public class buildOrderTypes {
     static void initialBuildOrder(RobotController rc) throws GameActionException {
         // build 3 launchers and 2 carriers
-        for (int i = 0; i++ < 3; ) {
+        for (int i = 0; i++ < 4; ) {
             if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                 rc.setIndicatorString("Building a launcher");
                 if (RUSH_MODE) {
@@ -16,7 +16,7 @@ public class buildOrderTypes {
                 }
             }
         }
-        for (int i = 0; i++ < 2; ) {
+        for (int i = 0; i++ < 1; ) {
             if (tryToBuildRobot(rc, RobotType.CARRIER)) {
                 rc.setIndicatorString("Building a carrier");
                 if (RUSH_MODE) {

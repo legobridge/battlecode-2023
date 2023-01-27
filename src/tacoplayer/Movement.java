@@ -79,4 +79,90 @@ public class Movement {
         }
         return false;
     }
+
+    static boolean moveTowardsCenter(RobotController rc) throws GameActionException {
+        int width = rc.getMapWidth();
+        int height = rc.getMapHeight();
+        MapLocation center = new MapLocation(width/2, height/2);
+        return Pathing.moveTowards(rc, center);
+    }
+
+    static boolean moveDirectlyTowards(RobotController rc, MapLocation target) throws GameActionException {
+        Direction dir = rc.getLocation().directionTo(target);
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+            return true;
+        }
+        else if (rc.canMove(dir.rotateLeft())) {
+            rc.move(dir.rotateLeft());
+            return true;
+        }
+        else if (rc.canMove(dir.rotateRight())) {
+            rc.move(dir.rotateRight());
+            return true;
+        }
+        return false;
+    }
+
+    static boolean moveDirectlyTowards(RobotController rc, Direction dir) throws GameActionException {
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+            return true;
+        }
+        else if (rc.canMove(dir.rotateLeft())) {
+            rc.move(dir.rotateLeft());
+            return true;
+        }
+        else if (rc.canMove(dir.rotateRight())) {
+            rc.move(dir.rotateRight());
+            return true;
+        }
+        return false;
+    }
+
+    static boolean moveSortaDirectlyTowards(RobotController rc, Direction dir) throws GameActionException {
+        if (rc.canMove(dir)) {
+            rc.setIndicatorString("Moving to extract");
+            rc.move(dir);
+            return true;
+        }
+        else if (rc.canMove(dir.rotateRight())) {
+            rc.setIndicatorString("Moving to extract");
+            rc.move(dir.rotateRight());
+            return true;
+        }
+        else if (rc.canMove(dir.rotateLeft())) {
+            rc.setIndicatorString("Moving to extract");
+            rc.move(dir.rotateLeft());
+            return true;
+        }
+        else if (rc.canMove(dir.rotateRight().rotateRight())) {
+            rc.setIndicatorString("Moving to extract");
+            rc.move(dir.rotateRight().rotateRight());
+            return true;
+        }
+        else if (rc.canMove(dir.rotateLeft().rotateLeft())) {
+            rc.setIndicatorString("Moving to extract");
+            rc.move(dir.rotateLeft().rotateLeft());
+            return true;
+        }
+        return false;
+    }
+
+    static boolean moveToExtract(RobotController rc, MapLocation wellLoc) throws GameActionException {
+        MapLocation target = null;
+        for (int i = 9; --i >= 0;) {
+            MapLocation spot = new MapLocation(wellLoc.x + i % 3 - 1, wellLoc.y + i / 3 - 1);
+            MapInfo spotInfo = rc.senseMapInfo(spot);
+            if (spotInfo.isPassable() && rc.canSenseRobotAtLocation(spot)) {
+                target = spot;
+                break;
+            }
+        }
+        if (target != null) {
+            moveSortaDirectlyTowards(rc, rc.getLocation().directionTo(target));
+            return true;
+        }
+        return false;
+    }
 }

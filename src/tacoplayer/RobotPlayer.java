@@ -68,7 +68,7 @@ public strictfp class RobotPlayer {
     static boolean retreatMode = false;
     static boolean attackMode = false;
     static boolean runawayMode = false;
-    static double MAGIC_NUM_HEAL_PERCENT = 1.0;
+    static double MAGIC_NUM_HEAL_PERCENT = .8;
 
     // Lists to hold values that couldn't be written to shared array
     // but should be once the bot is in range to write
