@@ -70,4 +70,24 @@ public class Movement {
         }
         return false;
     }
+    static boolean moveToExtract(RobotController rc, MapLocation wellLoc) throws GameActionException {
+        MapLocation target = null;
+        if (rc.senseCloud(rc.getLocation())) {
+            return false;
+        }
+        for (int i = 9; --i >= 0;) {
+            MapLocation spot = new MapLocation(wellLoc.x + i % 3 - 1, wellLoc.y + i / 3 - 1);
+            MapInfo spotInfo = rc.senseMapInfo(spot);
+            if (spotInfo.isPassable() && rc.canSenseRobotAtLocation(spot)) {
+                target = spot;
+                break;
+            }
+        }
+        if (target != null) {
+            moveTowardsLocation(rc, target);
+            return true;
+        }
+        return false;
+    }
 }
+
