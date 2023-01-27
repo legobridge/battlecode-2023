@@ -49,10 +49,10 @@ public strictfp class RobotPlayer {
     static boolean retreatMode = false;
 
 
-    static double avgRead = 0;
-    static double avgSensing = 0;
-    static double avgTurn = 0;
-    static double avgWrite = 0;
+    static double sumReadBc = 0;
+    static double sumSensingBc = 0;
+    static double sumTurnBc = 0;
+    static double sumWriteBc = 0;
 
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
@@ -73,9 +73,7 @@ public strictfp class RobotPlayer {
         if (rc.getType() == RobotType.HEADQUARTERS) {
             Comms.putHqLocationOnline(rc);
         }
-        else {
-            Comms.readOurHqLocs(rc);
-        }
+        Comms.readOurHqLocs(rc);
 
         // Initialize symmetry with 111 (all symmetries)
         if (Comms.isFirstHQ(rc)) {
@@ -105,8 +103,8 @@ public strictfp class RobotPlayer {
             Sensing.scanRobots(rc);
             Sensing.scanIslands(rc);
             Sensing.scanWells(rc); // TODO - pick well based on what we need. Also push to shared array.
-
             Comms.updateEnemyHqLocs(rc);
+
             if (rc.getType() != RobotType.HEADQUARTERS) {
                 closestHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, ourHqLocs);
             }
@@ -137,15 +135,15 @@ public strictfp class RobotPlayer {
             Comms.putSymmetryOnline(rc);
             Comms.putIslandsOnline(rc);
             int bc5 = Clock.getBytecodesLeft();
-//            avgRead += bc1 - bc2;
-//            avgSensing += bc2 - bc3;
-//            avgTurn += bc3 - bc4;
-//            avgWrite += bc4 - bc5;
+//            sumReadBc += bc1 - bc2;
+//            sumSensingBc += bc2 - bc3;
+//            sumTurnBc += bc3 - bc4;
+//            sumWriteBc += bc4 - bc5;
 //            if (turnCount > 200 && turnCount % 100 == 0) {
-//                System.out.println("Read: " + avgRead / turnCount);
-//                System.out.println("Sensing: " + avgSensing / turnCount);
-//                System.out.println("Turn: " + avgTurn / turnCount);
-//                System.out.println("Write: " + avgWrite / turnCount);
+//                System.out.println("Read: " + sumReadBc / turnCount);
+//                System.out.println("Sensing: " + sumSensingBc / turnCount);
+//                System.out.println("Turn: " + sumTurnBc / turnCount);
+//                System.out.println("Write: " + sumWriteBc / turnCount);
 //            }
         } catch (GameActionException e) {
             System.out.println(rc.getType() + " GameActionException");

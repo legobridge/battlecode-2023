@@ -25,7 +25,9 @@ public class Sensing {
     static RobotInfo[] enemyDestab = new RobotInfo[MAX_SENSED_ROBOTS];
 
     static int visibleEnemiesCount;
-    static int closestVisibleEnemyRobotDistSq; // TODO - store robotinfo
+    static int closestVisibleEnemyHqDistSq;
+    static RobotInfo closestVisibleEnemyHq;
+    static int closestVisibleEnemyRobotDistSq;
     static RobotInfo closestVisibleEnemyRobot;
 
     static int closestFriendlyIslandDistSq;
@@ -49,7 +51,8 @@ public class Sensing {
         ourDestabCount = 0;
 
         visibleEnemiesCount = 0;
-        closestVisibleEnemyRobotDistSq = Integer.MAX_VALUE;
+        closestVisibleEnemyHqDistSq = MAX_MAP_DIST_SQ;
+        closestVisibleEnemyRobotDistSq = MAX_MAP_DIST_SQ;
         closestVisibleEnemyRobot = null;
         enemyHqCount = 0;
         enemyCarrierCount = 0;
@@ -79,11 +82,16 @@ public class Sensing {
                 MapLocation enemyRobotLocation = robot.getLocation();
                 switch (robot.getType()) {
                     case HEADQUARTERS:
+                        int enemyHqDistSq = rc.getLocation().distanceSquaredTo(enemyRobotLocation);
+                        if (enemyHqDistSq < closestVisibleEnemyHqDistSq) {
+                            closestVisibleEnemyHqDistSq = enemyHqDistSq;
+                            closestVisibleEnemyHq = robot;
+                        }
                         break;
                     default:
                         visibleEnemiesCount++;
                         int enemyRobotDistSq = rc.getLocation().distanceSquaredTo(enemyRobotLocation);
-                        if (closestVisibleEnemyRobot == null || enemyRobotDistSq < closestVisibleEnemyRobotDistSq) {
+                        if (enemyRobotDistSq < closestVisibleEnemyRobotDistSq) {
                             closestVisibleEnemyRobotDistSq = enemyRobotDistSq;
                             closestVisibleEnemyRobot = robot;
                         }
@@ -92,12 +100,16 @@ public class Sensing {
                     case HEADQUARTERS:
                         enemyHqs[enemyHqCount++] = robot;
                         // If enemy headquarters is spotted, try to figure out which sort of symmetry the map has
-                        // TODO - stop doing this once fairly confident of symmetry
-                        int mostSymmetryPossible = 0;
-                        for (int i = -1; ++i < hqCount; ) {
-                            mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyRobotLocation);
+                        boolean isOnlyOneSymmetryLeft = (Comms.locallyKnownSymmetry == 1
+                                || Comms.locallyKnownSymmetry == 2
+                                || Comms.locallyKnownSymmetry == 4);
+                        if (!isOnlyOneSymmetryLeft) {
+                            int mostSymmetryPossible = 0;
+                            for (int i = -1; ++i < hqCount; ) {
+                                mostSymmetryPossible |= MapLocationUtil.getSymmetriesBetween(ourHqLocs[i], enemyRobotLocation);
+                            }
+                            Comms.updateSymmetry(mostSymmetryPossible);
                         }
-                        Comms.updateSymmetry(mostSymmetryPossible);
                         break;
                     case CARRIER:
                         enemyCarriers[enemyCarrierCount++] = robot;

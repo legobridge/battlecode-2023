@@ -29,7 +29,7 @@ public class Comms {
     static void readAndStoreFromSharedArray(RobotController rc) throws GameActionException {
         // Read only the indices we're using, and update local knowledge with shared array knowledge.
         // Ensure that local knowledge is always a superset of shared array knowledge
-        updateClassIslandArrays(rc);
+        readIslandsFromSharedArray(rc);
         locallyKnownSymmetry &= rc.readSharedArray(SYMMETRY_INDEX);
     }
 
@@ -73,6 +73,7 @@ public class Comms {
 
     static void readOurHqLocs(RobotController rc) throws GameActionException {
         // This function is called only once by each Robot
+        hqCount = 0;
         while (hqCount < 4) {
             int hqLocFromSharedArray = rc.readSharedArray(hqCount);
             if (hqLocFromSharedArray == 0) {
@@ -106,25 +107,11 @@ public class Comms {
         }
         // Find the location of the closest guessed enemy HQ
         MapLocation closestGuessedEnemyHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, enemyHqLocs);
+        closestEnemyHqLoc = closestGuessedEnemyHqLoc;
 
-        // Find the location of the closest sensed enemy HQ
-        int closestSensedEnemyHqDistSq = Integer.MAX_VALUE;
-        MapLocation closestSensedEnemyHqLoc = null;
-        for (int i = -1; ++i < enemyHqCount;) {
-            MapLocation sensedEnemyHqLoc = enemyHqs[i].location;
-            int sensedEnemyHqDistSq = rc.getLocation().distanceSquaredTo(sensedEnemyHqLoc);
-            if (closestSensedEnemyHqLoc == null || sensedEnemyHqDistSq < closestSensedEnemyHqDistSq) {
-                closestSensedEnemyHqDistSq = sensedEnemyHqDistSq;
-                closestSensedEnemyHqLoc = sensedEnemyHqLoc;
-            }
-        }
-
-        // Update the closest HQ
-        closestEnemyHqLoc = closestSensedEnemyHqLoc;
-        if (closestSensedEnemyHqLoc == null ||
-                (closestGuessedEnemyHqLoc != null
-                && rc.getLocation().distanceSquaredTo(closestGuessedEnemyHqLoc) < closestSensedEnemyHqDistSq)) {
-            closestEnemyHqLoc = closestGuessedEnemyHqLoc;
+        // Compare with the location of the closest sensed enemy HQ
+        if (closestGuessedEnemyHqLoc == null || rc.getLocation().distanceSquaredTo(closestGuessedEnemyHqLoc) > closestVisibleEnemyHqDistSq) {
+            closestEnemyHqLoc = closestVisibleEnemyHq.location;
         }
     }
 
@@ -142,7 +129,7 @@ public class Comms {
         }
     }
 
-    private static void updateClassIslandArrays(RobotController rc) throws GameActionException {
+    private static void readIslandsFromSharedArray(RobotController rc) throws GameActionException {
         lastNonZeroIndex = -1;
         for (int i = -1; ++i < NUM_ISLANDS_STORED; ) {
             // Read island info from shared array to local cache
@@ -235,7 +222,6 @@ public class Comms {
     }
 
     static void putIslandsOnline(RobotController rc) throws GameActionException {
-        // TODO - optimize this
         // Check if we are in wi-fi range
         if (!rc.canWriteSharedArray(0, 0)) {
             return;
