@@ -11,7 +11,7 @@ public class Pathing {
 
     static Direction currentDirection = null;
 
-    final static int MAX_PREV_LOCS_TO_STORE = 5;
+    final static int MAX_PREV_LOCS_TO_STORE = 8;
     static int lastFewLocsIndex = 0;
     static MapLocation[] lastFewLocs = new MapLocation[MAX_PREV_LOCS_TO_STORE];
 

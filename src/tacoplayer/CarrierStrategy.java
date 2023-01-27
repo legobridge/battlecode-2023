@@ -103,6 +103,10 @@ public class CarrierStrategy {
                 else wellAssignment = secondNearestMNWell;
             }
         }
+//        else {
+//            // Raise the alarm
+//            Comms.updateWellAttackInfo(rc, closestWellLoc);
+//        }
 
         // Collect from well if close and inventory not full
         if (wellAssignment != null && rc.canCollectResource(wellAssignment, -1)) {
