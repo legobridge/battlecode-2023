@@ -8,7 +8,8 @@ public class Sensing {
 
     final static int MAX_SENSED_ROBOTS = 120;
     final static int MAX_RADIUS_TO_SENSE_OBSTACLES = 20;
-    final static int SMALLER_RADIUS_TO_SENSE_OBSTACLES = 13;
+    final static int SMALLER_RADIUS_TO_SENSE_OBSTACLES = 16;
+    final static int SMALLEST_RADIUS_TO_SENSE_OBSTACLES = 10;
 
     static int ourCarrierCount;
     static int ourLauncherCount;
@@ -46,9 +47,15 @@ public class Sensing {
     static int bcsum = 0;
     static void scanObstacles(RobotController rc) throws GameActionException {
 //        int bc1 = Clock.getBytecodesLeft();
+        // On the robot's first two turns, don't scan everything
         int radiusSquaredToSense = MAX_RADIUS_TO_SENSE_OBSTACLES;
-        if (turnCount == 1) { // On the robot's first turn, don't scan everything
-            radiusSquaredToSense = SMALLER_RADIUS_TO_SENSE_OBSTACLES;
+        switch (turnCount) {
+            case 1:
+                radiusSquaredToSense = SMALLEST_RADIUS_TO_SENSE_OBSTACLES;
+                break;
+            case 2:
+                radiusSquaredToSense = SMALLER_RADIUS_TO_SENSE_OBSTACLES;
+                break;
         }
         MapInfo[] mapInfos = rc.senseNearbyMapInfos(radiusSquaredToSense);
         for (int i = mapInfos.length; --i >= 0;) {
@@ -67,6 +74,7 @@ public class Sensing {
 //        bcsum += (bc1 - Clock.getBytecodesLeft());
 //        if (rc.getType() == RobotType.LAUNCHER && rc.getID() % 17 == 0) {
 //            System.out.println(bcsum / turnCount);
+//            System.out.println((bc1 - Clock.getBytecodesLeft()));
 //        }
     }
 
