@@ -2,6 +2,8 @@ package tacoplayer;
 
 import battlecode.common.*;
 
+import java.util.Map;
+
 import static tacoplayer.RobotPlayer.*;
 import static tacoplayer.Movement.*;
 import static tacoplayer.Sensing.*;
@@ -82,7 +84,10 @@ public class LauncherStrategy {
             prevRoundLeaderLoc = leaderLoc;
             roundsWithoutPrevLeader = 0;
         }
-
+        if (rc.getRoundNum() < 7) {
+            MapLocation center = new MapLocation(rc.getMapWidth() / 2, rc.getMapHeight() / 2);
+            Movement.moveTowardsLocation(rc, center);
+        }
         // If you're hurt and not attacking, go heal
         if (rc.getHealth() <  rc.getType().getMaxHealth()
                 && !attackMode

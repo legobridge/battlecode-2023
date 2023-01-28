@@ -17,6 +17,7 @@ public class CarrierStrategy {
     static boolean atCarrierCapacity = false;
     static boolean extracting = false;
     static boolean depositing = false;
+    static int optimalResources = 39;
 
     /**
      * Run a single turn for a Carrier.
@@ -36,7 +37,7 @@ public class CarrierStrategy {
         resourcesThisRound = adAmount + mnAmount + exAmount;
 
         // If we are holding as much as possible, we are at carrier capacity
-        if (resourcesThisRound == GameConstants.CARRIER_CAPACITY) atCarrierCapacity = true;
+        if (resourcesThisRound >= optimalResources) atCarrierCapacity = true;
         else atCarrierCapacity = false;
 
         // If we gained resources last round, we are extracting, we stop extracting when we are full
@@ -181,9 +182,10 @@ public class CarrierStrategy {
 
             // Full resources -> go to HQ
             // TODO - Use the formula
-            if (resourcesThisRound == GameConstants.CARRIER_CAPACITY - 1) {
+            if (resourcesThisRound >= optimalResources) {
                 Pathing.moveTowards(rc, closestHqLoc);
                 Pathing.moveTowards(rc, closestHqLoc);
+                extracting = false;
             }
         }
     }
