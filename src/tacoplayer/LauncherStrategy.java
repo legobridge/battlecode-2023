@@ -10,6 +10,7 @@ public class LauncherStrategy {
 
     static int LAUNCHER_BATTALION_SIZE = 3;
 
+    // TODO - update batallion size dependent on how far the enemyHQs are?
     static void runLauncher(RobotController rc) throws GameActionException {
         // Update alive counter
         Comms.updateRobotCount(rc);
