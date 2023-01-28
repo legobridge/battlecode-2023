@@ -74,10 +74,12 @@ public class Movement {
         }
         for (int i = 9; --i >= 0;) {
             MapLocation spot = new MapLocation(wellLoc.x + i % 3 - 1, wellLoc.y + i / 3 - 1);
-            MapInfo spotInfo = rc.senseMapInfo(spot);
-            if (spotInfo.isPassable() && rc.canSenseRobotAtLocation(spot)) {
-                target = spot;
-                break;
+            if (rc.canSenseLocation(spot)) {
+                MapInfo spotInfo = rc.senseMapInfo(spot);
+                if (spotInfo.isPassable() && rc.canSenseRobotAtLocation(spot)) {
+                    target = spot;
+                    break;
+                }
             }
         }
         if (target != null) {
