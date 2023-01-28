@@ -189,7 +189,7 @@ public class CarrierStrategy {
 
             // Full resources -> go to HQ
             // TODO - Use the formula
-            if (resourcesThisRound == GameConstants.CARRIER_CAPACITY) {
+            if (resourcesThisRound == GameConstants.CARRIER_CAPACITY - 1) {
                 Pathing.moveTowards(rc, closestHqLoc);
                 Pathing.moveTowards(rc, closestHqLoc);
             }

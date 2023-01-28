@@ -27,7 +27,7 @@ public class Combat {
         int numEnemies = 0;
 
         // Go through nearby enemies
-        for (int i = 0; i < enemies.length; i++) {
+        for (int i = enemies.length; --i >= 0;) {
             // Get info from enemy
             RobotInfo enemy = enemies[i];
             MapLocation enemyLoc = enemy.getLocation();
