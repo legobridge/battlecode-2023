@@ -132,16 +132,8 @@ public class CarrierStrategy {
         depositResource(rc, ResourceType.MANA);
         depositResource(rc, ResourceType.ELIXIR);
 
-        // TODO - Last hit
-        // Occasionally try out the carriers attack
-//        if (rng.nextInt(20) == 1) {
-//            RobotInfo[] enemyRobots = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-//            if (enemyRobots.length > 0) {
-//                if (rc.canAttack(enemyRobots[0].location)) {
-//                    rc.attack(enemyRobots[0].location);
-//                }
-//            }
-//        }
+        // Last hit attack
+        Combat.carrierAttack(rc);
 
         // Move away from enemies
         if (enemyLauncherCount + enemyDestabCount > 0) {

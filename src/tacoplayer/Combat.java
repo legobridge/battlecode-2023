@@ -12,65 +12,7 @@ public class Combat {
     /** attack mode */
     static void attack(RobotController rc) throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam); // TODO - use universal sensing
-        if (enemies.length == 0) {
-            attackMode = false;
-            return;
-        }
-
-        MapLocation ourLoc = rc.getLocation();
-        MapLocation closestEnemyLoc = null;
-        MapLocation lowestLauncherLoc = null;
-        MapLocation lowestHealthLoc = null;
-        RobotType closestEnemyType = null;
-        int closestEnemyDistSq = Integer.MAX_VALUE;
-        int lowestLauncherDistSq = Integer.MAX_VALUE;
-        int lowestHealth = Integer.MAX_VALUE;
-        int numLaunchers = 0;
-        int numEnemies = 0;
-
-        // Go through nearby enemies
-        for (int i = 0; i < enemies.length; i++) {
-            // Get info from enemy
-            RobotInfo enemy = enemies[i];
-            MapLocation enemyLoc = enemy.getLocation();
-            RobotType enemyType = enemy.getType();
-            int distSqToEnemy = ourLoc.distanceSquaredTo(enemyLoc);
-            int enemyHealth = enemy.getHealth();
-            boolean isHQ = enemyType == RobotType.HEADQUARTERS;
-
-            // Update enemy count
-            if (!isHQ) {
-                numEnemies++;
-            }
-
-            // Update the launcher count
-            if (enemyType == RobotType.LAUNCHER) {
-                numLaunchers++;
-            }
-
-            // Update closest enemy
-            if (distSqToEnemy < closestEnemyDistSq && !isHQ) {
-                closestEnemyLoc = enemyLoc;
-                closestEnemyType = enemyType;
-                closestEnemyDistSq = distSqToEnemy;
-            }
-
-            // Update closest enemy launcher
-            if (enemyType == RobotType.LAUNCHER && distSqToEnemy < lowestLauncherDistSq && !isHQ) {
-                lowestLauncherLoc = enemyLoc;
-                lowestLauncherDistSq = distSqToEnemy;
-            }
-
-            // Update lowest health enemy
-            if (enemyHealth < lowestHealth && !isHQ) {
-                lowestHealthLoc = enemyLoc;
-                lowestHealth = enemyHealth;
-            }
-
-
-        }
-        // If only HQs were found, exit
-        if (numEnemies == 0) {
+        if (visibleEnemiesCount == 0) {
             attackMode = false;
             return;
         }
@@ -87,31 +29,41 @@ public class Combat {
         if (retreatMode || runawayMode) {
             // Prioritize attack launchers
             rc.setIndicatorString("RETREAT");
-            if (lowestLauncherLoc != null) {
-                tryAttack(rc, lowestLauncherLoc);
+            if (lowestHealthEnemyLauncherLoc != null) {
+                tryAttack(rc, lowestHealthEnemyLauncherLoc);
+            }
+            else if (lowestHealthEnemyInRangeLoc != null) {
+                tryAttack(rc, lowestHealthEnemyInRangeLoc);
             }
             else {
                 tryAttack(rc, closestEnemyLoc);
             }
         }
-        if ((lowestHealth <= MAGIC_DIVE_HEALTH || numLaunchers == 0) && Pathing.safeFromHQ(rc, closestEnemyHqLoc)) {
+        if ((lowestHealthEnemyHealth <= MAGIC_DIVE_HEALTH || enemyLauncherCount == 0) && Pathing.safeFromHQ(rc, closestEnemyHqLoc)) {
             // Prioritize attack launchers
             rc.setIndicatorString("DIVE");
-            attackDive(rc, lowestHealthLoc);
+            attackDive(rc, lowestHealthEnemyLoc);
         }
         else {
             // Prioritize attack launchers
             rc.setIndicatorString("KITE");
-            if (lowestLauncherLoc != null) {
-                attackKite(rc, closestEnemyType, lowestLauncherLoc, closestEnemyDistSq);
+            if (lowestHealthEnemyLauncherLoc != null) {
+                attackKite(rc, RobotType.LAUNCHER, lowestHealthEnemyLauncherLoc, closestEnemyDistSq);
             }
             else {
-                attackKite(rc, closestEnemyType, lowestHealthLoc, closestEnemyDistSq);
+                attackKite(rc, lowestHealthEnemy.getType(), lowestHealthEnemyLoc, closestEnemyDistSq);
             }
         }
 
         // Try attacking closest enemy if no attack was done
         tryAttack(rc, closestEnemyLoc);
+    }
+
+    static void carrierAttack(RobotController rc) throws GameActionException {
+        int damage = 5 * rc.getResourceAmount(ResourceType.ADAMANTIUM) / 4;
+        if (lowestHealthEnemyInRangeHealth <= damage) {
+            tryAttack(rc, lowestHealthEnemyInRangeLoc);
+        }
     }
 
     /** Mission failed, we'll get em next time */
@@ -176,7 +128,6 @@ public class Combat {
             attackSuccessful = tryAttack(rc, closestEnemyLoc);
         }
         return attackSuccessful;
-
     }
 
     /** Kill that bitch at all costs */
@@ -193,6 +144,13 @@ public class Combat {
         if (rc.canAttack(attackLoc)) {
             rc.attack(attackLoc);
             attackMode = true;
+            return true;
+        }
+        return false;
+    }
+
+    static boolean isMoveOutOfRange(RobotController rc, MapLocation enemyLoc, MapLocation newLoc) {
+        if (newLoc.distanceSquaredTo(enemyLoc) > rc.getType().actionRadiusSquared) {
             return true;
         }
         return false;

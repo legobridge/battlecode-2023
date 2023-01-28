@@ -32,6 +32,19 @@ public class Sensing {
     static int closestVisibleEnemyRobotDistSq;
     static RobotInfo closestVisibleEnemyRobot;
 
+    static RobotInfo closestEnemy;
+    static MapLocation closestEnemyLoc;
+    static int closestEnemyDistSq;
+    static MapLocation closestEnemyLauncherLoc;
+    static int closestEnemyLauncherDistSq;
+    static RobotInfo lowestHealthEnemy;
+    static MapLocation lowestHealthEnemyLoc;
+    static int lowestHealthEnemyHealth;
+    static MapLocation lowestHealthEnemyLauncherLoc = null;
+    static int lowestHealthEnemyLauncherHealth = Integer.MAX_VALUE;
+    static MapLocation lowestHealthEnemyInRangeLoc;
+    static int lowestHealthEnemyInRangeHealth;
+
     static int closestFriendlyIslandDistSq;
     static int closestNeutralIslandDistSq;
     static int closestEnemyIslandDistSq;
@@ -61,6 +74,21 @@ public class Sensing {
         enemyCarrierCount = 0;
         enemyLauncherCount = 0;
         enemyDestabCount = 0;
+
+        // Attack purposes
+        closestEnemy = null;
+        closestEnemyLoc = null;
+        closestEnemyDistSq = Integer.MAX_VALUE;
+        closestEnemyLauncherLoc = null;
+        closestEnemyLauncherDistSq = Integer.MAX_VALUE;
+        lowestHealthEnemy = null;
+        lowestHealthEnemyLoc = null;
+        lowestHealthEnemyHealth = Integer.MAX_VALUE;
+        lowestHealthEnemyLauncherLoc = null;
+        lowestHealthEnemyLauncherHealth = Integer.MAX_VALUE;
+        lowestHealthEnemyInRangeLoc = null;
+        lowestHealthEnemyInRangeHealth = Integer.MAX_VALUE;
+
         RobotInfo[] robots = rc.senseNearbyRobots();
         for (int j = -1; ++j < robots.length; ) {
             RobotInfo robot = robots[j];
@@ -127,6 +155,40 @@ public class Sensing {
                         break;
                     case DESTABILIZER:
                         break;
+                }
+                if (robot.getType() != RobotType.HEADQUARTERS) {
+                    MapLocation ourLoc = rc.getLocation();
+                    int enemyRobotDistSq = enemyRobotLocation.distanceSquaredTo(ourLoc);
+                    int enemyRobotHealth = robot.getHealth();
+                    // Update closest enemy
+                    if (enemyRobotDistSq < closestEnemyDistSq) {
+                        closestEnemy = robot;
+                        closestEnemyLoc = enemyRobotLocation;
+                        closestEnemyDistSq = enemyRobotDistSq;
+                    }
+                    // Update closest launcher
+                    if (robot.getType() == RobotType.LAUNCHER) {
+                        if (enemyRobotDistSq < closestEnemyLauncherDistSq) {
+                            closestEnemyLauncherLoc = enemyRobotLocation;
+                            closestEnemyLauncherDistSq = enemyRobotDistSq;
+                        }
+                        if (enemyRobotHealth < lowestHealthEnemyLauncherHealth) {
+                            lowestHealthEnemyLauncherLoc = enemyRobotLocation;
+                            lowestHealthEnemyLauncherHealth = enemyRobotHealth;
+                        }
+                    }
+                    // Update lowest health enemy
+                    if (enemyRobotHealth < lowestHealthEnemyHealth) {
+                        lowestHealthEnemy = robot;
+                        lowestHealthEnemyLoc = enemyRobotLocation;
+                        lowestHealthEnemyHealth = enemyRobotHealth;
+                    }
+                    // Update lowest health enemy in range
+                    if (enemyRobotDistSq <= rc.getType().actionRadiusSquared
+                        && enemyRobotHealth < lowestHealthEnemyInRangeHealth) {
+                        lowestHealthEnemyInRangeLoc = enemyRobotLocation;
+                        lowestHealthEnemyInRangeHealth = enemyRobotHealth;
+                    }
                 }
             }
         }
