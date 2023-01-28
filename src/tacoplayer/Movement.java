@@ -69,9 +69,6 @@ public class Movement {
     }
     static boolean moveToExtract(RobotController rc, MapLocation wellLoc) throws GameActionException {
         MapLocation target = null;
-        if (rc.senseCloud(rc.getLocation())) {
-            return false;
-        }
         for (int i = 9; --i >= 0;) {
             MapLocation spot = new MapLocation(wellLoc.x + i % 3 - 1, wellLoc.y + i / 3 - 1);
             if (rc.canSenseLocation(spot)) {
