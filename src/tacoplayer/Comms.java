@@ -178,6 +178,7 @@ public class Comms {
                     return false;
                 }
                 else {
+                    sharedWellLocs[i] = hashedLoc;
                     MapLocation loc = MapLocationUtil.unhashMapLocation(hashedLoc);
                     System.out.println("added mn well at " + String.valueOf(loc.x) + ", " + String.valueOf(loc.y));
                     return true;
