@@ -69,7 +69,7 @@ public class Comms {
         int hashed_loc = MapLocationUtil.hashMapLocation(rc.getLocation());
 
         // Write it to the shared array if it hasn't been written yet
-        for (int i = 4; --i >= 0; ) {
+        for (int i = -1; ++i < 4; ) {
             // hashMapLocation adds 1 so the value of hashed_loc can never be 0
             if (rc.readSharedArray(i) == 0) {
                 tryToWriteToSharedArray(rc, i, hashed_loc);

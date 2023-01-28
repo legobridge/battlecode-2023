@@ -71,15 +71,15 @@ public class Pathing {
         }
         MapLocation selfLoc = rc.getLocation();
         Direction[] backupDirectionsToTry = new Direction[MAX_PREV_LOCS_TO_STORE];
-        int backupDirectionsToTryIndex = 0;
+        int backupDirectionsToTryIndex = MAX_PREV_LOCS_TO_STORE - 1;
         boolean moved = false;
         int startingIndex = rng.nextInt(directions.length);
         for (int i = directions.length; --i >= 0; ) {
             Direction dir = directions[(startingIndex + i) % directions.length];
             MapLocation targetLoc = selfLoc.add(dir);
-            if (backupDirectionsToTryIndex < MAX_PREV_LOCS_TO_STORE && ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)) { // If we've been here recently, avoid it
+            if (backupDirectionsToTryIndex >= 0 && ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)) { // If we've been here recently, avoid it
                 backupDirectionsToTry[backupDirectionsToTryIndex] = dir;
-                backupDirectionsToTryIndex++;
+                backupDirectionsToTryIndex--;
             } else if (rc.canMove(dir) && safeFromHQ(rc, closestEnemyHqLoc)) {
                 moved = true;
                 rc.setIndicatorString("I moved to a brand new place, by moving: " + dir);
@@ -87,7 +87,7 @@ public class Pathing {
             }
         }
         if (!moved) {
-            for (int i = -1; ++i < backupDirectionsToTry.length; ) {
+            for (int i = backupDirectionsToTry.length; --i >= backupDirectionsToTryIndex + 1; ) {
                 if (rc.canMove(backupDirectionsToTry[i])) {
                     rc.setIndicatorString("I moved in a backup direction: " + backupDirectionsToTry[i]);
                     moveAndUpdateLastFewLocs(rc, backupDirectionsToTry[i]);
