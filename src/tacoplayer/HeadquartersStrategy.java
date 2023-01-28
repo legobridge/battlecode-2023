@@ -18,8 +18,6 @@ public class HeadquartersStrategy {
     // TODO: Update Magic Numbers
     // TODO: Come up with something better than for(int i = 0; i++ < 5; )
     // TODO: ACTIONS_PER_TURN should account for destab and booster effects
-
-    final static int SMALL_MAP_THRESH = 1000; // threshold deciding if the map is small or not
     final static int MAGIC_NUM_TURNS_TURTLE = 200; // turns to wait before building an anchor in turtle mode
     final static int MAGIC_ANCHOR_NUM_TURNS_TURTLE = 100; // turns to wait before building another anchor in turtle mode
     final static int MAGIC_NUM_TURNS_RUSH = 500; // turns to wait before building an anchor in rush mode
@@ -63,260 +61,145 @@ public class HeadquartersStrategy {
             }
             initialBuildOrder(rc);
         }
-        /** MAGIC NUMBERS USED **/
-        if (rc.getLocation().distanceSquaredTo(RobotPlayer.closestEnemyHqLoc) < 2000) {
-            rc.setIndicatorString("RUSH");
-            RUSH_MODE = true;
-        }
         else {
-            rc.setIndicatorString("TURTLE");
             /** MAGIC NUMBERS USED **/
-            if (mapSize <= 2500) {
-                MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 200;
-            } else if (mapSize <= 3000) {
-                MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 150;
+            if (rc.getLocation().distanceSquaredTo(RobotPlayer.closestEnemyHqLoc) < 2000) {
+                rc.setIndicatorString("RUSH");
+                RUSH_MODE = true;
             } else {
-                MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 100;
-            }
-            RUSH_MODE = false;
-        }
-        if (RUSH_MODE) {
-            lastBuiltAnchor++;
-            /** MAGIC NUMBERS USED **/
-            if (enemyLauncherCount - 1.5 * ourLauncherCount > 0) {
-                // we are under siege!
-                underSiege = true;
-                rc.setIndicatorString("Under siege!");
-                if (mana >= ACTIONS_PER_TURN * RobotType.LAUNCHER.getBuildCost(ResourceType.MANA)) {
-                    int launchersBuiltThisTurn = 0;
-                    for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
-                        if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
-                            launchersBuiltThisTurn++;
-                        }
-                    }
-                    if (launchersBuiltThisTurn == ACTIONS_PER_TURN) {
-                        rc.setIndicatorString("built 5 launchers");
-                    }
-                    else {
-                        // should never ever happen
-                        System.out.println("failed under siege");
-                    }
-                }
-                else {
-                    rc.setIndicatorString("waiting for resources under siege");
-                }
-            }
-            // try make amps
-            /** MAGIC NUMBERS USED **/
-            else if (turnCount >= MAGIC_AMP_NUM_TURNS_RUSH
-                    && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_RUSH == 0)) {
-                rc.setIndicatorString("Trying to build am amplifier");
-                if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
-                    rc.setIndicatorString("Building an amplifier");
-                    // use rest of the actions
-                    buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
-                }
-                else {
-                    // couldn't make an amp, lets make something else if we have excess of a resource
-                    buildBotsInsteadOfAmp(rc, ad, mana);
-                }
-            }
-            /** MAGIC NUMBERS USED **/
-            else if (turnCount > MAGIC_NUM_TURNS_RUSH
-                    && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_RUSH) {
-                // wait for resources and build an anchor
-                rc.setIndicatorString("Trying to build an anchor");
-                if (rc.canBuildAnchor(Anchor.STANDARD)) {
-                    rc.setIndicatorString("Building an anchor");
-                    rc.buildAnchor(Anchor.STANDARD);
-                    lastBuiltAnchor = 0;
-                    // use rest of the actions
-                    buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
+                rc.setIndicatorString("TURTLE");
+                /** MAGIC NUMBERS USED **/
+                if (mapSize <= 2500) {
+                    MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 200;
+                } else if (mapSize <= 3000) {
+                    MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 150;
                 } else {
-                    buildBotsInsteadOfAnchor(rc, ad, mana);
+                    MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 100;
                 }
+                RUSH_MODE = false;
             }
-            else {
-                // nothing special going on
-                buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
-            }
-        }
-
-        else {
-            // TURTLE
-            lastBuiltAnchor++;
-            /** MAGIC NUMBERS USED **/
-            if (enemyLauncherCount - 1.5 * ourLauncherCount > 0) {
-                // we are under siege!
-                underSiege = true;
-                rc.setIndicatorString("Under siege!");
-                if (mana >= ACTIONS_PER_TURN * RobotType.LAUNCHER.getBuildCost(ResourceType.MANA)) {
-                    int launchersBuiltThisTurn = 0;
-                    for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
-                        if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
-                            launchersBuiltThisTurn++;
+            if (RUSH_MODE) {
+                lastBuiltAnchor++;
+                /** MAGIC NUMBERS USED **/
+                if (enemyLauncherCount - 1.5 * ourLauncherCount > 0) {
+                    // we are under siege!
+                    underSiege = true;
+                    rc.setIndicatorString("Under siege!");
+                    if (mana >= ACTIONS_PER_TURN * RobotType.LAUNCHER.getBuildCost(ResourceType.MANA)) {
+                        int launchersBuiltThisTurn = 0;
+                        for (int i = ACTIONS_PER_TURN; --i >= 0; ) {
+                            if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                                launchersBuiltThisTurn++;
+                            }
                         }
+                        if (launchersBuiltThisTurn == ACTIONS_PER_TURN) {
+                            rc.setIndicatorString("built 5 launchers");
+                        } else {
+                            // should never ever happen
+                            System.out.println("failed under siege");
+                        }
+                    } else {
+                        rc.setIndicatorString("waiting for resources under siege");
                     }
-                    if (launchersBuiltThisTurn == ACTIONS_PER_TURN) {
-                        rc.setIndicatorString("built 5 launchers");
+                }
+                // try make amps
+                /** MAGIC NUMBERS USED **/
+                else if (turnCount >= MAGIC_AMP_NUM_TURNS_RUSH
+                        && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_RUSH == 0)) {
+                    rc.setIndicatorString("Trying to build am amplifier");
+                    if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
+                        rc.setIndicatorString("Building an amplifier");
+                        // use rest of the actions
+                        buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
+                    } else {
+                        // couldn't make an amp, lets make something else if we have excess of a resource
+                        buildBotsInsteadOfAmp(rc, ad, mana);
                     }
-                    else {
-                        // should never ever happen
-                        System.out.println("failed under siege");
+                }
+                /** MAGIC NUMBERS USED **/
+                else if (turnCount > MAGIC_NUM_TURNS_RUSH
+                        && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_RUSH) {
+                    // wait for resources and build an anchor
+                    rc.setIndicatorString("Trying to build an anchor");
+                    if (rc.canBuildAnchor(Anchor.STANDARD)) {
+                        rc.setIndicatorString("Building an anchor");
+                        rc.buildAnchor(Anchor.STANDARD);
+                        lastBuiltAnchor = 0;
+                        // use rest of the actions
+                        buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
+                    } else {
+                        buildBotsInsteadOfAnchor(rc, ad, mana);
                     }
-                }
-                else {
-                    rc.setIndicatorString("waiting for resources under siege");
-                }
-            }
-            // try make amps
-            /** MAGIC NUMBERS USED **/
-            else if (turnCount >= MAGIC_AMP_NUM_TURNS_TURTLE
-                    && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_TURTLE == 0)) {
-                rc.setIndicatorString("Trying to build am amplifier");
-                if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
-                    rc.setIndicatorString("Building an amplifier");
-                    // use rest of the actions
-                    buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
-                }
-                else {
-                    // couldn't make an amp, lets make something else if we have excess of a resource
-                    buildBotsInsteadOfAmp(rc, ad, mana);
-                }
-            }
-            // try and make an anchor
-            /** MAGIC NUMBERS USED **/
-            else if (turnCount > MAGIC_NUM_TURNS_TURTLE && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_TURTLE) {
-                // wait for resources and build an anchor
-                rc.setIndicatorString("Trying to build an anchor");
-                if (rc.canBuildAnchor(Anchor.STANDARD)) {
-                    rc.setIndicatorString("Building an anchor");
-                    rc.buildAnchor(Anchor.STANDARD);
-                    lastBuiltAnchor = 0;
-                    // use rest of the actions
-                    buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
                 } else {
-                    // make other bots if we have excess resources
-                    buildBotsInsteadOfAnchor(rc, ad, mana);
+                    // nothing special going on
+                    buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
                 }
             } else {
-                // build bots
-                // we have moving average
-                if (turnCount > AVERAGE_PERIOD) {
-                    buildBotsWithMovingAverage(rc);
+                // TURTLE
+                lastBuiltAnchor++;
+                /** MAGIC NUMBERS USED **/
+                if (enemyLauncherCount - 1.5 * ourLauncherCount > 0) {
+                    // we are under siege!
+                    underSiege = true;
+                    rc.setIndicatorString("Under siege!");
+                    if (mana >= ACTIONS_PER_TURN * RobotType.LAUNCHER.getBuildCost(ResourceType.MANA)) {
+                        int launchersBuiltThisTurn = 0;
+                        for (int i = ACTIONS_PER_TURN; --i >= 0; ) {
+                            if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                                launchersBuiltThisTurn++;
+                            }
+                        }
+                        if (launchersBuiltThisTurn == ACTIONS_PER_TURN) {
+                            rc.setIndicatorString("built 5 launchers");
+                        } else {
+                            // should never ever happen
+                            System.out.println("failed under siege");
+                        }
+                    } else {
+                        rc.setIndicatorString("waiting for resources under siege");
+                    }
                 }
-                // we don't have moving average
-                else {
-                    buildBots(rc, RobotType.CARRIER, ACTIONS_PER_TURN);
+                // try make amps
+                /** MAGIC NUMBERS USED **/
+                else if (turnCount >= MAGIC_AMP_NUM_TURNS_TURTLE
+                        && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_TURTLE == 0)) {
+                    rc.setIndicatorString("Trying to build am amplifier");
+                    if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
+                        rc.setIndicatorString("Building an amplifier");
+                        // use rest of the actions
+                        buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
+                    } else {
+                        // couldn't make an amp, lets make something else if we have excess of a resource
+                        buildBotsInsteadOfAmp(rc, ad, mana);
+                    }
+                }
+                // try and make an anchor
+                /** MAGIC NUMBERS USED **/
+                else if (turnCount > MAGIC_NUM_TURNS_TURTLE && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_TURTLE) {
+                    // wait for resources and build an anchor
+                    rc.setIndicatorString("Trying to build an anchor");
+                    if (rc.canBuildAnchor(Anchor.STANDARD)) {
+                        rc.setIndicatorString("Building an anchor");
+                        rc.buildAnchor(Anchor.STANDARD);
+                        lastBuiltAnchor = 0;
+                        // use rest of the actions
+                        buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
+                    } else {
+                        // make other bots if we have excess resources
+                        buildBotsInsteadOfAnchor(rc, ad, mana);
+                    }
+                } else {
+                    // build bots
+                    // we have moving average
+                    if (turnCount > AVERAGE_PERIOD) {
+                        buildBotsWithMovingAverage(rc);
+                    }
+                    // we don't have moving average
+                    else {
+                        buildBots(rc, RobotType.CARRIER, ACTIONS_PER_TURN);
+                    }
                 }
             }
         }
-
-//        if (mapSize < SMALL_MAP_THRESH) {
-//            // RUSH
-//            if (rc.getRoundNum() == 1) {
-//                System.out.print("RUSHHHHHHH!");
-//                RUSH_MODE = true;
-//            }
-//            lastBuiltAnchor++;
-//            if (turnCount == 1) {
-//                // initially build 4 launchers and 1 carriers
-//                initialBuildOrder(rc);
-//            }
-//            // try make amps
-//            /** MAGIC NUMBERS USED **/
-//            else if (turnCount >= MAGIC_AMP_NUM_TURNS_RUSH
-//                    && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_RUSH == 0)) {
-//                rc.setIndicatorString("Trying to build am amplifier");
-//                if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
-//                    rc.setIndicatorString("Building an amplifier");
-//                    // use rest of the actions
-//                    buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
-//                }
-//                else {
-//                    // couldn't make an amp, lets make something else if we have excess of a resource
-//                    buildBotsInsteadOfAmp(rc, ad, mana);
-//                }
-//            }
-//            /** MAGIC NUMBERS USED **/
-//            else if (turnCount > MAGIC_NUM_TURNS_RUSH
-//                    && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_RUSH) {
-//                // wait for resources and build an anchor
-//                rc.setIndicatorString("Trying to build an anchor");
-//                if (rc.canBuildAnchor(Anchor.STANDARD)) {
-//                    rc.setIndicatorString("Building an anchor");
-//                    rc.buildAnchor(Anchor.STANDARD);
-//                    lastBuiltAnchor = 0;
-//                    // use rest of the actions
-//                    buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
-//                } else {
-//                    buildBotsInsteadOfAnchor(rc, ad, mana);
-//                }
-//            }
-//            else {
-//                // nothing special going on
-//                buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
-//            }
-//        }
-//
-//        else {
-//            // TURTLE
-//            if (rc.getRoundNum() == 1) {
-//                System.out.print("TURTLE UP");
-//                if (mapSize <= 2500) {
-//                    MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 200;
-//                } else if (mapSize <= 3000) {
-//                    MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 150;
-//                } else {
-//                    MAGIC_AMP_EVERY_NUM_TURNS_TURTLE = 100;
-//                }
-//            }
-//            lastBuiltAnchor++;
-//            if (turnCount == 1) {
-//                // make 4 launchers and 1 carriers
-//                initialBuildOrder(rc);
-//            }
-//            // try make amps
-//            /** MAGIC NUMBERS USED **/
-//            else if (turnCount >= MAGIC_AMP_NUM_TURNS_TURTLE
-//                    && (Comms.getPrevRobotCount(rc, RobotType.AMPLIFIER) < hqCount || turnCount % MAGIC_AMP_EVERY_NUM_TURNS_TURTLE == 0)) {
-//                rc.setIndicatorString("Trying to build am amplifier");
-//                if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
-//                    rc.setIndicatorString("Building an amplifier");
-//                    // use rest of the actions
-//                    buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
-//                }
-//                else {
-//                    // couldn't make an amp, lets make something else if we have excess of a resource
-//                    buildBotsInsteadOfAmp(rc, ad, mana);
-//                }
-//            }
-//            // try and make an anchor
-//            /** MAGIC NUMBERS USED **/
-//            else if (turnCount > MAGIC_NUM_TURNS_TURTLE && lastBuiltAnchor > MAGIC_ANCHOR_NUM_TURNS_TURTLE && Comms.getNumNeutralIslands(rc) > 0) {
-//                // wait for resources and build an anchor
-//                rc.setIndicatorString("Trying to build an anchor");
-//                if (rc.canBuildAnchor(Anchor.STANDARD)) {
-//                    rc.setIndicatorString("Building an anchor");
-//                    rc.buildAnchor(Anchor.STANDARD);
-//                    lastBuiltAnchor = 0;
-//                    // use rest of the actions
-//                    buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN - 1);
-//                } else {
-//                    // make other bots if we have excess resources
-//                    buildBotsInsteadOfAnchor(rc, ad, mana);
-//                }
-//            } else {
-//                // build bots
-//                // we have moving average
-//                if (turnCount > AVERAGE_PERIOD) {
-//                    buildBotsWithMovingAverage(rc);
-//                }
-//                // we don't have moving average
-//                else {
-//                    buildBots(rc, RobotType.CARRIER, ACTIONS_PER_TURN);
-//                }
-//            }
-//        }
     }
 }

@@ -8,7 +8,7 @@ import static tacoplayer.BuildBots.*;
 public class BuildOrderTypes {
     static void initialBuildOrder(RobotController rc) throws GameActionException {
         // build 4 launchers and 1 carriers
-        for (int i = 0; i++ < 4; ) {
+        for (int i = ACTIONS_PER_TURN - 1; --i >= 0; ) {
             if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                 rc.setIndicatorString("Building a launcher");
                 if (RUSH_MODE) {
@@ -16,7 +16,7 @@ public class BuildOrderTypes {
                 }
             }
         }
-        for (int i = 0; i++ < 1; ) {
+        for (int i = 1; --i >= 0; ) {
             if (tryToBuildRobot(rc, RobotType.CARRIER)) {
                 rc.setIndicatorString("Building a carrier");
                 if (RUSH_MODE) {
@@ -28,7 +28,7 @@ public class BuildOrderTypes {
 
     static void buildBotsInsteadOfAmp(RobotController rc, int ad, int mana) throws GameActionException {
         if (RUSH_MODE) {
-            for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
+            for (int i = ACTIONS_PER_TURN; --i >= 0; ) {
                 if (mana > RobotType.LAUNCHER.getBuildCost(ResourceType.MANA) + RobotType.AMPLIFIER.getBuildCost(ResourceType.MANA)) {
                     if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                         rc.setIndicatorString("Building a launcher");
@@ -49,7 +49,7 @@ public class BuildOrderTypes {
         }
 
         else {
-            for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
+            for (int i = ACTIONS_PER_TURN; --i >= 0; ) {
                 if (mana > RobotType.LAUNCHER.getBuildCost(ResourceType.MANA) + RobotType.AMPLIFIER.getBuildCost(ResourceType.MANA)) {
                     if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                         rc.setIndicatorString("Building a launcher");
@@ -69,7 +69,7 @@ public class BuildOrderTypes {
 
     static void buildBotsInsteadOfAnchor(RobotController rc, int ad, int mana) throws GameActionException {
         if (RUSH_MODE) {
-            for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
+            for (int i = ACTIONS_PER_TURN; --i >= 0; ) {
                 if (mana > RobotType.LAUNCHER.getBuildCost(ResourceType.MANA) + Anchor.STANDARD.getBuildCost(ResourceType.MANA)) {
                     if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                         rc.setIndicatorString("Building a launcher");
@@ -90,7 +90,7 @@ public class BuildOrderTypes {
         }
 
         else {
-            for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
+            for (int i = ACTIONS_PER_TURN; --i >= 0; ) {
                 if (mana > RobotType.LAUNCHER.getBuildCost(ResourceType.MANA) + Anchor.STANDARD.getBuildCost(ResourceType.MANA)) {
                     if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                         rc.setIndicatorString("Building a launcher");
@@ -110,7 +110,7 @@ public class BuildOrderTypes {
     static void buildBots(RobotController rc, RobotType botPriority, int actionsAvailable) throws GameActionException {
         if (RUSH_MODE) {
             // RUSHHHHHHH!
-            for (int i = 0; i++ < actionsAvailable; ) {
+            for (int i = actionsAvailable; --i >= 0; ) {
                 if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                     rc.setIndicatorString("Building a launcher");
                     launchersBuilt++;
@@ -129,7 +129,7 @@ public class BuildOrderTypes {
             // TURTLE UP!
             switch (botPriority) {
                 case CARRIER:
-                    for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
+                    for (int i = ACTIONS_PER_TURN; --i >= 0; ) {
                         if (tryToBuildRobot(rc, RobotType.CARRIER)) {
                             rc.setIndicatorString("Building a carrier");
                         } else if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
@@ -142,7 +142,7 @@ public class BuildOrderTypes {
 
                 case LAUNCHER:
                 default :
-                    for (int i = 0; i++ < ACTIONS_PER_TURN; ) {
+                    for (int i = ACTIONS_PER_TURN; --i >= 0; ) {
                         if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                             rc.setIndicatorString("Building a launcher");
                         } else if (tryToBuildRobot(rc, RobotType.CARRIER)) {
@@ -165,7 +165,7 @@ public class BuildOrderTypes {
             int carriersToBuild = Math.round((float) ACTIONS_PER_TURN / ratioAdMn);
             int launchersToBuild = ACTIONS_PER_TURN - carriersToBuild;
             int remainingActions = ACTIONS_PER_TURN;
-            for (int i = 0; i++ < launchersToBuild; ) {
+            for (int i = launchersToBuild; --i >= 0; ) {
                 if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
                     rc.setIndicatorString("Building a launcher");
                     remainingActions--;
@@ -174,7 +174,7 @@ public class BuildOrderTypes {
                     rc.setIndicatorString("Not enough resources to build a launcher");
                 }
             }
-            for (int i = 0; i++ < carriersToBuild; ) {
+            for (int i = carriersToBuild; --i >= 0; ) {
                 if (tryToBuildRobot(rc, RobotType.CARRIER)) {
                     rc.setIndicatorString("Building a carrier");
                     remainingActions--;
@@ -194,16 +194,16 @@ public class BuildOrderTypes {
     }
     static float adGetMovingAverage() {
         int totalAd = 0;
-        for (int i = 0; i++ < adQueue.length; ) {
-            totalAd += adQueue[i - 1];
+        for (int i = -1; ++i < adQueue.length; ) {
+            totalAd += adQueue[i];
         }
         return (float) totalAd / adQueue.length;
     }
 
     static float mnGetMovingAverage() {
         int totalMn = 0;
-        for (int i = 0; i++ < mnQueue.length; ) {
-            totalMn += mnQueue[i - 1];
+        for (int i = -1; ++i < mnQueue.length; ) {
+            totalMn += mnQueue[i];
         }
         return (float) totalMn / mnQueue.length;
     }

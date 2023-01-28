@@ -177,8 +177,8 @@ public class BuildBots {
     static boolean buildFarthest(RobotController rc, RobotType robotTypeToBuild, Direction dirToBuild) throws GameActionException {
         switch (dirToBuild) {
             case NORTH:
-                for (int i = 0; i++ < farthestNorth.length; ) {
-                    MapLocation buildLoc = rc.getLocation().translate(farthestNorth[i - 1].getDx(), farthestNorth[i - 1].getDy());
+                for (int i = -1; ++i < farthestNorth.length; ) {
+                    MapLocation buildLoc = rc.getLocation().translate(farthestNorth[i].dx, farthestNorth[i].dy);
                     if (!(isWithinEnemyHQRange && buildLoc.isWithinDistanceSquared(closestEnemyHqLoc, RobotType.HEADQUARTERS.actionRadiusSquared))
                             && rc.canBuildRobot(robotTypeToBuild, buildLoc)) {
                         rc.buildRobot(robotTypeToBuild, buildLoc);
@@ -188,8 +188,8 @@ public class BuildBots {
                 break;
 
             case NORTHEAST:
-                for (int i = 0; i++ < farthestNorthEast.length; ) {
-                    MapLocation buildLoc = rc.getLocation().translate(farthestNorthEast[i - 1].getDx(), farthestNorthEast[i - 1].getDy());
+                for (int i = -1; ++i < farthestNorthEast.length; ) {
+                    MapLocation buildLoc = rc.getLocation().translate(farthestNorthEast[i].dx, farthestNorthEast[i].dy);
                     if (!(isWithinEnemyHQRange && buildLoc.isWithinDistanceSquared(closestEnemyHqLoc, RobotType.HEADQUARTERS.actionRadiusSquared))
                             && rc.canBuildRobot(robotTypeToBuild, buildLoc)) {
                         rc.buildRobot(robotTypeToBuild, buildLoc);
@@ -199,9 +199,9 @@ public class BuildBots {
                 break;
 
             case EAST:
-                for (int i = 0; i++ < farthestNorth.length; ) {
-                    TranslatePair translatePair = rotate90Clockwise(farthestNorth[i - 1]);
-                    MapLocation buildLoc = rc.getLocation().translate(translatePair.getDx(), translatePair.getDy());
+                for (int i = -1; ++i < farthestNorth.length; ) {
+                    TranslatePair translatePair = rotate90Clockwise(farthestNorth[i]);
+                    MapLocation buildLoc = rc.getLocation().translate(translatePair.dx, translatePair.dy);
                     if (!(isWithinEnemyHQRange && buildLoc.isWithinDistanceSquared(closestEnemyHqLoc, RobotType.HEADQUARTERS.actionRadiusSquared))
                             && rc.canBuildRobot(robotTypeToBuild, buildLoc)) {
                         rc.buildRobot(robotTypeToBuild, buildLoc);
@@ -211,9 +211,9 @@ public class BuildBots {
                 break;
 
             case SOUTHEAST:
-                for (int i = 0; i++ < farthestNorthEast.length; ) {
-                    TranslatePair translatePair = rotate90Clockwise(farthestNorthEast[i - 1]);
-                    MapLocation buildLoc = rc.getLocation().translate(translatePair.getDx(), translatePair.getDy());
+                for (int i = -1; ++i < farthestNorthEast.length; ) {
+                    TranslatePair translatePair = rotate90Clockwise(farthestNorthEast[i]);
+                    MapLocation buildLoc = rc.getLocation().translate(translatePair.dx, translatePair.dy);
                     if (!(isWithinEnemyHQRange && buildLoc.isWithinDistanceSquared(closestEnemyHqLoc, RobotType.HEADQUARTERS.actionRadiusSquared))
                             && rc.canBuildRobot(robotTypeToBuild, buildLoc)) {
                         rc.buildRobot(robotTypeToBuild, buildLoc);
@@ -223,9 +223,9 @@ public class BuildBots {
                 break;
 
             case SOUTH:
-                for (int i = 0; i++ < farthestNorth.length; ) {
-                    TranslatePair translatePair = rotate180(farthestNorth[i - 1]);
-                    MapLocation buildLoc = rc.getLocation().translate(translatePair.getDx(), translatePair.getDy());
+                for (int i = -1; ++i < farthestNorth.length; ) {
+                    TranslatePair translatePair = rotate180(farthestNorth[i]);
+                    MapLocation buildLoc = rc.getLocation().translate(translatePair.dx, translatePair.dy);
                     if (!(isWithinEnemyHQRange && buildLoc.isWithinDistanceSquared(closestEnemyHqLoc, RobotType.HEADQUARTERS.actionRadiusSquared))
                             && rc.canBuildRobot(robotTypeToBuild, buildLoc)) {
                         rc.buildRobot(robotTypeToBuild, buildLoc);
@@ -235,9 +235,9 @@ public class BuildBots {
                 break;
 
             case SOUTHWEST:
-                for (int i = 0; i++ < farthestNorthEast.length; ) {
-                    TranslatePair translatePair = rotate180(farthestNorthEast[i - 1]);
-                    MapLocation buildLoc = rc.getLocation().translate(translatePair.getDx(), translatePair.getDy());
+                for (int i = -1; ++i < farthestNorthEast.length; ) {
+                    TranslatePair translatePair = rotate180(farthestNorthEast[i]);
+                    MapLocation buildLoc = rc.getLocation().translate(translatePair.dx, translatePair.dy);
                     if (!(isWithinEnemyHQRange && buildLoc.isWithinDistanceSquared(closestEnemyHqLoc, RobotType.HEADQUARTERS.actionRadiusSquared))
                             && rc.canBuildRobot(robotTypeToBuild, buildLoc)) {
                         rc.buildRobot(robotTypeToBuild, buildLoc);
@@ -247,9 +247,9 @@ public class BuildBots {
                 break;
 
             case WEST:
-                for (int i = 0; i++ < farthestNorth.length; ) {
-                    TranslatePair translatePair = rotate90AntiClockwise(farthestNorth[i - 1]);
-                    MapLocation buildLoc = rc.getLocation().translate(translatePair.getDx(), translatePair.getDy());
+                for (int i = -1; ++i < farthestNorth.length; ) {
+                    TranslatePair translatePair = rotate90AntiClockwise(farthestNorth[i]);
+                    MapLocation buildLoc = rc.getLocation().translate(translatePair.dx, translatePair.dy);
                     if (!(isWithinEnemyHQRange && buildLoc.isWithinDistanceSquared(closestEnemyHqLoc, RobotType.HEADQUARTERS.actionRadiusSquared))
                             && rc.canBuildRobot(robotTypeToBuild, buildLoc)) {
                         rc.buildRobot(robotTypeToBuild, buildLoc);
@@ -259,9 +259,9 @@ public class BuildBots {
                 break;
 
             case NORTHWEST:
-                for (int i = 0; i++ < farthestNorthEast.length; ) {
-                    TranslatePair translatePair = rotate90AntiClockwise(farthestNorthEast[i - 1]);
-                    MapLocation buildLoc = rc.getLocation().translate(translatePair.getDx(), translatePair.getDy());
+                for (int i = -1; ++i < farthestNorthEast.length; ) {
+                    TranslatePair translatePair = rotate90AntiClockwise(farthestNorthEast[i]);
+                    MapLocation buildLoc = rc.getLocation().translate(translatePair.dx, translatePair.dy);
                     if (!(isWithinEnemyHQRange && buildLoc.isWithinDistanceSquared(closestEnemyHqLoc, RobotType.HEADQUARTERS.actionRadiusSquared))
                             && rc.canBuildRobot(robotTypeToBuild, buildLoc)) {
                         rc.buildRobot(robotTypeToBuild, buildLoc);
@@ -275,14 +275,14 @@ public class BuildBots {
     }
 
     static TranslatePair rotate90AntiClockwise(TranslatePair translatePair) {
-        return new TranslatePair(-1 * translatePair.getDy(), translatePair.getDx());
+        return new TranslatePair(-1 * translatePair.dy, translatePair.dx);
     }
 
     static TranslatePair rotate90Clockwise(TranslatePair translatePair) {
-        return new TranslatePair(translatePair.getDy(), -1 * translatePair.getDx());
+        return new TranslatePair(translatePair.dy, -1 * translatePair.dx);
     }
 
     static TranslatePair rotate180(TranslatePair translatePair) {
-        return new TranslatePair(-1 * translatePair.getDx(), -1 * translatePair.getDy());
+        return new TranslatePair(-1 * translatePair.dx, -1 * translatePair.dy);
     }
 }

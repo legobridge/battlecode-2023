@@ -2,8 +2,6 @@ package tacoplayer;
 
 import battlecode.common.*;
 
-import java.awt.*;
-
 import static tacoplayer.RobotPlayer.*;
 import static tacoplayer.Sensing.*;
 
@@ -71,7 +69,7 @@ public class Comms {
         int hashed_loc = MapLocationUtil.hashMapLocation(rc.getLocation());
 
         // Write it to the shared array if it hasn't been written yet
-        for (int i = 0; i < 4; i++) {
+        for (int i = -1; ++i < 4; ) {
             // hashMapLocation adds 1 so the value of hashed_loc can never be 0
             if (rc.readSharedArray(i) == 0) {
                 tryToWriteToSharedArray(rc, i, hashed_loc);
@@ -218,7 +216,7 @@ public class Comms {
 
     // Moves the first 8 bits to the last 8 bits of all the robot counts
     static void resetCounts(RobotController rc) throws GameActionException {
-        for (int i = 4; i < 9; i++) {
+        for (int i = 3; ++i < 9; ) {
             int save_count = getNumFromBits(rc.readSharedArray(i), 1, 8);
             save_count = save_count << 8;
             tryToWriteToSharedArray(rc, i, save_count);

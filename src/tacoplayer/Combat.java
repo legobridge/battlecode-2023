@@ -1,7 +1,6 @@
 package tacoplayer;
 
 import battlecode.common.*;
-
 import static tacoplayer.RobotPlayer.*;
 import static tacoplayer.Sensing.*;
 
@@ -128,6 +127,7 @@ public class Combat {
             attackSuccessful = tryAttack(rc, closestEnemyLoc);
         }
         return attackSuccessful;
+
     }
 
     /** Kill that bitch at all costs */
