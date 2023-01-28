@@ -49,6 +49,8 @@ public strictfp class RobotPlayer {
     static int lastRoundHealth;
     static int thisRoundHealth;
     static boolean retreatMode = false;
+    static boolean runawayMode = false;
+    static boolean attackMode = false;
 
 
     static double sumReadBc = 0;

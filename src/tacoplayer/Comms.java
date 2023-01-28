@@ -197,7 +197,7 @@ public class Comms {
     }
 
     static void readWellsFromSharedArray(RobotController rc) throws GameActionException {
-        for (int i = -1; ++i < NUM_WELLS_STORED; ) {
+        for (int i = NUM_WELLS_STORED; --i >= 0; ) {
             sharedWellLocs[i] = rc.readSharedArray(WELL_LOCS_START_INDEX + i);
             doneWithWells = sharedWellLocs[i] != 0;
         }
@@ -330,5 +330,17 @@ public class Comms {
         if (rc.readSharedArray(SYMMETRY_INDEX) > locallyKnownSymmetry) {
             tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
         }
+    }
+
+    public static SymmetryType getSymmetryType() {
+        int a = getNumFromBits(locallyKnownSymmetry, 1, 1);
+        if (a == 1) {
+            return SymmetryType.HORIZONTAL;
+        }
+        a = getNumFromBits(locallyKnownSymmetry, 2, 2);
+        if (a == 1) {
+            return SymmetryType.VERTICAL;
+        }
+        return SymmetryType.ROTATIONAL;
     }
 }
