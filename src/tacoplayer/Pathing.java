@@ -2,8 +2,6 @@ package tacoplayer;
 
 import battlecode.common.*;
 
-import java.util.ArrayList;
-
 import static tacoplayer.RobotPlayer.*;
 
 public class Pathing {
@@ -72,14 +70,16 @@ public class Pathing {
             return;
         }
         MapLocation selfLoc = rc.getLocation();
-        ArrayList<Direction> backupDirectionsToTry = new ArrayList<>();
+        Direction[] backupDirectionsToTry = new Direction[MAX_PREV_LOCS_TO_STORE];
+        int backupDirectionsToTryIndex = 0;
         boolean moved = false;
-        int numDirections = directions.length;
-        for (int i = 0; i < numDirections; i++) {
-            Direction dir = directions[rng.nextInt(numDirections)];
+        int startingIndex = rng.nextInt(directions.length);
+        for (int i = directions.length; --i >= 0; ) {
+            Direction dir = directions[(startingIndex + i) % directions.length];
             MapLocation targetLoc = selfLoc.add(dir);
-            if (ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)) { // If we've been here recently, avoid it
-                backupDirectionsToTry.add(dir);
+            if (backupDirectionsToTryIndex < MAX_PREV_LOCS_TO_STORE && ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)) { // If we've been here recently, avoid it
+                backupDirectionsToTry[backupDirectionsToTryIndex] = dir;
+                backupDirectionsToTryIndex++;
             } else if (rc.canMove(dir) && safeFromHQ(rc, closestEnemyHqLoc)) {
                 moved = true;
                 rc.setIndicatorString("I moved to a brand new place, by moving: " + dir);
@@ -87,10 +87,10 @@ public class Pathing {
             }
         }
         if (!moved) {
-            for (Direction backupDirection : backupDirectionsToTry) {
-                if (rc.canMove(backupDirection)) {
-                    rc.setIndicatorString("I moved in a backup direction: " + backupDirection);
-                    moveAndUpdateLastFewLocs(rc, backupDirection);
+            for (int i = -1; ++i < backupDirectionsToTry.length; ) {
+                if (rc.canMove(backupDirectionsToTry[i])) {
+                    rc.setIndicatorString("I moved in a backup direction: " + backupDirectionsToTry[i]);
+                    moveAndUpdateLastFewLocs(rc, backupDirectionsToTry[i]);
                 }
             }
         }

@@ -23,7 +23,7 @@ public class Movement {
     static MapLocation averageLoc(RobotInfo[] robots) {
         int sumX = 0;
         int sumY = 0;
-        for (int i = 0; i < robots.length; i++) {
+        for (int i = robots.length; --i >= 0; ) {
             MapLocation loc = robots[i].getLocation();
             sumX += loc.x;
             sumY += loc.y;

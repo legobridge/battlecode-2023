@@ -41,7 +41,7 @@ public class LauncherStrategy {
         int leaderHealth = 100;
         MapLocation leaderLoc = null;
         RobotInfo leader = null;
-        for (int i = -1; ++i < ourLauncherCount; ) {
+        for (int i = ourLauncherCount; --i >= 0; ) {
             if (ourLaunchers[i].getID() < leaderId) {
                 leaderId = ourLaunchers[i].getID();
                 leader = ourLaunchers[i];
@@ -55,7 +55,7 @@ public class LauncherStrategy {
             // If his health was above two launcher hits, move towards where he was
             if (prevRoundLeaderHealth > MAGIC_NUM_HITS_TO_ASSUME_DEAD * RobotType.LAUNCHER.damage
                     && prevRoundLeaderLoc != null) {
-                rc.setIndicatorString("missing :" + String.valueOf(prevRoundLeaderLoc.x) + ", " + String.valueOf(prevRoundLeaderLoc.y));
+                rc.setIndicatorString("missing :" + prevRoundLeaderLoc.x + ", " + prevRoundLeaderLoc.y);
                 Movement.moveTowardsLocation(rc, prevRoundLeaderLoc);
             }
             // If a certain number of rounds have passed without the leader then make a new one

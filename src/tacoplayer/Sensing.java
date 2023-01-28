@@ -62,7 +62,7 @@ public class Sensing {
         enemyLauncherCount = 0;
         enemyDestabCount = 0;
         RobotInfo[] robots = rc.senseNearbyRobots();
-        for (int j = -1; ++j < robots.length; ) {
+        for (int j = robots.length; --j >= 0; ) {
             RobotInfo robot = robots[j];
             if (robot.team == ourTeam) {
                 switch (robot.getType()) {
@@ -224,7 +224,7 @@ public class Sensing {
 
     public static void scanIslands(RobotController rc) throws GameActionException {
         int[] islandIds = rc.senseNearbyIslands();
-        for (int i = -1; ++i < islandIds.length; ) {
+        for (int i = islandIds.length; --i >= 0; ) {
             int islandId = islandIds[i];
             Team islandTeam = rc.senseTeamOccupyingIsland(islandId);
             if (knownIslands[islandId] == null) { // I haven't seen this island
