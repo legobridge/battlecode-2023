@@ -199,7 +199,7 @@ public class Comms {
     }
 
     static void readWellsFromSharedArray(RobotController rc) throws GameActionException {
-        for (int i = -1; ++i < NUM_WELLS_STORED; ) {
+        for (int i = NUM_WELLS_STORED; --i >= 0; ) {
             sharedWellLocs[i] = rc.readSharedArray(WELL_LOCS_START_INDEX + i);
             doneWithWells = sharedWellLocs[i] != 0;
         }
