@@ -1,6 +1,7 @@
 package tacoplayer;
 
 import battlecode.common.*;
+
 import static tacoplayer.RobotPlayer.*;
 import static tacoplayer.Sensing.*;
 
@@ -12,6 +13,7 @@ public class Combat {
     static void attack(RobotController rc) throws GameActionException {
         RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam); // TODO - use universal sensing
         if (enemies.length == 0) {
+            attackMode = false;
             return;
         }
 
@@ -69,13 +71,20 @@ public class Combat {
         }
         // If only HQs were found, exit
         if (numEnemies == 0) {
+            attackMode = false;
             return;
+        }
+
+        if (enemyLauncherCount > ourLauncherCount) {
+            runawayMode = true;
+        } else {
+            runawayMode = false;
         }
 
         // If retreat mode, attack nearest enemy if in range and keep haulin ass
         // else if enemy is low on health and within movement range, dive and attack it
         // else kite
-        if (retreatMode) {
+        if (retreatMode || runawayMode) {
             // Prioritize attack launchers
             rc.setIndicatorString("RETREAT");
             if (lowestLauncherLoc != null) {
@@ -131,6 +140,24 @@ public class Combat {
         }
     }
 
+    /** We won't win this one. Regroup and re-arm */
+    static void runaway(RobotController rc) throws GameActionException {
+        if (!runawayMode) {
+            return;
+        }
+        Direction enemyDir = rc.getLocation().directionTo(enemyLaunchers[0].getLocation()).opposite();
+        if (Movement.moveDirectlyTowards(rc, enemyDir)) {
+            rc.setIndicatorString("Avoiding a fight");
+        }
+        else if (closestFriendlyIslandLoc != null) {
+            Movement.moveTowardsLocation(rc, closestFriendlyIslandLoc);
+        }
+        else {
+            Movement.moveTowardsLocation(rc, closestHqLoc);
+        }
+        runawayMode = false;
+    }
+
     /** strategically move in and out of enemy range to prevent taking damage */
     static boolean attackKite(RobotController rc, RobotType enemyType,
                            MapLocation closestEnemyLoc, int distSqToEnemy)
@@ -165,6 +192,7 @@ public class Combat {
     static boolean tryAttack(RobotController rc, MapLocation attackLoc) throws GameActionException {
         if (rc.canAttack(attackLoc)) {
             rc.attack(attackLoc);
+            attackMode = true;
             return true;
         }
         return false;

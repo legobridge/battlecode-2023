@@ -333,4 +333,16 @@ public class Comms {
             tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
         }
     }
+
+    public static SymmetryType getSymmetryType() {
+        int a = getNumFromBits(locallyKnownSymmetry, 1, 1);
+        if (a == 1) {
+            return SymmetryType.HORIZONTAL;
+        }
+        a = getNumFromBits(locallyKnownSymmetry, 2, 2);
+        if (a == 1) {
+            return SymmetryType.VERTICAL;
+        }
+        return SymmetryType.ROTATIONAL;
+    }
 }

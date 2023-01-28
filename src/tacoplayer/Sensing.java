@@ -222,6 +222,21 @@ public class Sensing {
         }
     }
 
+    static MapLocation getClosestWell(RobotController rc) {
+        MapLocation robotLoc = rc.getLocation();
+        MapLocation closestWell = null;
+        int closestWellDistSq = Integer.MAX_VALUE;
+        for (int i = Comms.NUM_WELLS_STORED; --i >= 0; ) {
+            MapLocation wellLoc = MapLocationUtil.unhashMapLocation(Comms.sharedWellLocs[i]);
+            int dist = wellLoc.distanceSquaredTo(robotLoc);
+            if (dist < closestWellDistSq) {
+                closestWell = wellLoc;
+                closestWellDistSq = dist;
+            }
+        }
+        return closestWell;
+    }
+
     public static void scanIslands(RobotController rc) throws GameActionException {
         int[] islandIds = rc.senseNearbyIslands();
         for (int i = -1; ++i < islandIds.length; ) {
