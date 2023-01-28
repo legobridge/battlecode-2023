@@ -10,9 +10,11 @@ public class Sensing {
 
     static int ourCarrierCount;
     static int ourLauncherCount;
+    static int ourAmplifierCount;
     static int ourDestabCount;
     static RobotInfo[] ourCarriers = new RobotInfo[MAX_SENSED_ROBOTS];
     static RobotInfo[] ourLaunchers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] ourAmplifiers = new RobotInfo[MAX_SENSED_ROBOTS];
     static RobotInfo[] ourDestab = new RobotInfo[MAX_SENSED_ROBOTS];
 
     static int enemyHqCount;
@@ -49,6 +51,7 @@ public class Sensing {
         ourCarrierCount = 0;
         ourLauncherCount = 0;
         ourDestabCount = 0;
+        ourAmplifierCount = 0;
 
         visibleEnemiesCount = 0;
         closestVisibleEnemyHqDistSq = MAX_MAP_DIST_SQ;
@@ -71,9 +74,10 @@ public class Sensing {
                     case LAUNCHER:
                         ourLaunchers[ourLauncherCount++] = robot;
                         break;
-                    case AMPLIFIER: // TODO - sense these robots
+                    case AMPLIFIER:
+                        ourAmplifiers[ourAmplifierCount++] = robot;
                         break;
-                    case BOOSTER:
+                    case BOOSTER:// TODO - sense these robots
                         break;
                     case DESTABILIZER:
                         break;
@@ -128,11 +132,15 @@ public class Sensing {
         }
     }
 
-    static void scanWells(RobotController rc) {
+    static void scanWells(RobotController rc) throws GameActionException {
+        // Upload any non uploaded wells
+        Comms.checkWellUpdates(rc);
+
         WellInfo[] wells = rc.senseNearbyWells();
         MapLocation selfLoc = rc.getLocation();
 
-        for (WellInfo well : wells) {
+        for (int i = wells.length; --i >= 0; ) {
+            WellInfo well = wells[i];
             MapLocation wellLoc = well.getMapLocation();
             ResourceType wellType = well.getResourceType();
             if (!knownWellLocs.contains(wellLoc)) {
@@ -171,6 +179,12 @@ public class Sensing {
             } else if (secondClosestWellLoc == null || wellDistSq < secondClosestWellDistSq) {
                 updateSecondNearestWell(wellLoc, wellDistSq, wellType);
             }
+
+            // See if it can be written to the shared array
+            if (!Comms.doneWithWells && wellType == ResourceType.MANA) {
+                Comms.tryToUploadWell(rc, MapLocationUtil.hashMapLocation(wellLoc));
+            }
+
         }
     }
 

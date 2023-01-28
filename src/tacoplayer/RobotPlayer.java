@@ -134,8 +134,10 @@ public strictfp class RobotPlayer {
             }
             int bc4 = Clock.getBytecodesLeft();
             // Put information in shared array at the end of each round
-            Comms.putSymmetryOnline(rc);
-            Comms.putIslandsOnline(rc);
+            if (Sensing.ourAmplifierCount == 0) {
+                Comms.putSymmetryOnline(rc);
+                Comms.putIslandsOnline(rc);
+            }
             int bc5 = Clock.getBytecodesLeft();
 //            sumReadBc += bc1 - bc2;
 //            sumSensingBc += bc2 - bc3;

@@ -2,6 +2,8 @@ package tacoplayer;
 
 import battlecode.common.*;
 
+import java.awt.*;
+
 import static tacoplayer.RobotPlayer.*;
 import static tacoplayer.Sensing.*;
 
@@ -15,6 +17,8 @@ public class Comms {
     final static int NUM_ISLANDS_STORED = 15;
     final static int ISLAND_LOCS_START_INDEX = 9;
     final static int ISLAND_IDS_START_INDEX = ISLAND_LOCS_START_INDEX + NUM_ISLANDS_STORED;
+    final static int WELL_LOCS_START_INDEX = 39;
+    final static int NUM_WELLS_STORED = 4;
     final static int SYMMETRY_INDEX = 63;
     final static int ALL_SYMMETRIES = 7;
 
@@ -25,11 +29,16 @@ public class Comms {
     static int[] islandIdToOnlineIndexMap = new int[GameConstants.MAX_NUMBER_ISLANDS + 1]; // Indices are stored with an added 1 to differentiate from zero
 
     static int locallyKnownSymmetry = 7;
+    static boolean needToWriteWells = false;
+    static boolean doneWithWells = false;
+    static int wellUpdate = 0;
+    static int[] sharedWellLocs = new int[NUM_WELLS_STORED];
 
     static void readAndStoreFromSharedArray(RobotController rc) throws GameActionException {
         // Read only the indices we're using, and update local knowledge with shared array knowledge.
         // Ensure that local knowledge is always a superset of shared array knowledge
         readIslandsFromSharedArray(rc);
+        readWellsFromSharedArray(rc);
         locallyKnownSymmetry &= rc.readSharedArray(SYMMETRY_INDEX);
     }
 
@@ -155,6 +164,44 @@ public class Comms {
                     knownIslands[onlineIslandId].turnLastSensed = onlineIslandInfo.turnLastSensed;
                 }
             }
+        }
+    }
+
+    static boolean tryToUploadWell(RobotController rc, int hashedLoc) throws GameActionException {
+        for (int i = NUM_WELLS_STORED; --i >= 0; ) {
+            if (sharedWellLocs[i] == hashedLoc) {
+                break;
+            }
+            if (sharedWellLocs[i] == 0) {
+                if (!tryToWriteToSharedArray(rc, i + WELL_LOCS_START_INDEX, hashedLoc)) {
+                    needToWriteWells = true;
+                    wellUpdate = hashedLoc;
+                    return false;
+                }
+                else {
+                    sharedWellLocs[i] = hashedLoc;
+                    MapLocation loc = MapLocationUtil.unhashMapLocation(hashedLoc);
+                    System.out.println("added mn well at " + loc.x + ", " + loc.y);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    static void checkWellUpdates(RobotController rc) throws GameActionException {
+        if (needToWriteWells) {
+            if (tryToUploadWell(rc, wellUpdate)) {
+                needToWriteWells = false;
+                wellUpdate = 0;
+            }
+        }
+    }
+
+    static void readWellsFromSharedArray(RobotController rc) throws GameActionException {
+        for (int i = -1; ++i < NUM_WELLS_STORED; ) {
+            sharedWellLocs[i] = rc.readSharedArray(WELL_LOCS_START_INDEX + i);
+            doneWithWells = sharedWellLocs[i] != 0;
         }
     }
 
