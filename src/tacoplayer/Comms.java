@@ -169,9 +169,10 @@ public class Comms {
 
     static boolean tryToUploadWell(RobotController rc, int hashedLoc) throws GameActionException {
         for (int i = NUM_WELLS_STORED; --i >= 0; ) {
-            int hashedSharedLoc = sharedWellLocs[i];
-            if (hashedSharedLoc == hashedLoc) break;
-            if (hashedSharedLoc == 0) {
+            if (sharedWellLocs[i] == hashedLoc) {
+                break;
+            }
+            if (sharedWellLocs[i] == 0) {
                 if (!tryToWriteToSharedArray(rc, i + WELL_LOCS_START_INDEX, hashedLoc)) {
                     needToWriteWells = true;
                     wellUpdate = hashedLoc;
@@ -180,7 +181,7 @@ public class Comms {
                 else {
                     sharedWellLocs[i] = hashedLoc;
                     MapLocation loc = MapLocationUtil.unhashMapLocation(hashedLoc);
-                    System.out.println("added mn well at " + String.valueOf(loc.x) + ", " + String.valueOf(loc.y));
+                    System.out.println("added mn well at " + loc.x + ", " + loc.y);
                     return true;
                 }
             }
@@ -200,7 +201,7 @@ public class Comms {
     static void readWellsFromSharedArray(RobotController rc) throws GameActionException {
         for (int i = -1; ++i < NUM_WELLS_STORED; ) {
             sharedWellLocs[i] = rc.readSharedArray(WELL_LOCS_START_INDEX + i);
-            doneWithWells = !(sharedWellLocs[i] == 0);
+            doneWithWells = sharedWellLocs[i] != 0;
         }
     }
 
