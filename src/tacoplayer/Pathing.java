@@ -18,13 +18,12 @@ public class Pathing {
     };
 
     static BFSPathing bfsPathing;
-    final static int MAX_PREV_LOCS_TO_STORE = 5;
+    static BugPathing bugPathing;
+    static final int BFS_BYTECODE_THRESHOLD = 5000;
+    final static int MAX_PREV_LOCS_TO_STORE = 7;
     static int lastFewLocsIndex = 0;
     static MapLocation[] lastFewLocs = new MapLocation[MAX_PREV_LOCS_TO_STORE];
 
-    // TODO - Move (and act) as many times as cooldown allows
-    // TODO - consider currents to be obstacles (soft)
-    // TODO - this is very bytecode inefficient!!!
     static boolean moveTowards(RobotController rc, MapLocation target) throws GameActionException {
         MapLocation loc = rc.getLocation();
         if (loc.equals(target)) {
@@ -33,11 +32,15 @@ public class Pathing {
         if (!rc.isMovementReady()) {
             return false;
         }
-        int bc1= Clock.getBytecodesLeft();
-        Direction directionToTarget = bfsPathing.getBestDirection(target);
-        int bc2= Clock.getBytecodesLeft();
-        System.out.println(bc1 - bc2);
-        if (directionToTarget != null && rc.canMove(directionToTarget)) {
+        Direction directionToTarget = null;
+        int bytecodesLeft = Clock.getBytecodesLeft();
+        if (bytecodesLeft > BFS_BYTECODE_THRESHOLD) {
+            directionToTarget = bfsPathing.getBestDirection(target);
+        }
+        if (directionToTarget == null) {
+            directionToTarget = bugPathing.getBestDirection(target);
+        }
+        if (rc.canMove(directionToTarget)) {
             rc.move(directionToTarget);
             return true;
         }
@@ -61,14 +64,14 @@ public class Pathing {
                 backupDirectionsToTryIndex--;
             } else if (rc.canMove(dir) && safeFromHQ(rc, closestEnemyHqLoc)) {
                 moved = true;
-                rc.setIndicatorString("I moved to a brand new place, by moving: " + dir);
+//                rc.setIndicatorString("I moved to a brand new place, by moving: " + dir);
                 moveAndUpdateLastFewLocs(rc, dir);
             }
         }
         if (!moved) {
             for (int i = backupDirectionsToTry.length; --i >= backupDirectionsToTryIndex + 1; ) {
                 if (rc.canMove(backupDirectionsToTry[i])) {
-                    rc.setIndicatorString("I moved in a backup direction: " + backupDirectionsToTry[i]);
+//                    rc.setIndicatorString("I moved in a backup direction: " + backupDirectionsToTry[i]);
                     moveAndUpdateLastFewLocs(rc, backupDirectionsToTry[i]);
                 }
             }

@@ -69,6 +69,7 @@ public strictfp class RobotPlayer {
         // Set game constants
         setGameConstants(rc);
         Pathing.bfsPathing = new BFSPathing(rc);
+        Pathing.bugPathing = new BugPathing(rc);
 
         // Upload own location if HQ
         if (rc.getType() == RobotType.HEADQUARTERS) {

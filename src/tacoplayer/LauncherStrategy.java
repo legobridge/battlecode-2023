@@ -118,20 +118,18 @@ public class LauncherStrategy {
                 rc.setIndicatorString("LEADER: raiding mana well");
             } else if (moveTowardsEnemyHq(rc)) {
                 rc.setIndicatorString("LEADER: moving towards enemy hq");
-            } else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
-                rc.move(rc.getLocation().directionTo(mapCenter));
-                rc.setIndicatorString("LEADER: moving towards center");
+            } else if (moveTowardsLocation(rc, mapCenter)) {
+                rc.setIndicatorString("LEADER: moving towards map center");
             } else {
                 Pathing.moveRandomly(rc);
                 rc.setIndicatorString("LEADER: moving randomly");
             }
         }
-        // Follow the leader
-        else {
-            Direction dir = rc.getLocation().directionTo(leader.getLocation());
-            if (rc.canMove(dir)) {
-                rc.move(dir);
+        else { // Follow the leader
+            if (moveTowardsLocation(rc, leaderLoc)) {
                 rc.setIndicatorString("FOLLOWER: moving towards leader " + leaderId);
+            } if (moveTowardsLocation(rc, mapCenter)) {
+                rc.setIndicatorString("LEADER: moving towards map center");
             } else {
                 Pathing.moveRandomly(rc);
                 rc.setIndicatorString("FOLLOWER: moving randomly");

@@ -10,7 +10,6 @@ public class Combat {
 
     /** attack mode */
     static void attack(RobotController rc) throws GameActionException {
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, theirTeam); // TODO - use universal sensing
         if (visibleEnemiesCount == 0) {
             attackMode = false;
             return;
@@ -100,8 +99,8 @@ public class Combat {
         if (Movement.moveDirectlyTowards(rc, enemyDir)) {
             rc.setIndicatorString("Avoiding a fight");
         }
-        else if (closestFriendlyIslandLoc != null) {
-            Movement.moveTowardsLocation(rc, closestFriendlyIslandLoc);
+        else if (closestFriendlyIslandLoc != null && Movement.moveTowardsLocation(rc, closestFriendlyIslandLoc)) {
+
         }
         else {
             Movement.moveTowardsLocation(rc, closestHqLoc);
