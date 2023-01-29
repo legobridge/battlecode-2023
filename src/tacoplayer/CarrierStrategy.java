@@ -151,13 +151,13 @@ public class CarrierStrategy {
         // If you have an anchor, go plant that flag
         if (anchorMode) {
             if (closestNeutralIslandLoc == null) {
-                //TODO - return anchor
+                // TODO - return anchor
                 Pathing.moveRandomly(rc);
                 Pathing.moveRandomly(rc);
             }
             else {
-                Pathing.moveTowards(rc, closestNeutralIslandLoc);
-                Pathing.moveTowards(rc, closestNeutralIslandLoc);
+                Movement.moveTowardsLocation(rc, closestNeutralIslandLoc);
+                Movement.moveTowardsLocation(rc, closestNeutralIslandLoc);
                 if (rc.canPlaceAnchor() && closestNeutralIslandLoc.distanceSquaredTo(rc.getLocation()) == 0) {
                     rc.placeAnchor();
                     anchorMode = false;
@@ -168,12 +168,12 @@ public class CarrierStrategy {
                 if (wellAssignment != null) {
                     MapLocation selfLoc = rc.getLocation();
                     if (!selfLoc.isAdjacentTo(wellAssignment)) {
-                        Pathing.moveTowards(rc, wellAssignment);
-                        Pathing.moveTowards(rc, wellAssignment);
+                        Movement.moveTowardsLocation(rc, wellAssignment);
+                        Movement.moveTowardsLocation(rc, wellAssignment);
                     }
 //                } else if (rc.getRoundNum() < 15) {
 //                    Movement.moveTowardsCenter(rc);
-                }else {
+                } else {
 //                    Movement.moveTowardsCenter(rc);
                     Pathing.moveRandomly(rc);
                     Pathing.moveRandomly(rc);
@@ -183,8 +183,8 @@ public class CarrierStrategy {
             // Full resources -> go to HQ
             // TODO - Use the formula
             if (resourcesThisRound >= optimalResources) {
-                Pathing.moveTowards(rc, closestHqLoc);
-                Pathing.moveTowards(rc, closestHqLoc);
+                Movement.moveTowardsLocation(rc, closestHqLoc);
+                Movement.moveTowardsLocation(rc, closestHqLoc);
                 extracting = false;
             }
         }

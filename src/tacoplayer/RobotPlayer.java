@@ -5,8 +5,6 @@ import battlecode.common.*;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static tacoplayer.BuildOrderTypes.initialBuildOrder;
-
 public strictfp class RobotPlayer {
 
     static final Random rng = new Random(6147);
@@ -24,8 +22,6 @@ public strictfp class RobotPlayer {
     static int mapWidth;
     static int mapSize;
     static MapLocation mapCenter;
-
-    static int[][] map;
 
     static MapLocation closestHqLoc;
     static MapLocation closestEnemyHqLoc;
@@ -72,6 +68,8 @@ public strictfp class RobotPlayer {
     private static void takeFirstTurn(RobotController rc) throws GameActionException {
         // Set game constants
         setGameConstants(rc);
+        Pathing.bfsPathing = new BFSPathing(rc);
+        Pathing.bugPathing = new BugPathing(rc);
 
         // Upload own location if HQ
         if (rc.getType() == RobotType.HEADQUARTERS) {
@@ -103,7 +101,6 @@ public strictfp class RobotPlayer {
 
             int bc2 = Clock.getBytecodesLeft();
             // Scan surroundings
-            Sensing.scanObstacles(rc); // TODO - clouds, currents, etc.
             Sensing.scanRobots(rc);
             Sensing.scanIslands(rc);
             Sensing.scanWells(rc);
@@ -136,6 +133,7 @@ public strictfp class RobotPlayer {
             }
             int bc4 = Clock.getBytecodesLeft();
             // Put information in shared array at the end of each round
+            // TODO - put behind bytecode check
             if (Sensing.ourAmplifierCount == 0) {
                 Comms.putSymmetryOnline(rc);
                 Comms.putIslandsOnline(rc);
@@ -145,7 +143,7 @@ public strictfp class RobotPlayer {
 //            sumSensingBc += bc2 - bc3;
 //            sumTurnBc += bc3 - bc4;
 //            sumWriteBc += bc4 - bc5;
-//            if (turnCount > 200 && turnCount % 100 == 0) {
+//            if (turnCount > 100 && turnCount % 50 == 0) {
 //                System.out.println("Read: " + sumReadBc / turnCount);
 //                System.out.println("Sensing: " + sumSensingBc / turnCount);
 //                System.out.println("Turn: " + sumTurnBc / turnCount);
@@ -180,7 +178,6 @@ public strictfp class RobotPlayer {
         mapHeight = rc.getMapHeight();
         mapSize = rc.getMapWidth() * rc.getMapHeight();
         mapCenter = new MapLocation(rc.getMapWidth() / 2, rc.getMapHeight() / 2);
-        map = new int[mapWidth][mapHeight];
     }
     static void updateHealth(RobotController rc) {
         lastRoundHealth = thisRoundHealth;

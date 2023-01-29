@@ -20,28 +20,6 @@ public class Movement {
         return false;
     }
 
-    static MapLocation averageLoc(RobotInfo[] robots) {
-        int sumX = 0;
-        int sumY = 0;
-        for (int i = robots.length; --i >= 0; ) {
-            MapLocation loc = robots[i].getLocation();
-            sumX += loc.x;
-            sumY += loc.y;
-        }
-        return new MapLocation((int) ((float)sumX / robots.length), (int) ((float) sumY / robots.length));
-
-    }
-
-    static void moveTowardsRobots(RobotController rc, RobotInfo[] robots) throws GameActionException {
-        MapLocation target = averageLoc(robots);
-        Pathing.moveTowards(rc, target);
-    }
-
-    static boolean moveAwayFromRobots(RobotController rc, RobotInfo[] robots) throws GameActionException {
-        MapLocation target = averageLoc(robots);
-        return moveAwayFromLocation(rc, target);
-    }
-
     static boolean moveTowardsLocation(RobotController rc, MapLocation loc) throws GameActionException {
         return Pathing.moveTowards(rc, loc);
     }
@@ -84,12 +62,14 @@ public class Movement {
         int x = robotLoc.x + robotLoc.x - loc.x;
         int y = robotLoc.y + robotLoc.y - loc.y;
         MapLocation awayLoc = new MapLocation(x, y);
-        return Pathing.moveTowards(rc, awayLoc);
+        rc.setIndicatorString("Moving away from " + awayLoc);
+        return moveDirectlyTowards(rc, awayLoc);
     }
 
     static boolean moveTowardsEnemyWell(RobotController rc) throws GameActionException {
         MapLocation well = Sensing.getClosestWell(rc);
         MapLocation wellSym = MapLocationUtil.calcSymmetricLoc(well, Comms.getSymmetryType());
+        rc.setIndicatorString("Moving towards enemy Well! " + wellSym);
         return Pathing.moveTowards(rc, wellSym);
     }
     static boolean moveTowardsEnemyHq(RobotController rc) throws GameActionException {
@@ -100,8 +80,7 @@ public class Movement {
     static boolean moveTowardsEnemyIslands(RobotController rc) throws GameActionException {
         if (closestEnemyIslandLoc != null) {
             rc.setIndicatorString("Moving towards enemy island! " + closestEnemyIslandLoc);
-            Pathing.moveTowards(rc, closestEnemyIslandLoc);
-            return true;
+            return Pathing.moveTowards(rc, closestEnemyIslandLoc);
         }
         return false;
     }

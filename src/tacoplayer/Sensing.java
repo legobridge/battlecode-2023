@@ -56,10 +56,6 @@ public class Sensing {
     static int[] knownIslandIds = new int[GameConstants.MAX_NUMBER_ISLANDS];
     static IslandInfo[] knownIslands = new IslandInfo[GameConstants.MAX_NUMBER_ISLANDS + 1]; // Island with ID i is stored at i-th index
 
-    static void scanObstacles(RobotController rc) {
-        // TODO - scan for clouds and currents and add to local memory
-    }
-
     static void scanRobots(RobotController rc) throws GameActionException {
         ourCarrierCount = 0;
         ourLauncherCount = 0;

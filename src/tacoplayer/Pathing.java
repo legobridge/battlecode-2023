@@ -5,6 +5,7 @@ import battlecode.common.*;
 import static tacoplayer.RobotPlayer.*;
 
 public class Pathing {
+
     static final Direction[] directions = {
             Direction.NORTH,
             Direction.NORTHEAST,
@@ -15,57 +16,38 @@ public class Pathing {
             Direction.WEST,
             Direction.NORTHWEST,
     };
-    // Basic bug nav - Bug 0
 
-    static Direction currentDirection = null;
-
-    final static int MAX_PREV_LOCS_TO_STORE = 5;
+    static BFSPathing bfsPathing;
+    static BugPathing bugPathing;
+    static final int BFS_BYTECODE_THRESHOLD = 5000;
+    final static int MAX_PREV_LOCS_TO_STORE = 7;
     static int lastFewLocsIndex = 0;
     static MapLocation[] lastFewLocs = new MapLocation[MAX_PREV_LOCS_TO_STORE];
 
-    // TODO - Move (and act) as many times as cooldown allows
-    // TODO - consider currents to be obstacles (soft)
-    // TODO - this is very bytecode inefficient!!!
     static boolean moveTowards(RobotController rc, MapLocation target) throws GameActionException {
-//        rc.setIndicatorString("Moving towards target! (" + target + ")");
-        if (rc.getLocation().equals(target)) {
+        MapLocation loc = rc.getLocation();
+        if (loc.equals(target)) {
             return false;
         }
         if (!rc.isMovementReady()) {
             return false;
         }
-        MapLocation selfLoc = rc.getLocation();
-        Direction dir = rc.getLocation().directionTo(target);
-        MapLocation targetLoc = selfLoc.add(dir);
-        boolean hasMoved = false;
-        if (!ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc)
-                && rc.canMove(dir)
-                && safeFromHQ(rc, closestEnemyHqLoc)) {
-            moveAndUpdateLastFewLocs(rc, dir);
-            currentDirection = null;
-            hasMoved = true;
-        } else {
-            if (currentDirection == null) {
-                currentDirection = dir;
-            }
-            // Try to move in a way that keeps the obstacle on our right
-            for (int i = 0; i < 8; i++) {
-                targetLoc = selfLoc.add(currentDirection);
-                if (!ArrayUtil.mapLocationArrayContains(lastFewLocs, targetLoc) && rc.canMove(currentDirection)) {
-                    moveAndUpdateLastFewLocs(rc, currentDirection);
-                    currentDirection = currentDirection.rotateRight();
-                    hasMoved = true;
-                    break;
-                } else {
-                    currentDirection = currentDirection.rotateLeft();
-                }
-            }
+        Direction directionToTarget = null;
+        int bytecodesLeft = Clock.getBytecodesLeft();
+        if (bytecodesLeft > BFS_BYTECODE_THRESHOLD) {
+            directionToTarget = bfsPathing.getBestDirection(target);
         }
-        return hasMoved;
+        if (directionToTarget == null) {
+            directionToTarget = bugPathing.getBestDirection(target);
+        }
+        if (rc.canMove(directionToTarget)) {
+            rc.move(directionToTarget);
+            return true;
+        }
+        return false;
     }
 
     static void moveRandomly(RobotController rc) throws GameActionException {
-//        rc.setIndicatorString("Moving Randomly!");
         if (!rc.isMovementReady()) {
             return;
         }
@@ -82,14 +64,14 @@ public class Pathing {
                 backupDirectionsToTryIndex--;
             } else if (rc.canMove(dir) && safeFromHQ(rc, closestEnemyHqLoc)) {
                 moved = true;
-                rc.setIndicatorString("I moved to a brand new place, by moving: " + dir);
+//                rc.setIndicatorString("I moved to a brand new place, by moving: " + dir);
                 moveAndUpdateLastFewLocs(rc, dir);
             }
         }
         if (!moved) {
             for (int i = backupDirectionsToTry.length; --i >= backupDirectionsToTryIndex + 1; ) {
                 if (rc.canMove(backupDirectionsToTry[i])) {
-                    rc.setIndicatorString("I moved in a backup direction: " + backupDirectionsToTry[i]);
+//                    rc.setIndicatorString("I moved in a backup direction: " + backupDirectionsToTry[i]);
                     moveAndUpdateLastFewLocs(rc, backupDirectionsToTry[i]);
                 }
             }
@@ -105,11 +87,6 @@ public class Pathing {
         if (loc == null) {
             return true;
         }
-        else if (loc.distanceSquaredTo(rc.getLocation()) < RobotType.HEADQUARTERS.actionRadiusSquared+3) {
-            return false;
-        }
-        else {
-            return true;
-        }
+        else return loc.distanceSquaredTo(rc.getLocation()) >= RobotType.HEADQUARTERS.actionRadiusSquared + 3;
     }
 }
