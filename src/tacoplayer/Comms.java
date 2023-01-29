@@ -233,26 +233,28 @@ public class Comms {
     }
 
     private static void addIsland(RobotController rc, IslandInfo islandInfo, int index) throws GameActionException {
-        System.out.println("ADDING ISLAND: " + islandInfo.id);
-
         // Get the hashed location of an island square
         int islandLocHashed = MapLocationUtil.hashMapLocation(islandInfo.locations[0]);
         int islandTeamInt = islandInfo.team.ordinal();
         int newIslandLocTeam = bitHack(islandLocHashed, islandTeamInt, 12, 2);
 
-        // Update the island ID to shared array index map
-        islandIdToOnlineIndexMap[islandInfo.id] = index + 1;
+        if (index + 1 < 15) {
+            System.out.println("ADDING ISLAND: " + islandInfo.id);
 
-        // Write location-team value
-        islandLocsTeams[index] = newIslandLocTeam;
-        tryToWriteToSharedArray(rc, index + ISLAND_LOCS_START_INDEX, newIslandLocTeam);
+            // Update the island ID to shared array index map
+            islandIdToOnlineIndexMap[islandInfo.id] = index + 1;
 
-        // Get the combined island id and turn sensed
-        int islandIdTurn = IslandInfo.hashIslandIdAndTurnSensed(islandInfo.id, islandInfo.turnLastSensed);
+            // Write location-team value
+            islandLocsTeams[index] = newIslandLocTeam;
+            tryToWriteToSharedArray(rc, index + ISLAND_LOCS_START_INDEX, newIslandLocTeam);
 
-        // Write island ID
-        islandIDsTurns[index] = islandIdTurn;
-        tryToWriteToSharedArray(rc, index + ISLAND_IDS_START_INDEX, islandIdTurn);
+            // Get the combined island id and turn sensed
+            int islandIdTurn = IslandInfo.hashIslandIdAndTurnSensed(islandInfo.id, islandInfo.turnLastSensed);
+
+            // Write island ID
+            islandIDsTurns[index] = islandIdTurn;
+            tryToWriteToSharedArray(rc, index + ISLAND_IDS_START_INDEX, islandIdTurn);
+        }
     }
 
     private static void updateIslandTeam(RobotController rc, IslandInfo islandInfo, int index) throws GameActionException {
