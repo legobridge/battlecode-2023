@@ -25,6 +25,7 @@ public class Pathing {
     static MapLocation[] lastFewLocs = new MapLocation[MAX_PREV_LOCS_TO_STORE];
 
     static boolean moveTowards(RobotController rc, MapLocation target) throws GameActionException {
+        if (rc.getType() == RobotType.CARRIER) rc.setIndicatorLine(rc.getLocation(), target, 255, 200, 0);
         MapLocation loc = rc.getLocation();
         if (loc.equals(target)) {
             return false;

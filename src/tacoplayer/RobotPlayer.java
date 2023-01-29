@@ -5,6 +5,8 @@ import battlecode.common.*;
 import java.util.ArrayList;
 import java.util.Random;
 
+import static tacoplayer.CarrierStrategy.lastExtractedRound;
+
 public strictfp class RobotPlayer {
 
     static final Random rng = new Random(6147);
@@ -76,6 +78,7 @@ public strictfp class RobotPlayer {
         setGameConstants(rc);
         Pathing.bfsPathing = new BFSPathing(rc);
         Pathing.bugPathing = new BugPathing(rc);
+        lastExtractedRound = rc.getRoundNum();
 
         // Upload own location if HQ
         if (rc.getType() == RobotType.HEADQUARTERS) {

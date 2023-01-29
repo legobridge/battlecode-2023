@@ -18,6 +18,7 @@ public class CarrierStrategy {
     static boolean extracting = false;
     static boolean depositing = false;
     static int optimalResources = 39;
+    static int lastExtractedRound;
 
     /**
      * Run a single turn for a Carrier.
@@ -122,6 +123,14 @@ public class CarrierStrategy {
             }
             rc.collectResource(wellAssignment, -1);
             extracting = true;
+            lastExtractedRound = rc.getRoundNum();
+        }
+
+        if (wellAssignment == null || rc.getRoundNum() - lastExtractedRound > 25) { // If no wells found or haven't extracted any resources in a while, explore
+//            System.out.println("Moving spirally");
+            if (!Movement.moveSpirally(rc)) {
+                Pathing.moveRandomly(rc);
+            }
         }
 
         // If close to the desired well, try to move in for extraction
@@ -132,10 +141,18 @@ public class CarrierStrategy {
         }
 
         //Transfer resource to headquarters
-        // TODO - This is inefficient is robot is adjacent to both hq and resource at once
-        depositResource(rc, ResourceType.ADAMANTIUM);
-        depositResource(rc, ResourceType.MANA);
-        depositResource(rc, ResourceType.ELIXIR);
+        if (rc.getLocation().isAdjacentTo(closestHqLoc) && rc.getLocation().isAdjacentTo(wellAssignment)) {
+            if (rc.getWeight() == GameConstants.CARRIER_CAPACITY) {
+                depositResource(rc, ResourceType.ADAMANTIUM);
+                depositResource(rc, ResourceType.MANA);
+                depositResource(rc, ResourceType.ELIXIR);
+            }
+        }
+        else {
+            depositResource(rc, ResourceType.ADAMANTIUM);
+            depositResource(rc, ResourceType.MANA);
+            depositResource(rc, ResourceType.ELIXIR);
+        }
 
         // Last hit attack
         Combat.carrierAttack(rc);
