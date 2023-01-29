@@ -23,7 +23,7 @@ public class Movement {
     static MapLocation averageLoc(RobotInfo[] robots) {
         int sumX = 0;
         int sumY = 0;
-        for (int i = 0; i < robots.length; i++) {
+        for (int i = robots.length; --i >= 0; ) {
             MapLocation loc = robots[i].getLocation();
             sumX += loc.x;
             sumY += loc.y;
@@ -46,6 +46,39 @@ public class Movement {
         return Pathing.moveTowards(rc, loc);
     }
 
+    static boolean moveDirectlyTowards(RobotController rc, Direction dir) throws GameActionException {
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+            return true;
+        }
+        else if (rc.canMove(dir.rotateLeft())) {
+            rc.move(dir.rotateLeft());
+            return true;
+        }
+        else if (rc.canMove(dir.rotateRight())) {
+            rc.move(dir.rotateRight());
+            return true;
+        }
+        return false;
+    }
+
+    static boolean moveDirectlyTowards(RobotController rc, MapLocation target) throws GameActionException {
+        Direction dir = rc.getLocation().directionTo(target);
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+            return true;
+        }
+        else if (rc.canMove(dir.rotateLeft())) {
+            rc.move(dir.rotateLeft());
+            return true;
+        }
+        else if (rc.canMove(dir.rotateRight())) {
+            rc.move(dir.rotateRight());
+            return true;
+        }
+        return false;
+    }
+
     static boolean moveAwayFromLocation(RobotController rc, MapLocation loc) throws GameActionException {
         MapLocation robotLoc = rc.getLocation();
         int x = robotLoc.x + robotLoc.x - loc.x;
@@ -54,6 +87,11 @@ public class Movement {
         return Pathing.moveTowards(rc, awayLoc);
     }
 
+    static boolean moveTowardsEnemyWell(RobotController rc) throws GameActionException {
+        MapLocation well = Sensing.getClosestWell(rc);
+        MapLocation wellSym = MapLocationUtil.calcSymmetricLoc(well, Comms.getSymmetryType());
+        return Pathing.moveTowards(rc, wellSym);
+    }
     static boolean moveTowardsEnemyHq(RobotController rc) throws GameActionException {
         rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
         return Pathing.moveTowards(rc, closestEnemyHqLoc);
@@ -69,15 +107,14 @@ public class Movement {
     }
     static boolean moveToExtract(RobotController rc, MapLocation wellLoc) throws GameActionException {
         MapLocation target = null;
-        if (rc.senseCloud(rc.getLocation())) {
-            return false;
-        }
         for (int i = 9; --i >= 0;) {
             MapLocation spot = new MapLocation(wellLoc.x + i % 3 - 1, wellLoc.y + i / 3 - 1);
-            MapInfo spotInfo = rc.senseMapInfo(spot);
-            if (spotInfo.isPassable() && rc.canSenseRobotAtLocation(spot)) {
-                target = spot;
-                break;
+            if (rc.canSenseLocation(spot)) {
+                MapInfo spotInfo = rc.senseMapInfo(spot);
+                if (spotInfo.isPassable() && rc.canSenseRobotAtLocation(spot)) {
+                    target = spot;
+                    break;
+                }
             }
         }
         if (target != null) {

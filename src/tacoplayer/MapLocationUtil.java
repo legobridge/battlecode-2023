@@ -2,9 +2,6 @@ package tacoplayer;
 
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
-import battlecode.common.Team;
-
-import java.util.List;
 
 import static tacoplayer.RobotPlayer.*;
 
@@ -64,7 +61,7 @@ public class MapLocationUtil {
         MapLocation selfLoc = rc.getLocation();
         MapLocation closestLoc = null;
         int closestLocDistSq = MAX_MAP_DIST_SQ;
-        for (int i = -1; ++i < mapLocations.length;) {
+        for (int i = mapLocations.length; --i >= 0;) {
             if (mapLocations[i] == null) {
                 continue;
             }

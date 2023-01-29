@@ -10,9 +10,11 @@ public class Sensing {
 
     static int ourCarrierCount;
     static int ourLauncherCount;
+    static int ourAmplifierCount;
     static int ourDestabCount;
     static RobotInfo[] ourCarriers = new RobotInfo[MAX_SENSED_ROBOTS];
     static RobotInfo[] ourLaunchers = new RobotInfo[MAX_SENSED_ROBOTS];
+    static RobotInfo[] ourAmplifiers = new RobotInfo[MAX_SENSED_ROBOTS];
     static RobotInfo[] ourDestab = new RobotInfo[MAX_SENSED_ROBOTS];
 
     static int enemyHqCount;
@@ -30,6 +32,19 @@ public class Sensing {
     static int closestVisibleEnemyRobotDistSq;
     static RobotInfo closestVisibleEnemyRobot;
 
+    static RobotInfo closestEnemy;
+    static MapLocation closestEnemyLoc;
+    static int closestEnemyDistSq;
+    static MapLocation closestEnemyLauncherLoc;
+    static int closestEnemyLauncherDistSq;
+    static RobotInfo lowestHealthEnemy;
+    static MapLocation lowestHealthEnemyLoc;
+    static int lowestHealthEnemyHealth;
+    static MapLocation lowestHealthEnemyLauncherLoc = null;
+    static int lowestHealthEnemyLauncherHealth = Integer.MAX_VALUE;
+    static MapLocation lowestHealthEnemyInRangeLoc;
+    static int lowestHealthEnemyInRangeHealth;
+
     static int closestFriendlyIslandDistSq;
     static int closestNeutralIslandDistSq;
     static int closestEnemyIslandDistSq;
@@ -45,6 +60,7 @@ public class Sensing {
         ourCarrierCount = 0;
         ourLauncherCount = 0;
         ourDestabCount = 0;
+        ourAmplifierCount = 0;
 
         visibleEnemiesCount = 0;
         closestVisibleEnemyHqDistSq = MAX_MAP_DIST_SQ;
@@ -54,8 +70,23 @@ public class Sensing {
         enemyCarrierCount = 0;
         enemyLauncherCount = 0;
         enemyDestabCount = 0;
+
+        // Attack purposes
+        closestEnemy = null;
+        closestEnemyLoc = null;
+        closestEnemyDistSq = Integer.MAX_VALUE;
+        closestEnemyLauncherLoc = null;
+        closestEnemyLauncherDistSq = Integer.MAX_VALUE;
+        lowestHealthEnemy = null;
+        lowestHealthEnemyLoc = null;
+        lowestHealthEnemyHealth = Integer.MAX_VALUE;
+        lowestHealthEnemyLauncherLoc = null;
+        lowestHealthEnemyLauncherHealth = Integer.MAX_VALUE;
+        lowestHealthEnemyInRangeLoc = null;
+        lowestHealthEnemyInRangeHealth = Integer.MAX_VALUE;
+
         RobotInfo[] robots = rc.senseNearbyRobots();
-        for (int j = -1; ++j < robots.length; ) {
+        for (int j = robots.length; --j >= 0; ) {
             RobotInfo robot = robots[j];
             if (robot.team == ourTeam) {
                 switch (robot.getType()) {
@@ -67,9 +98,10 @@ public class Sensing {
                     case LAUNCHER:
                         ourLaunchers[ourLauncherCount++] = robot;
                         break;
-                    case AMPLIFIER: // TODO - sense these robots
+                    case AMPLIFIER:
+                        ourAmplifiers[ourAmplifierCount++] = robot;
                         break;
-                    case BOOSTER:
+                    case BOOSTER:// TODO - sense these robots
                         break;
                     case DESTABILIZER:
                         break;
@@ -120,15 +152,53 @@ public class Sensing {
                     case DESTABILIZER:
                         break;
                 }
+                if (robot.getType() != RobotType.HEADQUARTERS) {
+                    MapLocation ourLoc = rc.getLocation();
+                    int enemyRobotDistSq = enemyRobotLocation.distanceSquaredTo(ourLoc);
+                    int enemyRobotHealth = robot.getHealth();
+                    // Update closest enemy
+                    if (enemyRobotDistSq < closestEnemyDistSq) {
+                        closestEnemy = robot;
+                        closestEnemyLoc = enemyRobotLocation;
+                        closestEnemyDistSq = enemyRobotDistSq;
+                    }
+                    // Update closest launcher
+                    if (robot.getType() == RobotType.LAUNCHER) {
+                        if (enemyRobotDistSq < closestEnemyLauncherDistSq) {
+                            closestEnemyLauncherLoc = enemyRobotLocation;
+                            closestEnemyLauncherDistSq = enemyRobotDistSq;
+                        }
+                        if (enemyRobotHealth < lowestHealthEnemyLauncherHealth) {
+                            lowestHealthEnemyLauncherLoc = enemyRobotLocation;
+                            lowestHealthEnemyLauncherHealth = enemyRobotHealth;
+                        }
+                    }
+                    // Update lowest health enemy
+                    if (enemyRobotHealth < lowestHealthEnemyHealth) {
+                        lowestHealthEnemy = robot;
+                        lowestHealthEnemyLoc = enemyRobotLocation;
+                        lowestHealthEnemyHealth = enemyRobotHealth;
+                    }
+                    // Update lowest health enemy in range
+                    if (enemyRobotDistSq <= rc.getType().actionRadiusSquared
+                        && enemyRobotHealth < lowestHealthEnemyInRangeHealth) {
+                        lowestHealthEnemyInRangeLoc = enemyRobotLocation;
+                        lowestHealthEnemyInRangeHealth = enemyRobotHealth;
+                    }
+                }
             }
         }
     }
 
-    static void scanWells(RobotController rc) {
+    static void scanWells(RobotController rc) throws GameActionException {
+        // Upload any non uploaded wells
+        Comms.checkWellUpdates(rc);
+
         WellInfo[] wells = rc.senseNearbyWells();
         MapLocation selfLoc = rc.getLocation();
 
-        for (WellInfo well : wells) {
+        for (int i = wells.length; --i >= 0; ) {
+            WellInfo well = wells[i];
             MapLocation wellLoc = well.getMapLocation();
             ResourceType wellType = well.getResourceType();
             if (!knownWellLocs.contains(wellLoc)) {
@@ -167,6 +237,12 @@ public class Sensing {
             } else if (secondClosestWellLoc == null || wellDistSq < secondClosestWellDistSq) {
                 updateSecondNearestWell(wellLoc, wellDistSq, wellType);
             }
+
+            // See if it can be written to the shared array
+            if (!Comms.doneWithWells && wellType == ResourceType.MANA) {
+                Comms.tryToUploadWell(rc, MapLocationUtil.hashMapLocation(wellLoc));
+            }
+
         }
     }
 
@@ -204,9 +280,24 @@ public class Sensing {
         }
     }
 
+    static MapLocation getClosestWell(RobotController rc) {
+        MapLocation robotLoc = rc.getLocation();
+        MapLocation closestWell = null;
+        int closestWellDistSq = Integer.MAX_VALUE;
+        for (int i = Comms.NUM_WELLS_STORED; --i >= 0; ) {
+            MapLocation wellLoc = MapLocationUtil.unhashMapLocation(Comms.sharedWellLocs[i]);
+            int dist = wellLoc.distanceSquaredTo(robotLoc);
+            if (dist < closestWellDistSq) {
+                closestWell = wellLoc;
+                closestWellDistSq = dist;
+            }
+        }
+        return closestWell;
+    }
+
     public static void scanIslands(RobotController rc) throws GameActionException {
         int[] islandIds = rc.senseNearbyIslands();
-        for (int i = -1; ++i < islandIds.length; ) {
+        for (int i = islandIds.length; --i >= 0; ) {
             int islandId = islandIds[i];
             Team islandTeam = rc.senseTeamOccupyingIsland(islandId);
             if (knownIslands[islandId] == null) { // I haven't seen this island
