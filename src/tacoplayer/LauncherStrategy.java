@@ -65,7 +65,7 @@ public class LauncherStrategy {
 
         // Move
         if (!retreatMode) {
-            if (rc.getRoundNum() < 200) {
+            if (rc.getRoundNum() < 300) {
                 earlyMove(rc);
             }
             move(rc);
@@ -112,7 +112,8 @@ public class LauncherStrategy {
         else if (lowestHealth < prevLowestHealth && lowestHealthId == prevLowestHealthId
                 && lowestHealthLauncher != null) {
             rc.setIndicatorString("Moving in as backup");
-            moveDirectlyTowards(rc, lowestHealthLauncher.getLocation());
+            Direction dirToBackup = rc.getLocation().directionTo(lowestHealthLauncher.getLocation());
+            moveDirectlyTowards(rc, lowestHealthLauncher.getLocation().add(dirToBackup));
         }
         // Move to wherever is closest, enemy well or enemy HQ
         else if (enemyWellLoc != null
@@ -233,6 +234,7 @@ public class LauncherStrategy {
         }
     }
     static void updateSymmetry(RobotController rc) throws GameActionException {
+        usingSym = Comms.getSymmetryType();
         // If we are going to an HQ and its not there, remove that symmetry
         if (rc.canSenseLocation(closestEnemyHqLoc)) {
             RobotInfo rinf = rc.senseRobotAtLocation(closestEnemyHqLoc);
@@ -240,7 +242,6 @@ public class LauncherStrategy {
                 Comms.removeSymmetry(usingSym);
             }
         }
-        usingSym = Comms.getSymmetryType();
         enemyWellLoc = Comms.getNearestEnemyWellLoc(rc, usingSym);
         if (enemyWellLoc != null && rc.canSenseLocation(enemyWellLoc)) {
             WellInfo rinf = rc.senseWell(enemyWellLoc);
