@@ -5,8 +5,6 @@ import battlecode.common.*;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static tacoplayer.BuildOrderTypes.initialBuildOrder;
-
 public strictfp class RobotPlayer {
 
     static final Random rng = new Random(6147);
@@ -76,6 +74,9 @@ public strictfp class RobotPlayer {
         // Upload own location if HQ
         if (rc.getType() == RobotType.HEADQUARTERS) {
             Comms.putHqLocationOnline(rc);
+        }
+        if (rc.getType() == RobotType.AMPLIFIER) {
+            AmplifierStrategy.assignFarthestLocation(rc);
         }
         Comms.readOurHqLocs(rc);
 
