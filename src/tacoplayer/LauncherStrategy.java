@@ -76,7 +76,7 @@ public class LauncherStrategy {
         // Move together
         // Go through the nearby launchers and elect a leader
         boolean inEnemyHQRange = rc.getLocation().distanceSquaredTo(closestEnemyHqLoc) <= RobotType.HEADQUARTERS.actionRadiusSquared;
-        int leaderId = Integer.MAX_VALUE;
+        int leaderId = rc.getID();
         int lowestHealth = Integer.MAX_VALUE;
         int lowestHealthId = Integer.MAX_VALUE;
         RobotInfo lowestHealthLauncher = null;
@@ -132,12 +132,12 @@ public class LauncherStrategy {
         // Move together
         // Go through the nearby launchers and elect a leader
         boolean inEnemyHQRange = rc.getLocation().distanceSquaredTo(closestEnemyHqLoc) <= RobotType.HEADQUARTERS.actionRadiusSquared;
-        int leaderId = Integer.MAX_VALUE;
+        int leaderId = rc.getID();
         int lowestHealth = Integer.MAX_VALUE;
         int lowestHealthId = Integer.MAX_VALUE;
         int leaderHealth = 100;
-        MapLocation leaderLoc = null;
-        RobotInfo leader = null;
+        MapLocation leaderLoc = rc.getLocation();
+        RobotInfo leader = rc.senseRobotAtLocation(rc.getLocation());
         RobotInfo lowestHealthLauncher = null;
         for (int i = ourLauncherCount; --i >= 0; ) {
             if (ourLaunchers[i].getID() < leaderId) {
