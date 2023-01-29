@@ -75,6 +75,9 @@ public strictfp class RobotPlayer {
         if (rc.getType() == RobotType.HEADQUARTERS) {
             Comms.putHqLocationOnline(rc);
         }
+        if (rc.getType() == RobotType.AMPLIFIER) {
+            AmplifierStrategy.assignFarthestLocation(rc);
+        }
         Comms.readOurHqLocs(rc);
 
         // Initialize symmetry with 111 (all symmetries)
