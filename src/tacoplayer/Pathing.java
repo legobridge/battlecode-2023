@@ -20,7 +20,7 @@ public class Pathing {
     static BFSPathing bfsPathing;
     static BugPathing bugPathing;
     static final int BFS_BYTECODE_THRESHOLD = 5000;
-    final static int MAX_PREV_LOCS_TO_STORE = 7;
+    final static int MAX_PREV_LOCS_TO_STORE = 8;
     static int lastFewLocsIndex = 0;
     static MapLocation[] lastFewLocs = new MapLocation[MAX_PREV_LOCS_TO_STORE];
 

@@ -127,10 +127,7 @@ public class CarrierStrategy {
         }
 
         if (wellAssignment == null || rc.getRoundNum() - lastExtractedRound > 25) { // If no wells found or haven't extracted any resources in a while, explore
-//            System.out.println("Moving spirally");
-            if (!Movement.moveSpirally(rc)) {
-                Pathing.moveRandomly(rc);
-            }
+            Pathing.moveRandomly(rc);
         }
 
         // If close to the desired well, try to move in for extraction
