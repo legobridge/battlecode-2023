@@ -40,7 +40,7 @@ public class Pathing {
         if (directionToTarget == null) {
             directionToTarget = bugPathing.getBestDirection(target);
         }
-        if (rc.canMove(directionToTarget)) {
+        if (directionToTarget != null && rc.canMove(directionToTarget)) {
             rc.move(directionToTarget);
             return true;
         }

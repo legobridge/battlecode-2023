@@ -53,6 +53,10 @@ public strictfp class RobotPlayer {
     static double sumSensingBc = 0;
     static double sumTurnBc = 0;
     static double sumWriteBc = 0;
+    static double maxReadBc = 0;
+    static double maxSensingBc = 0;
+    static double maxTurnBc = 0;
+    static double maxWriteBc = 0;
 
     static int hqNum = 0;
 
@@ -143,21 +147,30 @@ public strictfp class RobotPlayer {
             }
             int bc4 = Clock.getBytecodesLeft();
             // Put information in shared array at the end of each round
-            // TODO - put behind bytecode check
-            if (Sensing.ourAmplifierCount == 0) {
+            if (Sensing.ourAmplifierCount == 0 && bc4 > 1200) {
                 Comms.putSymmetryOnline(rc);
                 Comms.putIslandsOnline(rc);
             }
             int bc5 = Clock.getBytecodesLeft();
-//            sumReadBc += bc1 - bc2;
-//            sumSensingBc += bc2 - bc3;
-//            sumTurnBc += bc3 - bc4;
-//            sumWriteBc += bc4 - bc5;
-//            if (turnCount > 100 && turnCount % 50 == 0) {
+            sumReadBc += bc1 - bc2;
+            sumSensingBc += bc2 - bc3;
+            sumTurnBc += bc3 - bc4;
+            sumWriteBc += bc4 - bc5;
+            maxReadBc = Math.max(maxReadBc, bc1 - bc2);
+            maxSensingBc = Math.max(maxSensingBc, bc2 - bc3);
+            maxTurnBc = Math.max(maxTurnBc, bc3 - bc4);
+            maxWriteBc = Math.max(maxWriteBc, bc4 - bc5);
+//            if (turnCount > 100 && turnCount % 100 == 0) {
 //                System.out.println("Read: " + sumReadBc / turnCount);
 //                System.out.println("Sensing: " + sumSensingBc / turnCount);
 //                System.out.println("Turn: " + sumTurnBc / turnCount);
 //                System.out.println("Write: " + sumWriteBc / turnCount);
+//            }
+//            if (turnCount > 100 && turnCount % 100 == 0) {
+//                System.out.println("Read: " + maxReadBc);
+//                System.out.println("Sensing: " + maxSensingBc);
+//                System.out.println("Turn: " + maxTurnBc);
+//                System.out.println("Write: " + maxWriteBc);
 //            }
         } catch (GameActionException e) {
             System.out.println(rc.getType() + " GameActionException");

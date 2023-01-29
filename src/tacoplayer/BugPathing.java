@@ -15,6 +15,22 @@ public class BugPathing {
     }
 
     public Direction getBestDirection(MapLocation target) {
-        return Direction.values()[rng.nextInt(8)];
+        Direction dirAnti = rc.getLocation().directionTo(target);
+        Direction dirClock = rc.getLocation().directionTo(target);
+        for (int i = 3; --i >= 0;) {
+            if (rc.canMove(dirAnti)) {
+                return dirAnti;
+            }
+            else {
+                dirAnti = dirAnti.rotateLeft();
+            }
+            if (rc.canMove(dirClock)) {
+                return dirClock;
+            }
+            else {
+                dirClock = dirClock.rotateRight();
+            }
+        }
+        return null;
     }
 }

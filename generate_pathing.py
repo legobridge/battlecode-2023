@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 
 LIMIT = 3
-RADIUS = 20
-SMALLER_RADIUS = 10
+RADIUS = 13
+SMALLER_RADIUS = 4
 # Note: Amps should be (34, 20) but we've reduced for bytecode reasons
 
 def encode(x, y):

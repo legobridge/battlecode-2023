@@ -8,12 +8,6 @@ public class BFSPathing {
     RobotController rc;
 
 
-    static MapLocation l0; // location representing relative coordinate (-3, -3)
-    static int dwalk0; // shortest distance to location from current location if the last move was a walk
-    static Direction dirwalk0; // best direction to take now if the last move was a walk
-    static boolean p0; // is the location passable
-    static Direction c0; // direction of the current at the location
-
     static MapLocation l15; // location representing relative coordinate (-3, -2)
     static int dwalk15; // shortest distance to location from current location if the last move was a walk
     static Direction dirwalk15; // best direction to take now if the last move was a walk
@@ -43,12 +37,6 @@ public class BFSPathing {
     static Direction dirwalk75; // best direction to take now if the last move was a walk
     static boolean p75; // is the location passable
     static Direction c75; // direction of the current at the location
-
-    static MapLocation l90; // location representing relative coordinate (-3, 3)
-    static int dwalk90; // shortest distance to location from current location if the last move was a walk
-    static Direction dirwalk90; // best direction to take now if the last move was a walk
-    static boolean p90; // is the location passable
-    static Direction c90; // direction of the current at the location
 
     static MapLocation l1; // location representing relative coordinate (-2, -3)
     static int dwalk1; // shortest distance to location from current location if the last move was a walk
@@ -260,12 +248,6 @@ public class BFSPathing {
     static boolean p95; // is the location passable
     static Direction c95; // direction of the current at the location
 
-    static MapLocation l6; // location representing relative coordinate (3, -3)
-    static int dwalk6; // shortest distance to location from current location if the last move was a walk
-    static Direction dirwalk6; // best direction to take now if the last move was a walk
-    static boolean p6; // is the location passable
-    static Direction c6; // direction of the current at the location
-
     static MapLocation l21; // location representing relative coordinate (3, -2)
     static int dwalk21; // shortest distance to location from current location if the last move was a walk
     static Direction dirwalk21; // best direction to take now if the last move was a walk
@@ -295,12 +277,6 @@ public class BFSPathing {
     static Direction dirwalk81; // best direction to take now if the last move was a walk
     static boolean p81; // is the location passable
     static Direction c81; // direction of the current at the location
-
-    static MapLocation l96; // location representing relative coordinate (3, 3)
-    static int dwalk96; // shortest distance to location from current location if the last move was a walk
-    static Direction dirwalk96; // best direction to take now if the last move was a walk
-    static boolean p96; // is the location passable
-    static Direction c96; // direction of the current at the location
 
 
     public BFSPathing(RobotController rc) {
@@ -2796,239 +2772,29 @@ public class BFSPathing {
             }
         }
 
-        if (rc.onTheMap(l0)) { // check (-3, -3)
-            if (rc.canSenseLocation(l0)) {
-                MapInfo mi0 = rc.senseMapInfo(l0);
-                p0 = mi0.isPassable();
-                c0 = mi0.getCurrentDirection();
-            }
-            if (p0) {
-                // from (-2, -2)
-                if (c16 != Direction.CENTER && l16.add(c16).equals(l0)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk16 + 1 < dwalk0) {
-                        dwalk0 = dwalk16 + 1;
-                        dirwalk0 = dirwalk16;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk16 + 2 < dwalk0) {
-                        dwalk0 = dwalk16 + 2;
-                        dirwalk0 = dirwalk16;
-                    }
-                }
-                // from (-3, -2)
-                if (c15 != Direction.CENTER && l15.add(c15).equals(l0)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk15 + 1 < dwalk0) {
-                        dwalk0 = dwalk15 + 1;
-                        dirwalk0 = dirwalk15;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk15 + 2 < dwalk0) {
-                        dwalk0 = dwalk15 + 2;
-                        dirwalk0 = dirwalk15;
-                    }
-                }
-                // from (-2, -3)
-                if (c1 != Direction.CENTER && l1.add(c1).equals(l0)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk1 + 1 < dwalk0) {
-                        dwalk0 = dwalk1 + 1;
-                        dirwalk0 = dirwalk1;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk1 + 2 < dwalk0) {
-                        dwalk0 = dwalk1 + 2;
-                        dirwalk0 = dirwalk1;
-                    }
-                }
-            }
-        }
-
-        if (rc.onTheMap(l90)) { // check (-3, 3)
-            if (rc.canSenseLocation(l90)) {
-                MapInfo mi90 = rc.senseMapInfo(l90);
-                p90 = mi90.isPassable();
-                c90 = mi90.getCurrentDirection();
-            }
-            if (p90) {
-                // from (-2, 2)
-                if (c76 != Direction.CENTER && l76.add(c76).equals(l90)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk76 + 1 < dwalk90) {
-                        dwalk90 = dwalk76 + 1;
-                        dirwalk90 = dirwalk76;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk76 + 2 < dwalk90) {
-                        dwalk90 = dwalk76 + 2;
-                        dirwalk90 = dirwalk76;
-                    }
-                }
-                // from (-3, 2)
-                if (c75 != Direction.CENTER && l75.add(c75).equals(l90)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk75 + 1 < dwalk90) {
-                        dwalk90 = dwalk75 + 1;
-                        dirwalk90 = dirwalk75;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk75 + 2 < dwalk90) {
-                        dwalk90 = dwalk75 + 2;
-                        dirwalk90 = dirwalk75;
-                    }
-                }
-                // from (-2, 3)
-                if (c91 != Direction.CENTER && l91.add(c91).equals(l90)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk91 + 1 < dwalk90) {
-                        dwalk90 = dwalk91 + 1;
-                        dirwalk90 = dirwalk91;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk91 + 2 < dwalk90) {
-                        dwalk90 = dwalk91 + 2;
-                        dirwalk90 = dirwalk91;
-                    }
-                }
-            }
-        }
-
-        if (rc.onTheMap(l6)) { // check (3, -3)
-            if (rc.canSenseLocation(l6)) {
-                MapInfo mi6 = rc.senseMapInfo(l6);
-                p6 = mi6.isPassable();
-                c6 = mi6.getCurrentDirection();
-            }
-            if (p6) {
-                // from (2, -2)
-                if (c20 != Direction.CENTER && l20.add(c20).equals(l6)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk20 + 1 < dwalk6) {
-                        dwalk6 = dwalk20 + 1;
-                        dirwalk6 = dirwalk20;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk20 + 2 < dwalk6) {
-                        dwalk6 = dwalk20 + 2;
-                        dirwalk6 = dirwalk20;
-                    }
-                }
-                // from (2, -3)
-                if (c5 != Direction.CENTER && l5.add(c5).equals(l6)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk5 + 1 < dwalk6) {
-                        dwalk6 = dwalk5 + 1;
-                        dirwalk6 = dirwalk5;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk5 + 2 < dwalk6) {
-                        dwalk6 = dwalk5 + 2;
-                        dirwalk6 = dirwalk5;
-                    }
-                }
-                // from (3, -2)
-                if (c21 != Direction.CENTER && l21.add(c21).equals(l6)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk21 + 1 < dwalk6) {
-                        dwalk6 = dwalk21 + 1;
-                        dirwalk6 = dirwalk21;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk21 + 2 < dwalk6) {
-                        dwalk6 = dwalk21 + 2;
-                        dirwalk6 = dirwalk21;
-                    }
-                }
-            }
-        }
-
-        if (rc.onTheMap(l96)) { // check (3, 3)
-            if (rc.canSenseLocation(l96)) {
-                MapInfo mi96 = rc.senseMapInfo(l96);
-                p96 = mi96.isPassable();
-                c96 = mi96.getCurrentDirection();
-            }
-            if (p96) {
-                // from (2, 2)
-                if (c80 != Direction.CENTER && l80.add(c80).equals(l96)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk80 + 1 < dwalk96) {
-                        dwalk96 = dwalk80 + 1;
-                        dirwalk96 = dirwalk80;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk80 + 2 < dwalk96) {
-                        dwalk96 = dwalk80 + 2;
-                        dirwalk96 = dirwalk80;
-                    }
-                }
-                // from (2, 3)
-                if (c95 != Direction.CENTER && l95.add(c95).equals(l96)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk95 + 1 < dwalk96) {
-                        dwalk96 = dwalk95 + 1;
-                        dirwalk96 = dirwalk95;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk95 + 2 < dwalk96) {
-                        dwalk96 = dwalk95 + 2;
-                        dirwalk96 = dirwalk95;
-                    }
-                }
-                // from (3, 2)
-                if (c81 != Direction.CENTER && l81.add(c81).equals(l96)) {
-                    // there was a current at the previous location and the current flows into this location
-                    if (dwalk81 + 1 < dwalk96) {
-                        dwalk96 = dwalk81 + 1;
-                        dirwalk96 = dirwalk81;
-                    }
-                }
-                else { // there was no current at the previous location
-                    if (dwalk81 + 2 < dwalk96) {
-                        dwalk96 = dwalk81 + 2;
-                        dirwalk96 = dirwalk81;
-                    }
-                }
-            }
-        }
-
 
         // System.out.println("LOCAL DISTANCES:");
-        // System.out.println("\t" + dwalk90 + "\t" + dwalk91 + "\t" + dwalk92 + "\t" + dwalk93 + "\t" + dwalk94 + "\t" + dwalk95 + "\t" + dwalk96);
+        // System.out.println("\t" + "\t" + dwalk91 + "\t" + dwalk92 + "\t" + dwalk93 + "\t" + dwalk94 + "\t" + dwalk95 + "\t");
         // System.out.println("\t" + dwalk75 + "\t" + dwalk76 + "\t" + dwalk77 + "\t" + dwalk78 + "\t" + dwalk79 + "\t" + dwalk80 + "\t" + dwalk81);
         // System.out.println("\t" + dwalk60 + "\t" + dwalk61 + "\t" + dwalk62 + "\t" + dwalk63 + "\t" + dwalk64 + "\t" + dwalk65 + "\t" + dwalk66);
         // System.out.println("\t" + dwalk45 + "\t" + dwalk46 + "\t" + dwalk47 + "\t" + dwalk48 + "\t" + dwalk49 + "\t" + dwalk50 + "\t" + dwalk51);
         // System.out.println("\t" + dwalk30 + "\t" + dwalk31 + "\t" + dwalk32 + "\t" + dwalk33 + "\t" + dwalk34 + "\t" + dwalk35 + "\t" + dwalk36);
         // System.out.println("\t" + dwalk15 + "\t" + dwalk16 + "\t" + dwalk17 + "\t" + dwalk18 + "\t" + dwalk19 + "\t" + dwalk20 + "\t" + dwalk21);
-        // System.out.println("\t" + dwalk0 + "\t" + dwalk1 + "\t" + dwalk2 + "\t" + dwalk3 + "\t" + dwalk4 + "\t" + dwalk5 + "\t" + dwalk6);
+        // System.out.println("\t" + "\t" + dwalk1 + "\t" + dwalk2 + "\t" + dwalk3 + "\t" + dwalk4 + "\t" + dwalk5 + "\t");
         // System.out.println("DIRECTIONS:");
-        // System.out.println("\t" + dirwalk90 + "\t" + dirwalk91 + "\t" + dirwalk92 + "\t" + dirwalk93 + "\t" + dirwalk94 + "\t" + dirwalk95 + "\t" + dirwalk96);
+        // System.out.println("\t" + "\t" + dirwalk91 + "\t" + dirwalk92 + "\t" + dirwalk93 + "\t" + dirwalk94 + "\t" + dirwalk95 + "\t");
         // System.out.println("\t" + dirwalk75 + "\t" + dirwalk76 + "\t" + dirwalk77 + "\t" + dirwalk78 + "\t" + dirwalk79 + "\t" + dirwalk80 + "\t" + dirwalk81);
         // System.out.println("\t" + dirwalk60 + "\t" + dirwalk61 + "\t" + dirwalk62 + "\t" + dirwalk63 + "\t" + dirwalk64 + "\t" + dirwalk65 + "\t" + dirwalk66);
         // System.out.println("\t" + dirwalk45 + "\t" + dirwalk46 + "\t" + dirwalk47 + "\t" + dirwalk48 + "\t" + dirwalk49 + "\t" + dirwalk50 + "\t" + dirwalk51);
         // System.out.println("\t" + dirwalk30 + "\t" + dirwalk31 + "\t" + dirwalk32 + "\t" + dirwalk33 + "\t" + dirwalk34 + "\t" + dirwalk35 + "\t" + dirwalk36);
         // System.out.println("\t" + dirwalk15 + "\t" + dirwalk16 + "\t" + dirwalk17 + "\t" + dirwalk18 + "\t" + dirwalk19 + "\t" + dirwalk20 + "\t" + dirwalk21);
-        // System.out.println("\t" + dirwalk0 + "\t" + dirwalk1 + "\t" + dirwalk2 + "\t" + dirwalk3 + "\t" + dirwalk4 + "\t" + dirwalk5 + "\t" + dirwalk6);
+        // System.out.println("\t" + "\t" + dirwalk1 + "\t" + dirwalk2 + "\t" + dirwalk3 + "\t" + dirwalk4 + "\t" + dirwalk5 + "\t");
 
         int target_dx = target.x - l48.x;
         int target_dy = target.y - l48.y;
         switch (target_dx) {
                 case -3:
                     switch (target_dy) {
-                        case -3:
-                            return dirwalk0; // destination is at relative location (-3, -3)
                         case -2:
                             return dirwalk15; // destination is at relative location (-3, -2)
                         case -1:
@@ -3039,8 +2805,6 @@ public class BFSPathing {
                             return dirwalk60; // destination is at relative location (-3, 1)
                         case 2:
                             return dirwalk75; // destination is at relative location (-3, 2)
-                        case 3:
-                            return dirwalk90; // destination is at relative location (-3, 3)
                     }
                     break;
                 case -2:
@@ -3135,8 +2899,6 @@ public class BFSPathing {
                     break;
                 case 3:
                     switch (target_dy) {
-                        case -3:
-                            return dirwalk6; // destination is at relative location (3, -3)
                         case -2:
                             return dirwalk21; // destination is at relative location (3, -2)
                         case -1:
@@ -3147,8 +2909,6 @@ public class BFSPathing {
                             return dirwalk66; // destination is at relative location (3, 1)
                         case 2:
                             return dirwalk81; // destination is at relative location (3, 2)
-                        case 3:
-                            return dirwalk96; // destination is at relative location (3, 3)
                     }
                     break;
         }
@@ -3157,16 +2917,28 @@ public class BFSPathing {
         double bestScore = 0;
         double currDist = Math.sqrt(l48.distanceSquaredTo(target));
         
-        double score0 = (currDist - Math.sqrt(l0.distanceSquaredTo(target))) / dwalk0;
-        if (score0 > bestScore) {
-            bestScore = score0;
-            ans = dirwalk0;
-        }
-
         double score15 = (currDist - Math.sqrt(l15.distanceSquaredTo(target))) / dwalk15;
         if (score15 > bestScore) {
             bestScore = score15;
             ans = dirwalk15;
+        }
+
+        double score30 = (currDist - Math.sqrt(l30.distanceSquaredTo(target))) / dwalk30;
+        if (score30 > bestScore) {
+            bestScore = score30;
+            ans = dirwalk30;
+        }
+
+        double score45 = (currDist - Math.sqrt(l45.distanceSquaredTo(target))) / dwalk45;
+        if (score45 > bestScore) {
+            bestScore = score45;
+            ans = dirwalk45;
+        }
+
+        double score60 = (currDist - Math.sqrt(l60.distanceSquaredTo(target))) / dwalk60;
+        if (score60 > bestScore) {
+            bestScore = score60;
+            ans = dirwalk60;
         }
 
         double score75 = (currDist - Math.sqrt(l75.distanceSquaredTo(target))) / dwalk75;
@@ -3175,16 +2947,34 @@ public class BFSPathing {
             ans = dirwalk75;
         }
 
-        double score90 = (currDist - Math.sqrt(l90.distanceSquaredTo(target))) / dwalk90;
-        if (score90 > bestScore) {
-            bestScore = score90;
-            ans = dirwalk90;
-        }
-
         double score1 = (currDist - Math.sqrt(l1.distanceSquaredTo(target))) / dwalk1;
         if (score1 > bestScore) {
             bestScore = score1;
             ans = dirwalk1;
+        }
+
+        double score16 = (currDist - Math.sqrt(l16.distanceSquaredTo(target))) / dwalk16;
+        if (score16 > bestScore) {
+            bestScore = score16;
+            ans = dirwalk16;
+        }
+
+        double score31 = (currDist - Math.sqrt(l31.distanceSquaredTo(target))) / dwalk31;
+        if (score31 > bestScore) {
+            bestScore = score31;
+            ans = dirwalk31;
+        }
+
+        double score61 = (currDist - Math.sqrt(l61.distanceSquaredTo(target))) / dwalk61;
+        if (score61 > bestScore) {
+            bestScore = score61;
+            ans = dirwalk61;
+        }
+
+        double score76 = (currDist - Math.sqrt(l76.distanceSquaredTo(target))) / dwalk76;
+        if (score76 > bestScore) {
+            bestScore = score76;
+            ans = dirwalk76;
         }
 
         double score91 = (currDist - Math.sqrt(l91.distanceSquaredTo(target))) / dwalk91;
@@ -3193,10 +2983,94 @@ public class BFSPathing {
             ans = dirwalk91;
         }
 
+        double score2 = (currDist - Math.sqrt(l2.distanceSquaredTo(target))) / dwalk2;
+        if (score2 > bestScore) {
+            bestScore = score2;
+            ans = dirwalk2;
+        }
+
+        double score17 = (currDist - Math.sqrt(l17.distanceSquaredTo(target))) / dwalk17;
+        if (score17 > bestScore) {
+            bestScore = score17;
+            ans = dirwalk17;
+        }
+
+        double score77 = (currDist - Math.sqrt(l77.distanceSquaredTo(target))) / dwalk77;
+        if (score77 > bestScore) {
+            bestScore = score77;
+            ans = dirwalk77;
+        }
+
+        double score92 = (currDist - Math.sqrt(l92.distanceSquaredTo(target))) / dwalk92;
+        if (score92 > bestScore) {
+            bestScore = score92;
+            ans = dirwalk92;
+        }
+
+        double score3 = (currDist - Math.sqrt(l3.distanceSquaredTo(target))) / dwalk3;
+        if (score3 > bestScore) {
+            bestScore = score3;
+            ans = dirwalk3;
+        }
+
+        double score93 = (currDist - Math.sqrt(l93.distanceSquaredTo(target))) / dwalk93;
+        if (score93 > bestScore) {
+            bestScore = score93;
+            ans = dirwalk93;
+        }
+
+        double score4 = (currDist - Math.sqrt(l4.distanceSquaredTo(target))) / dwalk4;
+        if (score4 > bestScore) {
+            bestScore = score4;
+            ans = dirwalk4;
+        }
+
+        double score19 = (currDist - Math.sqrt(l19.distanceSquaredTo(target))) / dwalk19;
+        if (score19 > bestScore) {
+            bestScore = score19;
+            ans = dirwalk19;
+        }
+
+        double score79 = (currDist - Math.sqrt(l79.distanceSquaredTo(target))) / dwalk79;
+        if (score79 > bestScore) {
+            bestScore = score79;
+            ans = dirwalk79;
+        }
+
+        double score94 = (currDist - Math.sqrt(l94.distanceSquaredTo(target))) / dwalk94;
+        if (score94 > bestScore) {
+            bestScore = score94;
+            ans = dirwalk94;
+        }
+
         double score5 = (currDist - Math.sqrt(l5.distanceSquaredTo(target))) / dwalk5;
         if (score5 > bestScore) {
             bestScore = score5;
             ans = dirwalk5;
+        }
+
+        double score20 = (currDist - Math.sqrt(l20.distanceSquaredTo(target))) / dwalk20;
+        if (score20 > bestScore) {
+            bestScore = score20;
+            ans = dirwalk20;
+        }
+
+        double score35 = (currDist - Math.sqrt(l35.distanceSquaredTo(target))) / dwalk35;
+        if (score35 > bestScore) {
+            bestScore = score35;
+            ans = dirwalk35;
+        }
+
+        double score65 = (currDist - Math.sqrt(l65.distanceSquaredTo(target))) / dwalk65;
+        if (score65 > bestScore) {
+            bestScore = score65;
+            ans = dirwalk65;
+        }
+
+        double score80 = (currDist - Math.sqrt(l80.distanceSquaredTo(target))) / dwalk80;
+        if (score80 > bestScore) {
+            bestScore = score80;
+            ans = dirwalk80;
         }
 
         double score95 = (currDist - Math.sqrt(l95.distanceSquaredTo(target))) / dwalk95;
@@ -3205,28 +3079,34 @@ public class BFSPathing {
             ans = dirwalk95;
         }
 
-        double score6 = (currDist - Math.sqrt(l6.distanceSquaredTo(target))) / dwalk6;
-        if (score6 > bestScore) {
-            bestScore = score6;
-            ans = dirwalk6;
-        }
-
         double score21 = (currDist - Math.sqrt(l21.distanceSquaredTo(target))) / dwalk21;
         if (score21 > bestScore) {
             bestScore = score21;
             ans = dirwalk21;
         }
 
+        double score36 = (currDist - Math.sqrt(l36.distanceSquaredTo(target))) / dwalk36;
+        if (score36 > bestScore) {
+            bestScore = score36;
+            ans = dirwalk36;
+        }
+
+        double score51 = (currDist - Math.sqrt(l51.distanceSquaredTo(target))) / dwalk51;
+        if (score51 > bestScore) {
+            bestScore = score51;
+            ans = dirwalk51;
+        }
+
+        double score66 = (currDist - Math.sqrt(l66.distanceSquaredTo(target))) / dwalk66;
+        if (score66 > bestScore) {
+            bestScore = score66;
+            ans = dirwalk66;
+        }
+
         double score81 = (currDist - Math.sqrt(l81.distanceSquaredTo(target))) / dwalk81;
         if (score81 > bestScore) {
             bestScore = score81;
             ans = dirwalk81;
-        }
-
-        double score96 = (currDist - Math.sqrt(l96.distanceSquaredTo(target))) / dwalk96;
-        if (score96 > bestScore) {
-            bestScore = score96;
-            ans = dirwalk96;
         }
 
 
@@ -3498,30 +3378,6 @@ public class BFSPathing {
         dirwalk81 = null;
         p81 = true;
         c81 = Direction.CENTER;
-    
-        l0 = l16.add(Direction.SOUTHWEST); // (-3, -3) from (-2, -2)
-        dwalk0 = 99999;
-        dirwalk0 = null;
-        p0 = true;
-        c0 = Direction.CENTER;
-    
-        l90 = l76.add(Direction.NORTHWEST); // (-3, 3) from (-2, 2)
-        dwalk90 = 99999;
-        dirwalk90 = null;
-        p90 = true;
-        c90 = Direction.CENTER;
-    
-        l6 = l20.add(Direction.SOUTHEAST); // (3, -3) from (2, -2)
-        dwalk6 = 99999;
-        dirwalk6 = null;
-        p6 = true;
-        c6 = Direction.CENTER;
-    
-        l96 = l80.add(Direction.NORTHEAST); // (3, 3) from (2, 2)
-        dwalk96 = 99999;
-        dirwalk96 = null;
-        p96 = true;
-        c96 = Direction.CENTER;
     
     }
 }
