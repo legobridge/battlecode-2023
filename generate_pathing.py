@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 
 LIMIT = 3
-RADIUS = 13
-SMALLER_RADIUS = 4
+RADIUS = 20
+SMALLER_RADIUS = 10
 # Note: Amps should be (34, 20) but we've reduced for bytecode reasons
 
 def encode(x, y):
@@ -32,9 +32,7 @@ def gen_constants():
                 out += f"""
     static MapLocation l{encode(x,y)}; // location representing relative coordinate ({x}, {y})
     static int dwalk{encode(x,y)}; // shortest distance to location from current location if the last move was a walk
-    static int dcur{encode(x,y)}; // shortest distance to location from current location if the last move was a current
     static Direction dirwalk{encode(x,y)}; // best direction to take now if the last move was a walk
-    static Direction dircur{encode(x,y)}; // best direction to take now if the last move was a current
     static boolean p{encode(x,y)}; // is the location passable
     static Direction c{encode(x,y)}; // direction of the current at the location
 """
@@ -51,9 +49,7 @@ def gen_init():
     out = f"""
         l{encode(0,0)} = rc.getLocation();
         dwalk{encode(0,0)} = 0;
-        dcur{encode(0,0)} = 99999;
         dirwalk{encode(0,0)} = Direction.CENTER;
-        dircur{encode(0,0)} = Direction.CENTER;
 
         if (l{encode(0,0)}.isAdjacentTo(target)) {{
             return l{encode(0,0)}.directionTo(target);
@@ -75,9 +71,7 @@ def gen_initRest():
                     out += f"""
         l{encode(x,y)} = l{encode(x - sign(x), y - sign(y))}.add({DIRECTIONS[(sign(x), sign(y))]}); // ({x}, {y}) from ({x - sign(x)}, {y - sign(y)})
         dwalk{encode(x,y)} = 99999;
-        dcur{encode(x,y)} = 99999;
         dirwalk{encode(x,y)} = null;
-        dircur{encode(x,y)} = null;
         p{encode(x,y)} = true;
         c{encode(x,y)} = Direction.CENTER;
     """
@@ -100,51 +94,35 @@ def gen_bfs():
             }}
             if (p{encode(x,y)}) {{"""
                     indent = ""
-#                     if r2 <= 2:
-#                         out += f"""
-#             if (!rc.isLocationOccupied(l{encode(x,y)})) {{ """
-#                         indent = "    "
+                    if r2 <= 2:
+                        out += f"""
+                if (!rc.isLocationOccupied(l{encode(x,y)})) {{ """
+                        indent = "    "
                     dxdy = [(dx, dy) for dx in range(-1, 2) for dy in range(-1, 2) if (dx, dy) != (0, 0) and dist(x+dx,y+dy) <= RADIUS]
                     dxdy = sorted(dxdy, key=lambda dd: dist(x+dd[0], y+dd[1]))
                     for dx, dy in dxdy:
                         if encode(x+dx, y+dy) in visited:
                             out += f"""
-                // from ({x+dx}, {y+dy})
-                if (c{encode(x+dx,y+dy)} != Direction.CENTER) {{ // there was a current at the previous location
-                    if (l{encode(x+dx,y+dy)}.add(c{encode(x+dx,y+dy)}).equals(l{encode(x,y)})) {{ // the current flows into this location
-                        if (dwalk{encode(x+dx,y+dy)} < dcur{encode(x,y)}) {{ // I walked onto the previous location so I can reach this one at the end of the turn
-                            dcur{encode(x,y)} = dwalk{encode(x+dx,y+dy)};
-                            dircur{encode(x,y)} = {DIRECTIONS[(-dx, -dy)] if (x+dx,y+dy) == (0, 0) else f'dirwalk{encode(x+dx,y+dy)}'};
-                        }}
-                        if (dcur{encode(x+dx,y+dy)} + 1 < dcur{encode(x,y)}) {{ // I can wait on the current till the end of the turn
-                            dcur{encode(x,y)} = dcur{encode(x+dx,y+dy)} + 1;
-                            dircur{encode(x,y)} = {DIRECTIONS[(-dx, -dy)] if (x+dx,y+dy) == (0, 0) else f'dircur{encode(x+dx,y+dy)}'};
-                        }}
-                    }}
-                }}
-                else {{ // there was no current at the previous location
-                    if (dwalk{encode(x+dx,y+dy)} + 1 < dwalk{encode(x,y)}) {{ // I can walk twice in a row since there was no current
-                        dwalk{encode(x,y)} = dwalk{encode(x+dx,y+dy)} + 1;
-                        dirwalk{encode(x,y)} = {DIRECTIONS[(-dx, -dy)] if (x+dx,y+dy) == (0, 0) else f'dirwalk{encode(x+dx,y+dy)}'};
-                    }}
-                }}
-                if (dcur{encode(x+dx,y+dy)} + 1 < dwalk{encode(x,y)}) {{ // in all cases, I can walk off the previous location if I arrived there via current
-                    dwalk{encode(x,y)} = dcur{encode(x+dx,y+dy)} + 1;
-                    dirwalk{encode(x,y)} = {DIRECTIONS[(-dx, -dy)] if (x+dx,y+dy) == (0, 0) else f'dircur{encode(x+dx,y+dy)}'};
-                }}
-                """
-#             {indent}if (d{encode(x,y)} > d{encode(x+dx,y+dy)}) {{ // from ({x+dx}, {y+dy})
-#                 {indent}d{encode(x,y)} = d{encode(x+dx,y+dy)};
-#                 {indent}dirwalk{encode(x,y)} = {DIRECTIONS[(-dx, -dy)] if (x+dx,y+dy) == (0, 0) else f'dirwalk{encode(x+dx,y+dy)}'};
-#             {indent}}}"""
-#                     out += f"""
-#             {indent}d{encode(x,y)} += 1;"""
-#                     if r2 <= 2:
-#                         out += f"""
-#             }}"""
+                {indent}// from ({x+dx}, {y+dy})
+                {indent}if (c{encode(x+dx,y+dy)} != Direction.CENTER && l{encode(x+dx,y+dy)}.add(c{encode(x+dx,y+dy)}).equals(l{encode(x,y)})) {{
+                    {indent}// there was a current at the previous location and the current flows into this location
+                    {indent}if (dwalk{encode(x+dx,y+dy)} + 1 < dwalk{encode(x,y)}) {{
+                        {indent}dwalk{encode(x,y)} = dwalk{encode(x+dx,y+dy)} + 1;
+                        {indent}dirwalk{encode(x,y)} = {DIRECTIONS[(-dx, -dy)] if (x+dx,y+dy) == (0, 0) else f'dirwalk{encode(x+dx,y+dy)}'};
+                    {indent}}}
+                {indent}}}
+                {indent}else {{ // there was no current at the previous location
+                    {indent}if (dwalk{encode(x+dx,y+dy)} + 2 < dwalk{encode(x,y)}) {{
+                        {indent}dwalk{encode(x,y)} = dwalk{encode(x+dx,y+dy)} + 2;
+                        {indent}dirwalk{encode(x,y)} = {DIRECTIONS[(-dx, -dy)] if (x+dx,y+dy) == (0, 0) else f'dirwalk{encode(x+dx,y+dy)}'};
+                    {indent}}}
+                {indent}}}"""
+                    if r2 <= 2:
+                        out += f"""
+                }}"""
                     visited.add(encode(x,y))
                     out += f"""
-              }}
+            }}
         }}
 """
     return out
@@ -163,7 +141,7 @@ def gen_selection():
                 if dist(tdx, tdy) <= RADIUS:
                     out += f"""
                         case {tdy}:
-                            return (dwalk{encode(tdx, tdy)} < dcur{encode(tdx, tdy)}) ? dirwalk{encode(tdx, tdy)} : dircur{encode(tdx, tdy)}; // destination is at relative location ({tdx}, {tdy})"""
+                            return dirwalk{encode(tdx, tdy)}; // destination is at relative location ({tdx}, {tdy})"""
             out += f"""
                     }}
                     break;"""
@@ -178,19 +156,10 @@ def gen_selection():
         for y in range(-LIMIT, LIMIT + 1):
             if SMALLER_RADIUS < dist(x, y) <= RADIUS: # on the edge of the RADIUS RADIUS
                 out += f"""
-        if (dwalk{encode(x,y)} < dcur{encode(x,y)}) {{
-            double score{encode(x,y)} = (currDist - Math.sqrt(l{encode(x,y)}.distanceSquaredTo(target))) / dwalk{encode(x,y)};
-            if (score{encode(x,y)} > bestScore) {{
-                bestScore = score{encode(x,y)};
-                ans = dirwalk{encode(x,y)};
-            }}
-        }}
-        else {{
-            double score{encode(x,y)} = (currDist - Math.sqrt(l{encode(x,y)}.distanceSquaredTo(target))) / dcur{encode(x,y)};
-            if (score{encode(x,y)} > bestScore) {{
-                bestScore = score{encode(x,y)};
-                ans = dircur{encode(x,y)};
-            }}
+        double score{encode(x,y)} = (currDist - Math.sqrt(l{encode(x,y)}.distanceSquaredTo(target))) / dwalk{encode(x,y)};
+        if (score{encode(x,y)} > bestScore) {{
+            bestScore = score{encode(x,y)};
+            ans = dirwalk{encode(x,y)};
         }}
 """
     return out
