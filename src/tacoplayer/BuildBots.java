@@ -91,7 +91,7 @@ public class BuildBots {
                         return true;
                     }
                 }
-                else if (closestEnemyHqLoc != null) {
+                else if (closestEnemyHqLoc != null && rc.getLocation().directionTo(closestEnemyHqLoc) != Direction.CENTER) {
                     Direction closestEnemyHQDir = rc.getLocation().directionTo(closestEnemyHqLoc);
                     if (buildFarthest(rc, robotTypeToBuild, closestEnemyHQDir)) {
                         return true;

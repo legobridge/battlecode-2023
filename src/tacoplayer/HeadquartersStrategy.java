@@ -61,7 +61,6 @@ public class HeadquartersStrategy {
 
         // First round
         if (turnCount == 1) {
-            // initially build 3 launchers and 2 carriers
             initialBuildOrder(rc);
         }
 
