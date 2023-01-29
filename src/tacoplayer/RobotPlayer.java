@@ -54,6 +54,8 @@ public strictfp class RobotPlayer {
     static double sumTurnBc = 0;
     static double sumWriteBc = 0;
 
+    static int hqNum = 0;
+
     @SuppressWarnings("unused")
     public static void run(RobotController rc) throws GameActionException {
 
@@ -108,6 +110,11 @@ public strictfp class RobotPlayer {
 
             if (rc.getType() != RobotType.HEADQUARTERS) {
                 closestHqLoc = MapLocationUtil.getClosestMapLocEuclidean(rc, ourHqLocs);
+            }
+
+            // Update the hq that you were spawned at
+            if (hqNum == 0 && closestHqLoc != null) {
+                MapLocationUtil.setClosestMapLocEuclidean(rc, ourHqLocs);
             }
 
             int bc3 = Clock.getBytecodesLeft();

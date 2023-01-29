@@ -73,4 +73,21 @@ public class MapLocationUtil {
         }
         return closestLoc;
     }
+
+    static void setClosestMapLocEuclidean(RobotController rc, MapLocation[] mapLocations) {
+        MapLocation selfLoc = rc.getLocation();
+        MapLocation closestLoc = null;
+        int closestLocDistSq = MAX_MAP_DIST_SQ;
+        for (int i = mapLocations.length; --i >= 0;) {
+            if (mapLocations[i] == null) {
+                continue;
+            }
+            int thisDistSq = selfLoc.distanceSquaredTo(mapLocations[i]);
+            if (closestLoc == null || thisDistSq < closestLocDistSq) {
+                closestLoc = mapLocations[i];
+                closestLocDistSq = thisDistSq;
+                hqNum = i+1;
+            }
+        }
+    }
 }

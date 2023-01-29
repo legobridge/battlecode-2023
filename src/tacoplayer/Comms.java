@@ -31,6 +31,7 @@ public class Comms {
     static boolean doneWithWells = false;
     static int wellUpdate = 0;
     static int[] sharedWellLocs = new int[NUM_WELLS_STORED];
+    static boolean writeSymmetry = false;
 
     static void readAndStoreFromSharedArray(RobotController rc) throws GameActionException {
         // Read only the indices we're using, and update local knowledge with shared array knowledge.
@@ -38,6 +39,11 @@ public class Comms {
         readIslandsFromSharedArray(rc);
         readWellsFromSharedArray(rc);
         locallyKnownSymmetry &= rc.readSharedArray(SYMMETRY_INDEX);
+        if (writeSymmetry) {
+            if (putSymmetryOnline(rc)) {
+                writeSymmetry = false;
+            }
+        }
     }
 
     private static boolean tryToWriteToSharedArray(RobotController rc, int index, int value) throws GameActionException {
@@ -167,11 +173,14 @@ public class Comms {
 
     static boolean tryToUploadWell(RobotController rc, int hashedLoc) throws GameActionException {
         for (int i = NUM_WELLS_STORED; --i >= 0; ) {
-            if (sharedWellLocs[i] == hashedLoc) {
+            int storedHashedLoc = getNumFromBits(sharedWellLocs[i], 1, 12);
+            int storedHqNum = getNumFromBits(sharedWellLocs[i], 13, 14);
+            if (storedHashedLoc == hashedLoc && storedHqNum == hqNum) {
                 break;
             }
+            int writeNum = bitHack(hashedLoc, hqNum, 12, 2);
             if (sharedWellLocs[i] == 0) {
-                if (!tryToWriteToSharedArray(rc, i + WELL_LOCS_START_INDEX, hashedLoc)) {
+                if (!tryToWriteToSharedArray(rc, i + WELL_LOCS_START_INDEX, writeNum)) {
                     needToWriteWells = true;
                     wellUpdate = hashedLoc;
                     return false;
@@ -179,7 +188,7 @@ public class Comms {
                 else {
                     sharedWellLocs[i] = hashedLoc;
                     MapLocation loc = MapLocationUtil.unhashMapLocation(hashedLoc);
-                    System.out.println("added mn well at " + loc.x + ", " + loc.y);
+                    System.out.println("added mn well at " + loc.x + ", " + loc.y + " for hq" + hqNum);
                     return true;
                 }
             }
@@ -322,25 +331,73 @@ public class Comms {
         }
     }
 
-    public static void putSymmetryOnline(RobotController rc) throws GameActionException {
+    public static boolean putSymmetryOnline(RobotController rc) throws GameActionException {
         // Check if we are in wi-fi range
         if (!rc.canWriteSharedArray(0, 0)) {
-            return;
+            return false;
         }
         if (rc.readSharedArray(SYMMETRY_INDEX) > locallyKnownSymmetry) {
-            tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
+            return tryToWriteToSharedArray(rc, SYMMETRY_INDEX, locallyKnownSymmetry);
         }
+        return false;
     }
 
     public static SymmetryType getSymmetryType() {
         int a = getNumFromBits(locallyKnownSymmetry, 1, 1);
         if (a == 1) {
-            return SymmetryType.HORIZONTAL;
+            return SymmetryType.ROTATIONAL;
         }
         a = getNumFromBits(locallyKnownSymmetry, 2, 2);
         if (a == 1) {
             return SymmetryType.VERTICAL;
         }
-        return SymmetryType.ROTATIONAL;
+        return SymmetryType.HORIZONTAL;
+    }
+
+    static void removeSymmetry(SymmetryType sym) {
+        int num = sym.ordinal();
+        if (getNumFromBits(locallyKnownSymmetry, num+1, num+1) == 0) {
+            return;
+        }
+        switch (num) {
+            case 0: num = 4; break;
+            case 1: num = 2; break;
+            case 2: num = 1; break;
+        }
+        locallyKnownSymmetry -= num;
+        writeSymmetry = true;
+    }
+
+    static MapLocation getNearestEnemyWellLoc(RobotController rc, SymmetryType sym) throws GameActionException {
+        MapLocation ourLoc = rc.getLocation();
+        MapLocation closest = null;
+        int closestDist = Integer.MAX_VALUE;
+        for (int i = NUM_WELLS_STORED; --i >= 0; ) {
+            int hashedLoc = getNumFromBits(sharedWellLocs[i], 1, 12);
+            if (hashedLoc == 0) {
+                break;
+            }
+            MapLocation wellLoc = MapLocationUtil.calcSymmetricLoc(MapLocationUtil.unhashMapLocation(hashedLoc), sym);
+            int dist = ourLoc.distanceSquaredTo(wellLoc);
+            if (dist < closestDist) {
+                closest = wellLoc;
+                closestDist = dist;
+            }
+        }
+        return closest;
+    }
+
+    static MapLocation getHqManaWellLoc(RobotController rc) throws GameActionException {
+        for (int i = NUM_WELLS_STORED; --i >= 0; ) {
+            int hashedLoc = getNumFromBits(sharedWellLocs[i], 1, 12);
+            int storedHqNum = getNumFromBits(sharedWellLocs[i], 13, 14);
+            if (hashedLoc == 0) {
+                break;
+            }
+            if (hqNum == storedHqNum) {
+                return MapLocationUtil.unhashMapLocation(hashedLoc);
+            }
+        }
+        return null;
     }
 }
