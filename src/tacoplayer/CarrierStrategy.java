@@ -109,6 +109,10 @@ public class CarrierStrategy {
 //            // Raise the alarm
 //            Comms.updateWellAttackInfo(rc, closestWellLoc);
 //        }
+        // If we havent found our well yet, read the mana well for our hq
+        if (currentResourceAssignment == ResourceType.MANA && wellAssignment == null) {
+            wellAssignment = Comms.getHqManaWellLoc(rc);
+        }
 
         // Collect from well if close and inventory not full
         if (wellAssignment != null && rc.canCollectResource(wellAssignment, -1)) {
