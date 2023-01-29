@@ -19,9 +19,22 @@ public class AmplifierStrategy {
         // MUST move away from enemies
         if (enemyLauncherCount + enemyDestabCount > 0) {
             Movement.moveTowardsLocation(rc, closestHqLoc);
+            rc.setIndicatorString("Retreating to base");
         }
+        // If injured move to friendly island
+        else if (closestFriendlyIslandLoc != null) {
+            Movement.moveTowardsLocation(rc, closestFriendlyIslandLoc);
+            rc.setIndicatorString("Moving towards island to heal");
+        }
+        // Move towards a launcher
+        else if (ourLauncherCount > 0) {
+            Movement.moveTowardsLocation(rc, ourLaunchers[0].getLocation());
+            rc.setIndicatorString("Moving towards launcher");
+        }
+        // Move randomly
         else {
             Pathing.moveRandomly(rc);
+            rc.setIndicatorString("Moving randomly");
         }
     }
 }

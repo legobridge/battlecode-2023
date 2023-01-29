@@ -156,55 +156,55 @@ public class BuildOrderTypes {
         }
     }
 
-    static void buildBotsWithMovingAverage(RobotController rc) throws GameActionException {
-        float adMovingAverageDividedCarrierCost = adGetMovingAverage() / RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM);
-        float mnMovingAverageDividedLauncherCost = mnGetMovingAverage() / RobotType.LAUNCHER.getBuildCost(ResourceType.MANA);
-        float ratioAdMn = adMovingAverageDividedCarrierCost / mnMovingAverageDividedLauncherCost;
-        if (ratioAdMn > 1) {
-            resourceNeeded = ResourceType.MANA;
-            int carriersToBuild = Math.round((float) ACTIONS_PER_TURN / ratioAdMn);
-            int launchersToBuild = ACTIONS_PER_TURN - carriersToBuild;
-            int remainingActions = ACTIONS_PER_TURN;
-            for (int i = launchersToBuild; --i >= 0; ) {
-                if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
-                    rc.setIndicatorString("Building a launcher");
-                    remainingActions--;
-                }
-                else {
-                    rc.setIndicatorString("Not enough resources to build a launcher");
-                }
-            }
-            for (int i = carriersToBuild; --i >= 0; ) {
-                if (tryToBuildRobot(rc, RobotType.CARRIER)) {
-                    rc.setIndicatorString("Building a carrier");
-                    remainingActions--;
-                }
-                else {
-                    rc.setIndicatorString("Not enough resources to build a carrier");
-                }
-            }
-            buildBots(rc, RobotType.LAUNCHER, remainingActions);
-        }
-        else {
-            if (ratioAdMn < AD_CRITICAL_LOW_THRESH) {
-                resourceNeeded = ResourceType.ADAMANTIUM;
-            }
-            buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
-        }
-    }
-    static float adGetMovingAverage() {
-        int totalAd = 0;
-        for (int i = -1; ++i < adQueue.length; ) {
-            totalAd += adQueue[i];
-        }
-        return (float) totalAd / adQueue.length;
-    }
-
-    static float mnGetMovingAverage() {
-        int totalMn = 0;
-        for (int i = -1; ++i < mnQueue.length; ) {
-            totalMn += mnQueue[i];
-        }
-        return (float) totalMn / mnQueue.length;
-    }
+//    static void buildBotsWithMovingAverage(RobotController rc) throws GameActionException {
+//        float adMovingAverageDividedCarrierCost = adGetMovingAverage() / RobotType.CARRIER.getBuildCost(ResourceType.ADAMANTIUM);
+//        float mnMovingAverageDividedLauncherCost = mnGetMovingAverage() / RobotType.LAUNCHER.getBuildCost(ResourceType.MANA);
+//        float ratioAdMn = adMovingAverageDividedCarrierCost / mnMovingAverageDividedLauncherCost;
+//        if (ratioAdMn > 1) {
+//            ResourceType resourceNeeded = ResourceType.MANA; //todo - resolve this
+//            int carriersToBuild = Math.round((float) ACTIONS_PER_TURN / ratioAdMn);
+//            int launchersToBuild = ACTIONS_PER_TURN - carriersToBuild;
+//            int remainingActions = ACTIONS_PER_TURN;
+//            for (int i = launchersToBuild; --i >= 0; ) {
+//                if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+//                    rc.setIndicatorString("Building a launcher");
+//                    remainingActions--;
+//                }
+//                else {
+//                    rc.setIndicatorString("Not enough resources to build a launcher");
+//                }
+//            }
+//            for (int i = carriersToBuild; --i >= 0; ) {
+//                if (tryToBuildRobot(rc, RobotType.CARRIER)) {
+//                    rc.setIndicatorString("Building a carrier");
+//                    remainingActions--;
+//                }
+//                else {
+//                    rc.setIndicatorString("Not enough resources to build a carrier");
+//                }
+//            }
+//            buildBots(rc, RobotType.LAUNCHER, remainingActions);
+//        }
+//        else {
+//            if (ratioAdMn < AD_CRITICAL_LOW_THRESH) {
+//                resourceNeeded = ResourceType.ADAMANTIUM;
+//            }
+//            buildBots(rc, RobotType.LAUNCHER, ACTIONS_PER_TURN);
+//        }
+//    }
+//    static float adGetMovingAverage() {
+//        int totalAd = 0;
+//        for (int i = -1; ++i < adQueue.length; ) {
+//            totalAd += adQueue[i];
+//        }
+//        return (float) totalAd / adQueue.length;
+//    }
+//
+//    static float mnGetMovingAverage() {
+//        int totalMn = 0;
+//        for (int i = -1; ++i < mnQueue.length; ) {
+//            totalMn += mnQueue[i];
+//        }
+//        return (float) totalMn / mnQueue.length;
+//    }
 }

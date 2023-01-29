@@ -29,6 +29,18 @@ public class CarrierStrategy {
         // Update alive counter
         Comms.updateRobotCount(rc);
 
+        // Debug shit
+        if (wellAssignment == nearestADWell) {
+            rc.setIndicatorString("GOAL: Adamantium");
+        }
+        else if (wellAssignment == nearestMNWell) {
+            rc.setIndicatorString("GOAL: Mana");
+        }
+//        if (ourCarrierCount > 20 && rc.getWeight() == 0
+//                && wellAssignment != nearestMNWell && !anchorMode) {
+//            rc.disintegrate();
+//        }
+
         // Update resources
         int adAmount = rc.getResourceAmount(ResourceType.ADAMANTIUM);
         int mnAmount = rc.getResourceAmount(ResourceType.MANA);
@@ -51,7 +63,7 @@ public class CarrierStrategy {
         // Update well priority
         if (firstResourceGoal == null) {
             int round = rc.getRoundNum();
-            if (rc.getRoundNum() % 2 == 0 && (round <= 2 || round > 30)) {
+            if (rc.getRoundNum() % 2 == 0 && (round <= 2 || round > 150)) {
                 wellAssignment = nearestADWell;
                 firstResourceGoal = ResourceType.ADAMANTIUM;
                 secondResourceGoal = ResourceType.MANA;
@@ -76,8 +88,8 @@ public class CarrierStrategy {
 
         // If you are at the well and there are more than 6 robots,
         // Switch which well you go to
-        if (ourCarrierCount > 12 && !extracting && wellAssignment != null
-                && rc.getLocation().distanceSquaredTo(wellAssignment) <= 9) {
+        if (ourCarrierCount > 16 && !extracting && wellAssignment != null
+                && rc.getLocation().distanceSquaredTo(wellAssignment) <= 16) {
             // If we are currently trying to collect the first resource goal from the nearest well,
             // Try collecting the secondary resource goal from its nearest well
             if (currentResourceAssignment == firstResourceGoal

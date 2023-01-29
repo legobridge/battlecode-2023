@@ -94,6 +94,10 @@ public class Movement {
     }
     static boolean moveTowardsEnemyHq(RobotController rc) throws GameActionException {
         rc.setIndicatorString("Moving towards enemy HQ! " + closestEnemyHqLoc);
+        if (rc.getLocation().distanceSquaredTo(closestEnemyHqLoc) <= RobotType.HEADQUARTERS.actionRadiusSquared + 3) {
+            Pathing.moveTowards(rc, closestHqLoc);
+            return true;
+        }
         return Pathing.moveTowards(rc, closestEnemyHqLoc);
     }
 

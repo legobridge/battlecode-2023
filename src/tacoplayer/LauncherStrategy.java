@@ -19,6 +19,10 @@ public class LauncherStrategy {
     static int prevLowestHealthId = 0;
     static int MAGIC_NUM_HITS_TO_ASSUME_DEAD = 2;
     static int MAGIC_ROUNDS_TO_ELECT_NEW_LEADER = 5;
+    static int MAGIC_ROUNDS_PER_OBJECTIVE = 50;
+    static boolean attackEnemyHQ = false;
+    static boolean attackEnemyWell = false;
+    static boolean attackEnemyIsland = false;
 
     // TODO - update batallion size dependent on how far the enemyHQs are?
     static void runLauncher(RobotController rc) throws GameActionException {
@@ -27,6 +31,26 @@ public class LauncherStrategy {
 
         // Update health
         updateHealth(rc);
+
+        // Every 50 rounds refresh objective
+        if (rc.getRoundNum() % MAGIC_ROUNDS_PER_OBJECTIVE == 0) {
+            attackEnemyHQ = false;
+            attackEnemyWell = false;
+            if (ourLauncherCount % 2 == 0) {
+                attackEnemyHQ = true;
+            }
+            else {
+                attackEnemyHQ = true;
+            }
+        }
+
+        // If enemy island is known
+        if (closestEnemyIslandLoc != null) {
+            attackEnemyIsland = true;
+        }
+        else {
+            attackEnemyIsland = false;
+        }
 
         // Attack
         Combat.attack(rc);
@@ -109,14 +133,17 @@ public class LauncherStrategy {
                 }
             }
         }
-        else if (leaderId > rc.getID()) { // I am the leader!
+        else if (leaderId > rc.getID() || true) { // I am the leader!
             if (moveTowardsVisibleEnemies(rc)) {
                 rc.setIndicatorString("LEADER: moving towards enemy robots");
-            } else if (moveTowardsEnemyIslands(rc)) {
+            } else if (attackEnemyIsland) {
+                moveTowardsEnemyIslands(rc);
                 rc.setIndicatorString("LEADER: moving towards enemy island");
-            } else if (moveTowardsEnemyWell(rc)) {
+            } else if (attackEnemyWell) {
+                moveTowardsEnemyWell(rc);
                 rc.setIndicatorString("LEADER: raiding mana well");
-            } else if (moveTowardsEnemyHq(rc)) {
+            } else if (attackEnemyHQ) {
+                moveTowardsEnemyHq(rc);
                 rc.setIndicatorString("LEADER: moving towards enemy hq");
             } else if (rc.canMove(rc.getLocation().directionTo(mapCenter))) {
                 rc.move(rc.getLocation().directionTo(mapCenter));
@@ -129,13 +156,33 @@ public class LauncherStrategy {
         // Follow the leader
         else {
             Direction dir = rc.getLocation().directionTo(leader.getLocation());
-            if (rc.canMove(dir)) {
-                rc.move(dir);
-                rc.setIndicatorString("FOLLOWER: moving towards leader " + leaderId);
-            } else {
-                Pathing.moveRandomly(rc);
-                rc.setIndicatorString("FOLLOWER: moving randomly");
-            }
+//            if (rc.canMove(dir)) {
+//                rc.move(dir);
+//                rc.setIndicatorString("FOLLOWER: moving towards leader " + leaderId);
+//            }
+//            if (Movement.moveDirectlyTowards(rc, dir)) {
+//                rc.setIndicatorString("FOLLOWER: moving towards leader");
+//            }
+//            else if (closestEnemyHqLoc != null && rc.getRoundNum() < 100) {
+//                moveTowardsEnemyHq(rc);
+//                rc.setIndicatorString("FOLLOWER: moving towards enemy HQ");
+//            }
+//            else if (closestNeutralIslandLoc != null) {
+//                rc.setIndicatorString("FOLLOWER: Moving towards neutral island");
+//                moveTowardsLocation(rc, closestNeutralIslandLoc);
+//            }
+//            else if (closestEnemyHqLoc != null) {
+//                moveTowardsEnemyHq(rc);
+//                rc.setIndicatorString("FOLLOWER: moving towards enemy HQ");
+//            }
+//            else if(closestFriendlyIslandLoc != null) {
+//                rc.setIndicatorString("FOLLOWER: Moving towards friendly island");
+//                moveTowardsLocation(rc, closestFriendlyIslandLoc);
+//            }
+//            else {
+//                Pathing.moveRandomly(rc);
+//                rc.setIndicatorString("FOLLOWER: moving randomly");
+//            }
         }
         prevLowestHealth = lowestHealth;
         prevLowestHealthId = lowestHealthId;

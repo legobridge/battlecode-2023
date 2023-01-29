@@ -127,7 +127,7 @@ public class BuildBots {
                 }
                 Direction nearestWellDir;
                 Direction secondNearestWellDir;
-                switch (resourceNeeded) {
+                switch (ResourceType.MANA) {
                     case ADAMANTIUM:
                          nearestWellDir = rc.getLocation().directionTo(nearestADWell);
                          secondNearestWellDir = rc.getLocation().directionTo(secondNearestADWell);
@@ -175,6 +175,7 @@ public class BuildBots {
     }
 
     static boolean buildFarthest(RobotController rc, RobotType robotTypeToBuild, Direction dirToBuild) throws GameActionException {
+        boolean isWithinEnemyHQRange = false; //todo - resolve this
         switch (dirToBuild) {
             case NORTH:
                 for (int i = -1; ++i < farthestNorth.length; ) {
