@@ -61,69 +61,71 @@ public class HeadquartersStrategy {
 
         // First round
         if (turnCount == 1) {
+            if (rc.getLocation().isWithinDistanceSquared(closestEnemyHqLoc, 2 * RobotType.HEADQUARTERS.actionRadiusSquared - 1)) {
+                isWithinEnemyHQRange = true;
+            }
             initialBuildOrder(rc);
         }
-
-        // Check how many carriers there are
-        if (ourCarrierCount > maxCarriersSeen) {
-            maxCarriersSeen = ourCarrierCount;
-        }
-
-        // Update need more carriers flag
-        if (turnCount % MAGIC_NUM_UPDATE_CARRIER_TURNS == 0) {
-            if (maxCarriersSeen > 12) {
-                needMoreCarriers = false;
-            }
-            else {
-                needMoreCarriers = true;
-            }
-        }
-
-        // build anchor
-        // If past a certain round and haven't built one in a certain number of turns
-        if (rc.getRoundNum() >= MAGIC_NUM_TURNS_RUSH
-                && rc.getRoundNum() - lastAnchorRound >= MAGIC_ANCHOR_NUM_TURNS_RUSH
-                && !needAmps
-                && rc.getNumAnchors(Anchor.STANDARD) == 0) {
-            needAnchor = true;
-            if (closestNeutralIslandLoc != null) {
-                if (rc.canBuildAnchor(Anchor.STANDARD)) {
-                    rc.setIndicatorString("Building an anchor");
-                    rc.buildAnchor(Anchor.STANDARD);
-                    lastAnchorRound = rc.getRoundNum();
-                    actions++;
-                }
-            }
-        }
         else {
-            needAnchor = false;
-        }
-
-        // build amplifiers
-        // If past a certain round and there are less amps than HQs
-        if (actions < ACTIONS_PER_TURN && needAmps && !needAnchor) {
-            if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
-                rc.setIndicatorString("Building an amplifier");
-                actions++;
+            // Check how many carriers there are
+            if (ourCarrierCount > maxCarriersSeen) {
+                maxCarriersSeen = ourCarrierCount;
             }
-        }
 
-        // build carriers
-        if (needMoreCarriers && !needAmps && !needAnchor) {
-            for (int i = 0; i < ACTIONS_PER_TURN - actions; i++) {
-                if (tryToBuildRobot(rc, RobotType.CARRIER)) {
-                    rc.setIndicatorString("Building a carrier");
+            // Update need more carriers flag
+            if (turnCount % MAGIC_NUM_UPDATE_CARRIER_TURNS == 0) {
+                if (maxCarriersSeen > 12) {
+                    needMoreCarriers = false;
+                } else {
+                    needMoreCarriers = true;
+                }
+            }
+
+            // build anchor
+            // If past a certain round and haven't built one in a certain number of turns
+            if (rc.getRoundNum() >= MAGIC_NUM_TURNS_RUSH
+                    && rc.getRoundNum() - lastAnchorRound >= MAGIC_ANCHOR_NUM_TURNS_RUSH
+                    && !needAmps
+                    && rc.getNumAnchors(Anchor.STANDARD) == 0) {
+                needAnchor = true;
+                if (closestNeutralIslandLoc != null) {
+                    if (rc.canBuildAnchor(Anchor.STANDARD)) {
+                        rc.setIndicatorString("Building an anchor");
+                        rc.buildAnchor(Anchor.STANDARD);
+                        lastAnchorRound = rc.getRoundNum();
+                        actions++;
+                    }
+                }
+            } else {
+                needAnchor = false;
+            }
+
+            // build amplifiers
+            // If past a certain round and there are less amps than HQs
+            if (actions < ACTIONS_PER_TURN && needAmps && !needAnchor) {
+                if (tryToBuildRobot(rc, RobotType.AMPLIFIER)) {
+                    rc.setIndicatorString("Building an amplifier");
                     actions++;
                 }
             }
-        }
 
-        // build launchers
-        if (!needAmps && !needAnchor) {
-            for (int i = 0; i < ACTIONS_PER_TURN - actions; i++) {
-                if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
-                    rc.setIndicatorString("Building a launcher");
-                    actions++;
+            // build carriers
+            if (needMoreCarriers && !needAmps && !needAnchor) {
+                for (int i = 0; i < ACTIONS_PER_TURN - actions; i++) {
+                    if (tryToBuildRobot(rc, RobotType.CARRIER)) {
+                        rc.setIndicatorString("Building a carrier");
+                        actions++;
+                    }
+                }
+            }
+
+            // build launchers
+            if (!needAmps && !needAnchor) {
+                for (int i = 0; i < ACTIONS_PER_TURN - actions; i++) {
+                    if (tryToBuildRobot(rc, RobotType.LAUNCHER)) {
+                        rc.setIndicatorString("Building a launcher");
+                        actions++;
+                    }
                 }
             }
         }
