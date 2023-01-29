@@ -7,9 +7,6 @@ import static tacoplayer.RobotPlayer.*;
 public class Sensing {
 
     final static int MAX_SENSED_ROBOTS = 120;
-    final static int MAX_RADIUS_TO_SENSE_OBSTACLES = 20;
-    final static int SMALLER_RADIUS_TO_SENSE_OBSTACLES = 16;
-    final static int SMALLEST_RADIUS_TO_SENSE_OBSTACLES = 10;
 
     static int ourCarrierCount;
     static int ourLauncherCount;
@@ -43,40 +40,6 @@ public class Sensing {
     static int knownIslandCount = 0;
     static int[] knownIslandIds = new int[GameConstants.MAX_NUMBER_ISLANDS];
     static IslandInfo[] knownIslands = new IslandInfo[GameConstants.MAX_NUMBER_ISLANDS + 1]; // Island with ID i is stored at i-th index
-
-    static int bcsum = 0;
-    static void scanObstacles(RobotController rc) throws GameActionException {
-//        int bc1 = Clock.getBytecodesLeft();
-        // On the robot's first two turns, don't scan everything
-        int radiusSquaredToSense = MAX_RADIUS_TO_SENSE_OBSTACLES;
-        switch (turnCount) {
-            case 1:
-                radiusSquaredToSense = SMALLEST_RADIUS_TO_SENSE_OBSTACLES;
-                break;
-            case 2:
-                radiusSquaredToSense = SMALLER_RADIUS_TO_SENSE_OBSTACLES;
-                break;
-        }
-        MapInfo[] mapInfos = rc.senseNearbyMapInfos(radiusSquaredToSense);
-        for (int i = mapInfos.length; --i >= 0;) {
-            MapLocation loc = mapInfos[i].getMapLocation();
-            if (map[loc.x][loc.y] == 0) {
-                if (!mapInfos[i].isPassable()) {
-                    map[loc.x][loc.y] = 1;
-                }
-                else if (mapInfos[i].hasCloud()) {
-                    map[loc.x][loc.y] = 2;
-                } else {
-                    map[loc.x][loc.y] = 3 + mapInfos[i].getCurrentDirection().ordinal();
-                }
-            }
-        }
-//        bcsum += (bc1 - Clock.getBytecodesLeft());
-//        if (rc.getType() == RobotType.LAUNCHER && rc.getID() % 17 == 0) {
-//            System.out.println(bcsum / turnCount);
-//            System.out.println((bc1 - Clock.getBytecodesLeft()));
-//        }
-    }
 
     static void scanRobots(RobotController rc) throws GameActionException {
         ourCarrierCount = 0;
